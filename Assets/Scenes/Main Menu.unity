@@ -4735,6 +4735,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   useUnityServices: 1
+  uniqueProfileString: P1
   playerInfo:
     ID: 
     username: 

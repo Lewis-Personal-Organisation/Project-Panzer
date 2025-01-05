@@ -4,10 +4,12 @@ using System;
 using System.Threading.Tasks;
 using Unity.Services.Authentication;
 using System.Linq.Expressions;
+using UnityEditor;
 
 public class SessionManager : MonoBehaviour
 {
 	public bool useUnityServices = false;
+	public string uniqueProfileString = string.Empty;
 	public PlayerInfoData playerInfo;
 	public bool playerIsSetup => UnityServices.State == ServicesInitializationState.Initialized && AuthenticationService.Instance.IsSignedIn;
 
@@ -23,12 +25,31 @@ public class SessionManager : MonoBehaviour
 	{
 		try
 		{
+#if UNITY_EDITOR
+			Debug.Log("Session Manager :: Attempting Unity Services Init with Unique Profile for Editor...");
+			if (uniqueProfileString == string.Empty)
+			{
+				Debug.LogError("Unique Profile String is null. Unity Services Init failed! Stopping Editor");
+				EditorApplication.isPlaying = false;
+			}
+			else
+			{
+				string profileName = $"Profile-{uniqueProfileString}";
+				InitializationOptions unityServicesAuthOptions = new InitializationOptions().SetProfile(profileName);
+				await UnityServices.InitializeAsync(unityServicesAuthOptions);
+			}
+#else
+			Debug.Log("Session Manager :: Attempting Unity Services Init for Player...");
 			await UnityServices.InitializeAsync();
-			Debug.Log("Session Manager :: Unity Services initialised Successfully");
+#endif
 		}
 		catch (Exception e)
 		{
 			Debug.LogException(e);
+		}
+		finally
+		{
+			Debug.Log("Session Manager :: Unity Services initialised Successfully");
 		}
 
 		AuthenticationService.Instance.SignInFailed += (err) =>
@@ -36,19 +57,16 @@ public class SessionManager : MonoBehaviour
 			playerInfo = null;
 			Debug.LogError($"Unity Relay :: {err}");
 		};
-
 		AuthenticationService.Instance.SignedOut += () =>
 		{
 			playerInfo = null;
 			Debug.Log($"Unity Relay :: Player signed out.");
 		};
-
 		AuthenticationService.Instance.Expired += () =>
 		{
 			playerInfo = null;
 			Debug.Log($"Unity Relay :: Player session could not be refreshed and expired.");
 		};
-
 		AuthenticationService.Instance.SignedIn += () => Debug.Log($"Unity Relay :: Player Signed in. ID: {AuthenticationService.Instance.PlayerId}");
 
 		try
@@ -59,7 +77,6 @@ public class SessionManager : MonoBehaviour
 			playerInfo.ID = AuthenticationService.Instance.PlayerInfo.Id;
 			playerInfo.username = AuthenticationService.Instance.PlayerInfo.Username;
 
-			Debug.Log("Session Manager :: Signed in Anonymously");
 		}
 		catch (Exception e)
 		{

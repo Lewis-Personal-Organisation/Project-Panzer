@@ -52,27 +52,34 @@ public class LobbyUI : MonoBehaviour
 		instance = this;
 	}
 
+	private void Start()
+	{
+		LobbyManager.OnLobbyChanged += OnLobbyChanged;
+	}
+
 	void OnLobbyChanged(Lobby updatedLobby, bool isGameReady)
 	{
+		AdjustPlayerSlots();
+
 		if (isHost)
 		{
-			Debug.Log("OnLobbyChanged :: Host");
 			OnHostLobbyChanged(updatedLobby, isGameReady);
 		}
 		else
 		{
-			Debug.Log("OnLobbyChanged :: Client");
 			OnJoinLobbyChanged(updatedLobby, isGameReady);
 		}
 	}
 
 	public void OnHostLobbyChanged(Lobby updatedLobby, bool isGameReady)
 	{
+		Debug.Log("OnLobbyChanged :: Host");
 		//sceneView.SetHostLobbyPlayers(updatedLobby.Players);
 
 		if (isGameReady)
 		{
-			NetworkManager.Singleton.SceneManager.LoadScene("Game", LoadSceneMode.Single);
+			// GAME IS READY TO START
+			//NetworkManager.Singleton.SceneManager.LoadScene("Game", LoadSceneMode.Single);
 		}
 
 		//LobbyManager.instance.LogLobbyPlayers();
@@ -80,6 +87,7 @@ public class LobbyUI : MonoBehaviour
 
 	public void OnJoinLobbyChanged(Lobby updatedLobby, bool isGameReady)
 	{
+		Debug.Log("OnLobbyChanged :: Client");
 		//sceneView.SetJoinLobbyPlayers(updatedLobby.Players);
 	}
 
@@ -112,7 +120,7 @@ public class LobbyUI : MonoBehaviour
 
 	public void OnPlayerJoined(List<LobbyPlayerJoined> newPlayers)
 	{
-		AdjustPlayerSlots();
+		//AdjustPlayerSlots();
 		//if (isHost)
 		//{
 		//	List<Unity.Services.Lobbies.Models.Player> activePlayers = lobbyManager.GetLobbyPlayers();
@@ -142,7 +150,7 @@ public class LobbyUI : MonoBehaviour
 
 	public void OnPlayerLeft(List<int> removedPlayerIndexes)
 	{
-		AdjustPlayerSlots();
+		//AdjustPlayerSlots();
 		//if (isHost)
 		//{
 		//	for (int i = 0; i < removedPlayerIndexes.Count; i++)

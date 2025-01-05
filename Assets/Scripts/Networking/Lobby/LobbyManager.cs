@@ -113,7 +113,6 @@ public class LobbyManager : MonoBehaviour
 			var updatedLobby = await LobbyService.Instance.GetLobbyAsync(activeLobby.Id);
 			if (this == null) return;
 
-			Debug.Log($"Old Players:{activeLobby.Players?.Count}, New Players:{updatedLobby.Players?.Count}");
 			UpdateLobby(updatedLobby);
 		}
 
@@ -147,24 +146,22 @@ public class LobbyManager : MonoBehaviour
 
 	void UpdateLobby(Lobby updatedLobby)
 	{
-		//Debug.Log($"Update Lobby :: Old Players:{activeLobby.Players?.Count}, New Players:{updatedLobby.Players?.Count}");
-
 		// Since this is called after an await, ensure that the Lobby wasn't closed while waiting.
 		if (activeLobby == null || updatedLobby == null) return;
 
-		//Debug.Log("Update Lobby :: Lobbies Valid");
 		if (DidPlayersChange(activeLobby.Players, updatedLobby.Players))
 		{
 			Debug.Log("Update Lobby :: Players Changed - Lobby Updated!");
 			activeLobby = updatedLobby;
 			players = activeLobby?.Players;
 
+			// If our player exists, check if all other players are ready
 			if (updatedLobby.Players.Exists(player => player.Id == playerId))
 			{
-				var isGameReady = IsGameReady(updatedLobby);
+				var isGameReady = AllPlayersReady(updatedLobby);
 
+				// Trigger event with value (This starts the game if all players are ready)
 				OnLobbyChanged?.Invoke(updatedLobby, isGameReady);
-				Debug.Log("Update Lobby :OnLobbyChanged Invoked");
 			}
 			else
 			{
@@ -208,7 +205,7 @@ public class LobbyManager : MonoBehaviour
 		return false;
 	}
 
-	static bool IsGameReady(Lobby lobby)
+	static bool AllPlayersReady(Lobby lobby)
 	{
 		if (lobby.Players.Count <= 1)
 		{
