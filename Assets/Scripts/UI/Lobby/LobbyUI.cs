@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TMPro;
 using Unity.Netcode;
@@ -7,6 +8,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using static LobbyManager;
 
 public class LobbyUI : MonoBehaviour
 {
@@ -15,9 +17,15 @@ public class LobbyUI : MonoBehaviour
 	[SerializeField] private GameObject parent;
 
 	[SerializeField] private TextMeshProUGUI title;
+	[SerializeField] private Button leaveButton;
+	[SerializeField] private Button readyButton;
+	[SerializeField] private TextMeshProUGUI readyButtonText;
+	[SerializeField] private Color readyColour;
+	[SerializeField] private Color unreadyColour;
 
 	LobbyManager lobbyManager => LobbyManager.instance;
 	bool isHost => lobbyManager.isHost;
+	private bool isReady;
 
 	[SerializeField] private PlayerSlot[] playerSlots = new PlayerSlot[4];
 
@@ -28,12 +36,12 @@ public class LobbyUI : MonoBehaviour
 		[SerializeField] private GameObject gameObject;
 		[SerializeField] private Image backImage;
 		[SerializeField] private TextMeshProUGUI playerNameTitle;
+		[SerializeField] private GameObject readyGameObject;
 
 		public bool IsFree() => !gameObject.activeInHierarchy;
 
 		public void Show(string playerName)
 		{
-			backImage.color = UnityEngine.Random.ColorHSV();
 			playerNameTitle.text = playerName;
 			gameObject.SetActive(true);
 		}
@@ -44,12 +52,16 @@ public class LobbyUI : MonoBehaviour
 			playerNameTitle.text = string.Empty;
 			gameObject.SetActive(false);
 		}
+
+		public void SetReady(bool isReady) => readyGameObject.SetActive(isReady);
 	}
 
 
 	private void Awake()
 	{
 		instance = this;
+		leaveButton.onClick.AddListener(OnLeaveClicked);
+		readyButton.onClick.AddListener(OnReadyClicked);
 	}
 
 	private void Start()
@@ -91,22 +103,16 @@ public class LobbyUI : MonoBehaviour
 		//sceneView.SetJoinLobbyPlayers(updatedLobby.Players);
 	}
 
-	public void OnPlayerNotInLobby()
+	public void Hide()
 	{
-		Debug.Log($"This player is no longer in the lobby so returning to main menu.");
-
-		ReturnToMainMenu();
-	}
-
-	void ReturnToMainMenu()
-	{
-		//SceneManager.LoadScene("ServerlessMultiplayerGameSample");
+		parent.SetActive(false);
+		Debug.Log($"This player left the Lobby and returned to main menu");
 	}
 
 	public void Show()
 	{
-		//LobbyManager.OnLobbyChanged += OnLobbyChanged;
-		//LobbyManager.OnPlayerNotInLobbyEvent += OnPlayerNotInLobby;
+		readyButton.interactable = true;
+		leaveButton.interactable = true;
 
 		parent.SetActive(true);
 		SetLobbyTitle();
@@ -118,21 +124,46 @@ public class LobbyUI : MonoBehaviour
 		title.text = isHost ? "Host Game Lobby" : "Game Lobby";
 	}
 
-	public void OnPlayerJoined(List<LobbyPlayerJoined> newPlayers)
+	private async void OnReadyClicked()
 	{
-		//AdjustPlayerSlots();
-		//if (isHost)
-		//{
-		//	List<Unity.Services.Lobbies.Models.Player> activePlayers = lobbyManager.GetLobbyPlayers();
+		try
+		{
+			readyButton.interactable = !readyButton.interactable;
+			leaveButton.interactable = !leaveButton.interactable;
 
-		//	for (int i = 0; i < playerSlots.Length; i++)
-		//	{
-		//		if (i < activePlayers.Count)
-		//			playerSlots[i].Show(activePlayers[i].Data["playerName"].Value);
-		//		else
-		//			playerSlots[i].Hide();
-		//	}
-		//}
+			isReady = !isReady;
+			readyButton.image.color = isReady ? readyColour : unreadyColour;
+			readyButtonText.text = isReady ? "Unready" : "Ready";
+
+			await lobbyManager.SetReadyState(isReady);
+		}
+		catch (Exception e)
+		{
+			Debug.LogException(e);
+		}
+		finally
+		{
+			if (this != null)
+			{
+				readyButton.interactable = !readyButton.interactable;
+				leaveButton.interactable = !leaveButton.interactable;
+			}
+		}
+	}
+
+	private async void OnLeaveClicked()
+	{
+		readyButton.interactable = false;
+		leaveButton.interactable = false;
+
+		if (lobbyManager.isHost)
+		{
+			await lobbyManager.DeleteAnyActiveLobbyWithNotify();
+		}
+		else
+		{
+			await lobbyManager.LeaveJoinedLobby();
+		}
 	}
 
 	public void AdjustPlayerSlots()
@@ -142,21 +173,14 @@ public class LobbyUI : MonoBehaviour
 		for (int i = 0; i < playerSlots.Length; i++)
 		{
 			if (i < activePlayers.Count)
-				playerSlots[i].Show(activePlayers[i].Data["playerName"].Value);
+			{
+				playerSlots[i].Show(activePlayers[i].Data[PlayerDictionaryData.playerNameKey].Value);
+				playerSlots[i].SetReady(bool.Parse(activePlayers[i].Data[PlayerDictionaryData.isReadyKey].Value));
+			}
 			else
+			{
 				playerSlots[i].Hide();
+			}
 		}
-	}
-
-	public void OnPlayerLeft(List<int> removedPlayerIndexes)
-	{
-		//AdjustPlayerSlots();
-		//if (isHost)
-		//{
-		//	for (int i = 0; i < removedPlayerIndexes.Count; i++)
-		//	{
-		//		Debug.Log($"Player '{removedPlayerIndexes[i]}' Left!");
-		//	}
-		//}
 	}
 }

@@ -31,18 +31,18 @@ public class LobbyManager : MonoBehaviour
 	bool wasGameStarted = false;
 
 	private PlayerDictionaryData playerDictionaryData;
-	private class PlayerDictionaryData
+	public class PlayerDictionaryData
 	{
 		public PlayerDictionaryData(string playerName, bool isPlayerReady)
 		{
 			this.playerName = playerName;
-			this.isPlayerReady = isPlayerReady;
+			this.isReady = isPlayerReady;
 		}
 
 		public const string playerNameKey = "playerName";
 		public string playerName;
 		public const string isReadyKey = "isReady";
-		public bool isPlayerReady = false;
+		public bool isReady = false;
 	}
 
 	ILobbyEvents activeLobbyEvents;
@@ -180,7 +180,7 @@ public class LobbyManager : MonoBehaviour
 		{
 			activeLobby = null;
 
-			OnPlayerNotInLobbyEvent?.Invoke();
+			LobbyUI.instance.Hide();
 		}
 	}
 
@@ -395,7 +395,7 @@ public class LobbyManager : MonoBehaviour
 		string lobbyPlayerNames = "Player(s) ";
 		for (int i = 0; i < players.Count; i++)
 		{
-			lobbyPlayerNames += $"'{players[i].Data["playerName"].Value}'";
+			lobbyPlayerNames += $"'{players[i].Data[PlayerDictionaryData.playerNameKey].Value}'";
 
 			if (i == players.Count - 1)
 				lobbyPlayerNames += " are present";
@@ -432,12 +432,12 @@ public class LobbyManager : MonoBehaviour
 		return player;
 	}
 
-	Dictionary<string, PlayerDataObject> CreatePlayerDictionary()
+	public Dictionary<string, PlayerDataObject> CreatePlayerDictionary()
 	{
 		var playerDictionary = new Dictionary<string, PlayerDataObject>
 			{
 				{ PlayerDictionaryData.playerNameKey,  new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, playerDictionaryData.playerName) },
-				{ PlayerDictionaryData.isReadyKey,  new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, playerDictionaryData.isPlayerReady.ToString()) },
+				{ PlayerDictionaryData.isReadyKey,  new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, playerDictionaryData.isReady.ToString()) },
 			};
 
 		return playerDictionary;
@@ -468,6 +468,35 @@ public class LobbyManager : MonoBehaviour
 
 		instance.LogLobbyPlayers();
 	}
+	
+	public async Task SetReadyState(bool isReady)
+	{
+		try
+		{
+			if (activeLobby == null)
+			{
+				Debug.Log("Attempting to toggle ready state when not already in a lobby.");
+				return;
+			}
+
+			playerDictionaryData.isReady = isReady;
+
+			var lobbyId = activeLobby.Id;
+
+			var options = new UpdatePlayerOptions();
+			options.Data = CreatePlayerDictionary();
+
+			var updatedLobby = await LobbyService.Instance.UpdatePlayerAsync(lobbyId, playerId, options);
+			if (this == null) return;
+
+			UpdateLobby(updatedLobby);
+		}
+		catch (Exception e)
+		{
+			Debug.LogException(e);
+		}
+	}
+
 
 	// Check if players connected already use our name
 	// Since we are already connected to a lobby at this point, we must check for 2 matches instead of 1
@@ -478,11 +507,11 @@ public class LobbyManager : MonoBehaviour
 
 		for (int i = 0; i < players.Count; i++)
 		{
-			Debug.Log($"Name Check: Found player '{players[i].Data["playerName"].Value}'");
-			if (ownerName == players[i].Data["playerName"].Value)
+			Debug.Log($"Name Check: Found player '{players[i].Data[PlayerDictionaryData.playerNameKey].Value}'");
+			if (ownerName == players[i].Data[PlayerDictionaryData.playerNameKey].Value)
 			{
 				matches++;
-				Debug.Log($"Name Check: Name Matched! {players[i].Data["playerName"].Value} + {ownerName}, Count {matches}");
+				Debug.Log($"Name Check: Name Matched! {players[i].Data[PlayerDictionaryData.playerNameKey].Value} + {ownerName}, Count {matches}");
 
 				if (matches == 2)
 					return false;
@@ -497,7 +526,7 @@ public class LobbyManager : MonoBehaviour
 		{
 			for (int i = 0; i < newPlayers.Count; i++)
 			{
-				Debug.Log($"Player '{newPlayers[i].Player.Data["playerName"].Value}' joined!");
+				Debug.Log($"Player '{newPlayers[i].Player.Data[PlayerDictionaryData.playerNameKey].Value}' joined!");
 			}
 		}
 	}

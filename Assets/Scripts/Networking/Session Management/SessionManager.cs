@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Unity.Services.Authentication;
 using System.Linq.Expressions;
 using UnityEditor;
+using ParrelSync;
 
 public class SessionManager : MonoBehaviour
 {
@@ -26,18 +27,18 @@ public class SessionManager : MonoBehaviour
 		try
 		{
 #if UNITY_EDITOR
-			Debug.Log("Session Manager :: Attempting Unity Services Init with Unique Profile for Editor...");
-			if (uniqueProfileString == string.Empty)
+			uniqueProfileString = GetProjectName();
+			if (ClonesManager.IsClone())
 			{
-				Debug.LogError("Unique Profile String is null. Unity Services Init failed! Stopping Editor");
-				EditorApplication.isPlaying = false;
+				uniqueProfileString += "ClonedProject";
 			}
-			else
-			{
-				string profileName = $"Profile-{uniqueProfileString}";
-				InitializationOptions unityServicesAuthOptions = new InitializationOptions().SetProfile(profileName);
-				await UnityServices.InitializeAsync(unityServicesAuthOptions);
-			}
+
+			uniqueProfileString = uniqueProfileString.Replace(" ", "");
+			if (uniqueProfileString.Length > 29)
+				uniqueProfileString = uniqueProfileString.Substring(0, 29);
+
+			InitializationOptions unityServicesAuthOptions = new InitializationOptions().SetProfile(uniqueProfileString);
+			await UnityServices.InitializeAsync(unityServicesAuthOptions);
 #else
 			Debug.Log("Session Manager :: Attempting Unity Services Init for Player...");
 			await UnityServices.InitializeAsync();
@@ -82,5 +83,13 @@ public class SessionManager : MonoBehaviour
 		{
 			Debug.LogException(e);
 		}
+	}
+
+	public string GetProjectName()
+	{
+		string[] s = Application.dataPath.Split('/');
+		string projectName = s[s.Length - 2];
+		
+		return projectName;
 	}
 }

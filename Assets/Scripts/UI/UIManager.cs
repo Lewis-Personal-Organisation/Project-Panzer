@@ -36,9 +36,6 @@ public class UIManager : MonoBehaviour
 	[Header("Session")]
 	[SerializeField] private SessionManager sessionManager;
 
-	[Header("Connection Handler")]
-	[SerializeField] private ConnectionHandler connectionHandler;
-
 	[Header("Lobby Data")]
 	[SerializeField] UnityTransport unityTransport;
 	[SerializeField] private bool isLobbyPrivate;
@@ -78,7 +75,6 @@ public class UIManager : MonoBehaviour
 	[SerializeField] private Button privateButton;
 	[SerializeField] private Button publicButton;
 	[SerializeField] private Button confirmButton;
-	[SerializeField] private Button closeLobbyButton;
 	[SerializeField] private GameObject requestingLobbyGameObject;
 
 	[Header("Join Code UI")]
@@ -101,7 +97,6 @@ public class UIManager : MonoBehaviour
 		privateButton.onClick.AddListener(delegate { SetHostLobbyVisiblity(false); });
 		publicButton.onClick.AddListener(delegate { SetHostLobbyVisiblity(true); });
 		confirmButton.onClick.AddListener(OnHostConfirmLobbyPressed);
-		closeLobbyButton.onClick.AddListener(OnHostCloseLobbyPressed);
 
 		submitButton.onClick.AddListener(SubmitTextInput);
 		pasteButton.onClick.AddListener(OnPaste);
@@ -194,7 +189,6 @@ public class UIManager : MonoBehaviour
 			case TextSubmissionContext.PlayerName:
 				nameDisplayText.text = inputText.text;
 				nameDisplayText.gameObject.SetActive(true);
-				//connectionHandler.SetConnectionData(System.Text.Encoding.ASCII.GetBytes(inputText.text));
 
 				if (LobbyManager.lobbyPreviouslyRefusedUsername)
 				{
@@ -210,10 +204,6 @@ public class UIManager : MonoBehaviour
 				}
 				break;
 		}
-
-		// Show main Buttons ToggleVEDisplay(true);
-
-		// Sets the Name as connection data //connectionHandler.SetConnectionData(System.Text.Encoding.ASCII.GetBytes(inputText.text));
 
 		ToggleInputTextGroup(false);
 		inputText.text = string.Empty;
@@ -271,21 +261,10 @@ public class UIManager : MonoBehaviour
 		Lobby lobby = await LobbyManager.instance.CreateLobby(gameNameText.text, maxPlayers, playerName, isLobbyPrivate, relayJoinCode);
 		if (this == null) return;
 
-		// Enforce approval is everything is sucessfull
-		//NetworkManager.Singleton.ConnectionApprovalCallback = connectionHandler.ApprovalCheck;
-
 		requestingLobbyGameObject.SetActive(false);
-		closeLobbyButton.gameObject.SetActive(true);
-		closeLobbyButton.interactable = true;
 
 		joinCodeText.text = lobby.LobbyCode;
 		joinCodeGroup.SetActive(true);
-	}
-
-	private async void OnHostCloseLobbyPressed()
-	{
-		await LobbyManager.instance.DeleteAnyActiveLobbyWithNotify();
-		closeLobbyButton.gameObject.SetActive(false);
 	}
 
 	private void ToggleHostLobbyPanel(bool state)
