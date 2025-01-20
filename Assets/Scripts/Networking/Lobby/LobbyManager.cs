@@ -8,12 +8,11 @@ using UnityEngine;
 using Unity.Services.Samples.ServerlessMultiplayerGame;
 using System.Linq;
 using UnityEditor;
-using UnityEditor.Rendering;
+using System.Collections;
 
 [DisallowMultipleComponent]
-public class LobbyManager : MonoBehaviour
+public class LobbyManager : Singleton<LobbyManager>
 {
-	public static LobbyManager instance { get; private set; }
 	public Lobby activeLobby { get; private set; }
 	public static string playerId => AuthenticationService.Instance.PlayerId;
 	public List<Player> players { get; private set; }
@@ -22,41 +21,38 @@ public class LobbyManager : MonoBehaviour
 	public const string hostNameKey = "hostName";
 	public const string relayJoinCodeKey = "relayJoinCode";
 	public static event Action<Lobby, bool> OnLobbyChanged;
-	public static event Action OnPlayerNotInLobbyEvent;
+	//public static event Action OnPlayerNotInLobbyEvent;
 	public static bool lobbyPreviouslyRefusedUsername = false;
 	float nextHostHeartbeatTime;
 	const float hostHeartbeatFrequency = 15;
 	float nextUpdatePlayersTime;
-	const float updatePlayersFrequency = 1.5F;
+	[SerializeField] float updatePlayersFrequency = 1.5F;
 	bool wasGameStarted = false;
 
 	private PlayerDictionaryData playerDictionaryData;
 	public class PlayerDictionaryData
 	{
-		public PlayerDictionaryData(string playerName, bool isPlayerReady)
+		public PlayerDictionaryData(string playerName, bool isPlayerReady, int vehicleIndex)
 		{
 			this.playerName = playerName;
 			this.isReady = isPlayerReady;
+			this.lobbyVehicleIndex = vehicleIndex;
 		}
 
-		public const string playerNameKey = "playerName";
+		public const string nameKey = "playerName";
 		public string playerName;
 		public const string isReadyKey = "isReady";
 		public bool isReady = false;
+		public const string vehicleIndexKey = "vehicleIndex";
+		public int lobbyVehicleIndex = 0;
 	}
 
 	ILobbyEvents activeLobbyEvents;
 
-	private void Awake()
+
+	new private void Awake()
 	{
-		if (instance != null && instance != this)
-		{
-			Destroy(this);
-		}
-		else
-		{
-			instance = this;
-		}
+		base.Awake();
 	}
 
     async void Update()
@@ -85,7 +81,6 @@ public class LobbyManager : MonoBehaviour
 		}
 	}
 
-
 	async Task PeriodicHostHeartbeat()
 	{
 		try
@@ -109,9 +104,12 @@ public class LobbyManager : MonoBehaviour
 			// Set next update time before calling Lobby Service since next update could also trigger an
 			// update which could cause throttling issues.
 			nextUpdatePlayersTime = Time.realtimeSinceStartup + updatePlayersFrequency;
-
 			var updatedLobby = await LobbyService.Instance.GetLobbyAsync(activeLobby.Id);
-			if (this == null) return;
+
+			if (this == null)
+			{
+				return;
+			}
 
 			UpdateLobby(updatedLobby);
 		}
@@ -124,7 +122,7 @@ public class LobbyManager : MonoBehaviour
 			// Lobby has closed
 			//ServerlessMultiplayerGameSampleManager.instance.SetReturnToMenuReason(
 			//	ServerlessMultiplayerGameSampleManager.ReturnToMenuReason.LobbyClosed);
-
+			Debug.Log("Lobby Not Found or Closed. Returning to Main Menu");
 			OnPlayerNotInLobby();
 		}
 
@@ -147,11 +145,14 @@ public class LobbyManager : MonoBehaviour
 	void UpdateLobby(Lobby updatedLobby)
 	{
 		// Since this is called after an await, ensure that the Lobby wasn't closed while waiting.
-		if (activeLobby == null || updatedLobby == null) return;
+		if (activeLobby == null || updatedLobby == null)
+		{
+			return;
+		}
 
 		if (DidPlayersChange(activeLobby.Players, updatedLobby.Players))
 		{
-			Debug.Log("Update Lobby :: Players Changed - Lobby Updated!");
+			//Debug.Log("Update Lobby :: Players Changed - Lobby Updated!");
 			activeLobby = updatedLobby;
 			players = activeLobby?.Players;
 
@@ -174,14 +175,32 @@ public class LobbyManager : MonoBehaviour
 		}
 	}
 
+	/// <summary>
+	/// If Lobby is not null, remove ourself from it
+	/// </summary>
+	public void LeaveLobbyOnQuit()
+	{
+		if (activeLobby != null)
+		{
+			LobbyService.Instance.RemovePlayerAsync(activeLobby.Id, playerId);
+		}
+	}
+
 	public void OnPlayerNotInLobby()
 	{
 		if (activeLobby != null)
 		{
 			activeLobby = null;
-
-			LobbyUI.instance.Hide();
+			UIManager.LobbyUI.LeaveLobby();
+			StartCoroutine(ShutdownNetworkAndReturnToMainMenu());
 		}
+	}
+	private IEnumerator ShutdownNetworkAndReturnToMainMenu()
+	{
+		yield return StartCoroutine(SessionManager.Instance.IShutdownNetworkClient());
+		UIManager.MainMenu.Toggle(true);
+		UIManager.LobbySetupMenu.ToggleLobbyCreationInteractables(true);
+		Debug.Log("LobbyUI :: Re-enabled buttons after shutdown");
 	}
 
 	static bool DidPlayersChange(List<Player> oldPlayers, List<Player> newPlayers)
@@ -198,6 +217,12 @@ public class LobbyManager : MonoBehaviour
 				oldPlayers[i].Data[PlayerDictionaryData.isReadyKey].Value != newPlayers[i].Data[PlayerDictionaryData.isReadyKey].Value)
 			{
 				Debug.Log("Update Lobby :: DidPlayersChange :: Player ID/Ready State Changed");
+				return true;
+			}
+
+			if (oldPlayers[i].Data[PlayerDictionaryData.vehicleIndexKey].Value != newPlayers[i].Data[PlayerDictionaryData.vehicleIndexKey].Value)
+			{
+				Debug.Log("Update Lobby :: DidPlayersChange :: Vehicle Index Changed");
 				return true;
 			}
 		}
@@ -229,7 +254,7 @@ public class LobbyManager : MonoBehaviour
 	{
 		try
 		{
-			playerDictionaryData = new(hostName, false);
+			playerDictionaryData = new(hostName, false, 0);
 			isHost = true;
 			wasGameStarted = false;
 
@@ -272,10 +297,6 @@ public class LobbyManager : MonoBehaviour
 			if (this == null) return default;
 
 			players = activeLobby?.Players;
-
-			UIManager.instance.ToggleHostView(false);
-			LobbyUI.instance.Show();
-
 			LogLobbyCreation(activeLobby);
 		}
 		catch (Exception e)
@@ -330,7 +351,7 @@ public class LobbyManager : MonoBehaviour
 	{
 		isHost = false;
 		this.wasGameStarted = false;
-		this.playerDictionaryData = new(playerName, false);
+		this.playerDictionaryData = new(playerName, false, 0);
 
 		if (activeLobby != null)
 		{
@@ -395,7 +416,7 @@ public class LobbyManager : MonoBehaviour
 		string lobbyPlayerNames = "Player(s) ";
 		for (int i = 0; i < players.Count; i++)
 		{
-			lobbyPlayerNames += $"'{players[i].Data[PlayerDictionaryData.playerNameKey].Value}'";
+			lobbyPlayerNames += $"'{players[i].Data[PlayerDictionaryData.nameKey].Value}'";
 
 			if (i == players.Count - 1)
 				lobbyPlayerNames += " are present";
@@ -436,8 +457,9 @@ public class LobbyManager : MonoBehaviour
 	{
 		var playerDictionary = new Dictionary<string, PlayerDataObject>
 			{
-				{ PlayerDictionaryData.playerNameKey,  new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, playerDictionaryData.playerName) },
-				{ PlayerDictionaryData.isReadyKey,  new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, playerDictionaryData.isReady.ToString()) },
+				{ PlayerDictionaryData.nameKey, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, playerDictionaryData.playerName) },
+				{ PlayerDictionaryData.vehicleIndexKey, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, playerDictionaryData.lobbyVehicleIndex.ToString()) },
+				{ PlayerDictionaryData.isReadyKey, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, playerDictionaryData.isReady.ToString()) },
 			};
 
 		return playerDictionary;
@@ -466,7 +488,7 @@ public class LobbyManager : MonoBehaviour
 			$"Upid:{lobby.Upid}, " +
 			$"Lobby.Data: {lobbyDataStr}");
 
-		instance.LogLobbyPlayers();
+		Instance.LogLobbyPlayers();
 	}
 	
 	public async Task SetReadyState(bool isReady)
@@ -498,20 +520,50 @@ public class LobbyManager : MonoBehaviour
 	}
 
 
-	// Check if players connected already use our name
-	// Since we are already connected to a lobby at this point, we must check for 2 matches instead of 1
+	public async Task SwapLobbyVehicle(int index)
+	{
+		try
+		{
+			if (activeLobby == null)
+			{
+				Debug.Log("Attempting to swap vehicle when not already in a lobby.");
+				return;
+			}
+
+			playerDictionaryData.lobbyVehicleIndex = index;
+
+			var lobbyId = activeLobby.Id;
+
+			var options = new UpdatePlayerOptions();
+			options.Data = CreatePlayerDictionary();
+
+			var updatedLobby = await LobbyService.Instance.UpdatePlayerAsync(lobbyId, playerId, options);
+			if (this == null) return;
+
+			UpdateLobby(updatedLobby);
+		}
+		catch (Exception e)
+		{
+			Debug.LogException(e);
+		}
+	}
+
+	/// <summary>
+	/// Check if players connected already use our name
+	/// Since we are already connected to a lobby at this point, we must check for 2 matches instead of 1
+	/// </summary>
 	public bool PlayerNameCheck(string ownerName)
 	{
 		int matches = 0;
-		List<Player> players = instance.GetLobbyPlayers();
+		List<Player> players = Instance.GetLobbyPlayers();
 
 		for (int i = 0; i < players.Count; i++)
 		{
-			Debug.Log($"Name Check: Found player '{players[i].Data[PlayerDictionaryData.playerNameKey].Value}'");
-			if (ownerName == players[i].Data[PlayerDictionaryData.playerNameKey].Value)
+			//Debug.Log($"Name Check: Found player '{players[i].Data[PlayerDictionaryData.playerNameKey].Value}'");
+			if (ownerName == players[i].Data[PlayerDictionaryData.nameKey].Value)
 			{
 				matches++;
-				Debug.Log($"Name Check: Name Matched! {players[i].Data[PlayerDictionaryData.playerNameKey].Value} + {ownerName}, Count {matches}");
+				//Debug.Log($"Name Check: Name Matched! {players[i].Data[PlayerDictionaryData.playerNameKey].Value} + {ownerName}, Count {matches}");
 
 				if (matches == 2)
 					return false;
@@ -526,7 +578,7 @@ public class LobbyManager : MonoBehaviour
 		{
 			for (int i = 0; i < newPlayers.Count; i++)
 			{
-				Debug.Log($"Player '{newPlayers[i].Player.Data[PlayerDictionaryData.playerNameKey].Value}' joined!");
+				Debug.Log($"Player '{newPlayers[i].Player.Data[PlayerDictionaryData.nameKey].Value}' joined!");
 			}
 		}
 	}
@@ -539,5 +591,111 @@ public class LobbyManager : MonoBehaviour
 				Debug.Log($"Player '{leftPlayers[i]}' Left!");
 			}
 		}
+	}
+
+	/// <summary>
+	/// Attempts to join a private lobby using the specified Join Code. 
+	/// Also ensures Player names are unique. If not, requires user to re-enter name
+	/// </summary>
+	public async void JoinPrivateLobbyAsClient(string joinCode, string playername)
+	{
+		try
+		{
+			UIManager.LoadingIcon.ShowWithText("Joining Lobby...");
+			await SessionManager.Instance.InitialiseUnityServices();
+			Lobby joinedLobby = await Instance.JoinPrivateLobby(joinCode, playername);
+
+			if (this == null)
+			{
+				Debug.Log("Null. Returning");
+				return;
+			}
+
+			if (joinedLobby == null)
+			{
+				Debug.Log("Failed to Join Private Lobby");
+				// Could return player to main menu here
+				return;
+			}
+
+			UIManager.LoadingIcon.Toggle(false);
+			Debug.Log($"Checking Name {playername}");
+			Instance.LogLobbyPlayers();
+
+			if (Instance.activeLobby == null)
+				return;
+
+			bool nameCheckPassed = Instance.PlayerNameCheck(playername);
+
+			if (nameCheckPassed)
+			{
+				lobbyPreviouslyRefusedUsername = false;
+				Debug.Log("Name Check: Passed");
+				Instance.LogLobbyPlayers();
+				await OpenLobby(joinedLobby);
+			}
+			else
+			{
+				lobbyPreviouslyRefusedUsername = true;
+				Debug.Log("Name Check: Failed. Leaving Lobby...");
+				await Instance.LeaveJoinedLobby();
+				Debug.Log("Name Check: Left Lobby. Set a unique name and rejoin!");
+				UIManager.TextInputGroup.ToggleInputTextGroup(true, TextSubmissionContext.PlayerName);
+				UIManager.MainMenu.Toggle(false);
+				UIManager.TextInputGroup.TogglePasteButton(false);
+			}
+		}
+		catch (LobbyServiceException e) when (e.Reason == LobbyExceptionReason.LobbyNotFound)
+		{
+			Debug.Log("Failed to Join Private Lobby: Invalid Code");
+		}
+		catch (LobbyServiceException e) when (e.Reason == LobbyExceptionReason.LobbyFull)
+		{
+			Debug.Log("Failed to Join Private Lobby: Lobby Full");
+		}
+		catch (Exception e)
+		{
+			Debug.LogException(e);
+		}
+	}
+
+	/// <summary>
+	/// Shows the Lobby UI once a lobby is joined
+	/// </summary>
+	async Task OpenLobby(Lobby lobbyJoined)
+	{
+		Debug.Log("Lobby Data Retrieved. Initializing Client");
+
+		try
+		{
+			await SessionManager.Instance.InitializeRelayClient(lobbyJoined);
+
+			if (this == null)
+			{
+				Debug.Log("Null. Returning");
+				return;
+			}
+
+			UIManager.MainMenu.Toggle(false);
+			UIManager.LobbyUI.Toggle(true, lobbyJoined.LobbyCode);
+		}
+		catch (Exception e)
+		{
+			Debug.LogException(e);
+		}
+	}
+
+	public int GetLocalPlayerIndexInLobby()
+	{
+		if (activeLobby == null)
+			return -1;
+
+		for (int i = 0; i < activeLobby.Players.Count; i++)
+		{
+			if (playerId == activeLobby.Players[i].Id)
+				return i;
+		}
+
+		return -1;
 	}
 }

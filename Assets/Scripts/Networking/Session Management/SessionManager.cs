@@ -3,16 +3,24 @@ using Unity.Services.Core;
 using System;
 using System.Threading.Tasks;
 using Unity.Services.Authentication;
-using System.Linq.Expressions;
-using UnityEditor;
+#if UNITY_EDITOR 
 using ParrelSync;
+#endif
+using Unity.Netcode.Transports.UTP;
+using Unity.Netcode;
+using Unity.Networking.Transport;
+using Unity.Services.Lobbies.Models;
+using Unity.Services.Relay;
+using System.Collections;
 
-public class SessionManager : MonoBehaviour
+public class SessionManager : Singleton<SessionManager>
 {
+	[SerializeField] internal UnityTransport unityTransport;
 	public bool useUnityServices = false;
 	public string uniqueProfileString = string.Empty;
 	public PlayerInfoData playerInfo;
-	public bool playerIsSetup => UnityServices.State == ServicesInitializationState.Initialized && AuthenticationService.Instance.IsSignedIn;
+	public bool networkManagerInitialised = true;
+	private bool IsNetworkReady => UnityServices.State == ServicesInitializationState.Initialized && AuthenticationService.Instance.IsSignedIn;
 
 	[System.Serializable]
 	public class PlayerInfoData
@@ -22,10 +30,19 @@ public class SessionManager : MonoBehaviour
 		public string username;
 	}
 
+	new private void Awake()
+	{
+		base.Awake();
+		GameSave.PrintPrefix();
+	}
+
 	public async Task InitialiseUnityServices()
 	{
 		try
 		{
+			if (IsNetworkReady)
+				return;
+
 #if UNITY_EDITOR
 			uniqueProfileString = GetProjectName();
 			if (ClonesManager.IsClone())
@@ -85,11 +102,51 @@ public class SessionManager : MonoBehaviour
 		}
 	}
 
-	public string GetProjectName()
+	/// <summary>
+	/// Requests to join a Relay Allocation using a Join Code
+	/// Starts the Player as a Client
+	/// </summary>
+	internal async Task InitializeRelayClient(Lobby lobbyJoined)
+	{
+		try
+		{
+			string relayJoinCode = lobbyJoined.Data[LobbyManager.relayJoinCodeKey].Value;
+			//await InitializeClient(relayJoinCode);
+
+			var joinAllocation = await RelayService.Instance.JoinAllocationAsync(relayJoinCode);
+			var endPoint = NetworkEndPoint.Parse(joinAllocation.RelayServer.IpV4,
+				(ushort)joinAllocation.RelayServer.Port);
+
+			var ipAddress = endPoint.Address.Split(':')[0];
+
+			SessionManager.Instance.unityTransport.SetClientRelayData(ipAddress, endPoint.Port,
+				joinAllocation.AllocationIdBytes, joinAllocation.Key,
+				joinAllocation.ConnectionData, joinAllocation.HostConnectionData, false);
+
+			//NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
+			NetworkManager.Singleton.StartClient();
+			Instance.networkManagerInitialised = true;
+			Debug.Log("Relay Allocation complete. Starting as Client");
+		}
+		catch (Exception e)
+		{
+			Debug.LogException(e);
+		}
+	}
+
+	public IEnumerator IShutdownNetworkClient()
+	{
+		Debug.Log($"Network Client Shutting down....");
+		NetworkManager.Singleton.Shutdown();
+		yield return new WaitUntil(() => !NetworkManager.Singleton.ShutdownInProgress);
+		Debug.Log($"Network Client Shutdown Succesfully");
+		Instance.networkManagerInitialised = false;
+	}
+
+	private string GetProjectName()
 	{
 		string[] s = Application.dataPath.Split('/');
 		string projectName = s[s.Length - 2];
-		
 		return projectName;
 	}
 }

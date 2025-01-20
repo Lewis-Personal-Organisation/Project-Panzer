@@ -8,8 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: mat_wheel_G1
-  m_Shader: {fileID: -6465566751694194690, guid: 1d4a130f2a0dd024fb4b03124803c717,
-    type: 3}
+  m_Shader: {fileID: -6465566751694194690, guid: 1d4a130f2a0dd024fb4b03124803c717, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []

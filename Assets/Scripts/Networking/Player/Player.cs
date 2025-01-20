@@ -7,7 +7,7 @@ namespace HelloWorld
 	{
 		public NetworkVariable<Vector3> Position = new NetworkVariable<Vector3>();
 		//[SerializeField] private PlayerUI playerUI;
-		[SerializeField] private UIManager helloWorldManager;
+		[SerializeField] private MainMenuUI helloWorldManager;
 		[SerializeField] private NetworkData networkData;
 		public NetworkData NetworkData => networkData;
 
@@ -20,13 +20,13 @@ namespace HelloWorld
 
 			if (IsOwner)
 			{
-				helloWorldManager = GameObject.Find("UI Manager").GetComponent<UIManager>();
+				//helloWorldManager = GameObject.Find("UI Manager").GetComponent<UIManager>();
 				//helloWorldManager.player = this;
 
 				if (IsServer)
 				{
 					networkData = this.gameObject.AddComponent<NetworkData>();
-					networkData.TrySubmitNewPlayerName(helloWorldManager.nameDisplayText.text);
+					networkData.TrySubmitNewPlayerName(UIManager.MainMenu.nameDisplayText.text);
 				}
 
 				Move();
