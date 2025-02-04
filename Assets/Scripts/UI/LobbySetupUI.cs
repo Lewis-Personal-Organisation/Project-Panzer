@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 public class LobbySetupUI : Panel
 {
 	[Header("Host Lobby")]
-	[SerializeField] private TextMeshProUGUI gameNameText;
+	[SerializeField] private TextMeshProUGUI lobbyNameText;
 	[SerializeField] private Button closeButton;
 	[SerializeField] private Button privateButton;
 	[SerializeField] private Button publicButton;
@@ -69,7 +69,7 @@ public class LobbySetupUI : Panel
 		if (this == null) return;
 
 		// Create lobby with Relay
-		Lobby lobby = await LobbyManager.Instance.CreateLobby(gameNameText.text, maxPlayers, GameSave.PlayerName, isLobbyPrivate, relayJoinCode);
+		Lobby lobby = await LobbyManager.Instance.CreateLobby(lobbyNameText.text, maxPlayers, GameSave.PlayerName, isLobbyPrivate, relayJoinCode);
 		if (this == null) return;
 
 		UIManager.LoadingIcon.Toggle(false);
@@ -110,6 +110,6 @@ public class LobbySetupUI : Panel
 
 	public void SetLobbyNameText(string name)
 	{
-		gameNameText.text = $"{name}'s Lobby";
+		lobbyNameText.text = $"{name}'s Lobby";
 	}
 }

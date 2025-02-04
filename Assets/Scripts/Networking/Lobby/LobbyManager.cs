@@ -9,6 +9,7 @@ using Unity.Services.Samples.ServerlessMultiplayerGame;
 using System.Linq;
 using UnityEditor;
 using System.Collections;
+using static UnityEditor.Progress;
 
 [DisallowMultipleComponent]
 public class LobbyManager : Singleton<LobbyManager>
@@ -26,10 +27,37 @@ public class LobbyManager : Singleton<LobbyManager>
 	float nextHostHeartbeatTime;
 	const float hostHeartbeatFrequency = 15;
 	float nextUpdatePlayersTime;
+	float nextSendUpdatePlayersTime;
 	[SerializeField] float updatePlayersFrequency = 1.5F;
 	bool wasGameStarted = false;
 
 	private PlayerDictionaryData playerDictionaryData;
+
+
+	public static class RateLimits
+	{
+		public enum RequestType
+		{
+			UpdatePlayers,
+			UpdateLobbies,
+			DeleteLobby,
+			LeaveOrRemovePlayers,
+		}
+
+		private static Dictionary<RequestType, int> TypeRates = new Dictionary<RequestType, int>
+		{
+			{ RequestType.UpdatePlayers, 1 },
+			{ RequestType.UpdateLobbies, 1 },
+			{ RequestType.DeleteLobby, 2 },
+			{ RequestType.LeaveOrRemovePlayers, 5 },
+		};
+
+		/// <summary>
+		/// Returns the time to wait for lobby request type
+		/// </summary>
+		public static int RatePerSecond(RequestType type) => TypeRates[type];
+	}
+
 	public class PlayerDictionaryData
 	{
 		public PlayerDictionaryData(string playerName, bool isPlayerReady, int vehicleIndex)
@@ -47,7 +75,7 @@ public class LobbyManager : Singleton<LobbyManager>
 		public int lobbyVehicleIndex = 0;
 	}
 
-	ILobbyEvents activeLobbyEvents;
+	//ILobbyEvents activeLobbyEvents;
 
 
 	new private void Awake()
@@ -71,8 +99,15 @@ public class LobbyManager : Singleton<LobbyManager>
 
 				if (Time.realtimeSinceStartup >= nextUpdatePlayersTime)
 				{
-					await PeriodicUpdateLobby();
+					await PeriodicGetUpdatedLobby();
+					//return;
 				}
+
+				//if (updatePlayerAsyncPending && Time.realtimeSinceStartup >= nextSendUpdatePlayersTime)
+				//{
+				//	await PeriodicSendUpdatedLobby();
+				//	//return;
+				//}
 			}
 		}
 		catch (Exception e)
@@ -97,10 +132,11 @@ public class LobbyManager : Singleton<LobbyManager>
 		}
 	}
 
-	async Task PeriodicUpdateLobby()
+	async Task PeriodicGetUpdatedLobby()
 	{
 		try
 		{
+			//Debug.Log($"Trying to get updated Lobby. Next Update in {updatePlayersFrequency}s");
 			// Set next update time before calling Lobby Service since next update could also trigger an
 			// update which could cause throttling issues.
 			nextUpdatePlayersTime = Time.realtimeSinceStartup + updatePlayersFrequency;
@@ -141,6 +177,56 @@ public class LobbyManager : Singleton<LobbyManager>
 			Debug.LogException(e);
 		}
 	}
+	//async Task PeriodicSendUpdatedLobby()
+	//{
+	//	try
+	//	{
+	//		Debug.Log($"Trying to send updated Lobby. Next Update in {updatePlayersFrequency}s");
+	//		// Set next update time before calling Lobby Service since next update could also trigger an
+	//		// update which could cause throttling issues.
+	//		nextSendUpdatePlayersTime = Time.realtimeSinceStartup + updatePlayersFrequency;
+
+	//		var options = new UpdatePlayerOptions();
+	//		options.Data = CreatePlayerDictionary();
+
+	//		var updatedLobby = await LobbyService.Instance.UpdatePlayerAsync(activeLobby.Id, playerId, options);
+
+	//		if (this == null)
+	//		{
+	//			return;
+	//		}
+
+	//		UpdateLobby(updatedLobby);
+	//	}
+	//	// Handle lobby no longer exists (host canceled game and returned to main menu).
+	//	catch (LobbyServiceException e) when (e.Reason == LobbyExceptionReason.LobbyNotFound)
+	//	{
+	//		if (this == null) return;
+
+	//		// Lobby has closed
+	//		//ServerlessMultiplayerGameSampleManager.instance.SetReturnToMenuReason(
+	//		//	ServerlessMultiplayerGameSampleManager.ReturnToMenuReason.LobbyClosed);
+	//		Debug.Log("Lobby Not Found or Closed. Returning to Main Menu");
+	//		OnPlayerNotInLobby();
+	//	}
+
+	//	// Handle player no longer allowed to view lobby (host booted player so player is no longer in the lobby).
+	//	catch (LobbyServiceException e) when (e.Reason == LobbyExceptionReason.Forbidden)
+	//	{
+	//		if (this == null) return;
+
+	//		//ServerlessMultiplayerGameSampleManager.instance.SetReturnToMenuReason(
+	//		//	ServerlessMultiplayerGameSampleManager.ReturnToMenuReason.PlayerKicked);
+
+	//		OnPlayerNotInLobby();
+	//	}
+	//	catch (Exception e)
+	//	{
+	//		Debug.LogException(e);
+	//	}
+
+	//	updatePlayerAsyncPending = false;
+	//}
 
 	void UpdateLobby(Lobby updatedLobby)
 	{
@@ -207,7 +293,7 @@ public class LobbyManager : Singleton<LobbyManager>
 	{
 		if (oldPlayers.Count != newPlayers.Count)
 		{
-			Debug.Log("Update Lobby :: DidPlayersChange :: Player Count Changed");
+			Debug.Log("Updating Lobby > Player Count Changed");
 			return true;
 		}
 
@@ -216,13 +302,13 @@ public class LobbyManager : Singleton<LobbyManager>
 			if (oldPlayers[i].Id != newPlayers[i].Id ||
 				oldPlayers[i].Data[PlayerDictionaryData.isReadyKey].Value != newPlayers[i].Data[PlayerDictionaryData.isReadyKey].Value)
 			{
-				Debug.Log("Update Lobby :: DidPlayersChange :: Player ID/Ready State Changed");
+				Debug.Log("Updating Lobby > Player ID/Ready State Changed");
 				return true;
 			}
 
 			if (oldPlayers[i].Data[PlayerDictionaryData.vehicleIndexKey].Value != newPlayers[i].Data[PlayerDictionaryData.vehicleIndexKey].Value)
 			{
-				Debug.Log("Update Lobby :: DidPlayersChange :: Vehicle Index Changed");
+				Debug.Log("Updating Lobby > Vehicle Index Changed");
 				return true;
 			}
 		}
@@ -391,34 +477,32 @@ public class LobbyManager : Singleton<LobbyManager>
 		}
 	}
 
-	public List<Player> GetLobbyPlayers()
-	{
-		if (activeLobby != null)
-		{
-			return activeLobby.Players;
-		}
-		else
-		{
-			return null;
-		}
-	}
+	//public Player[] GetLobbyPlayers()
+	//{
+	//	if (activeLobby != null)
+	//	{
+	//		return activeLobby.Players.ToArray();
+	//	}
+	//	else
+	//	{
+	//		return null;
+	//	}
+	//}
 
 	public void LogLobbyPlayers()
 	{
-		List<Player> players = GetLobbyPlayers();
-
-		if (players == null)
+		if (activeLobby.Players == null)
 		{
 			Debug.Log("Players are null. Returning");
 			return;
 		}
 
 		string lobbyPlayerNames = "Player(s) ";
-		for (int i = 0; i < players.Count; i++)
+		for (int i = 0; i < activeLobby.Players.Count; i++)
 		{
 			lobbyPlayerNames += $"'{players[i].Data[PlayerDictionaryData.nameKey].Value}'";
 
-			if (i == players.Count - 1)
+			if (i == activeLobby.Players.Count - 1)
 				lobbyPlayerNames += " are present";
 			else
 				lobbyPlayerNames += ", ";
@@ -531,6 +615,7 @@ public class LobbyManager : Singleton<LobbyManager>
 			}
 
 			playerDictionaryData.lobbyVehicleIndex = index;
+			Debug.Log($"Updated Lobby Vehicle index for Sync");
 
 			var lobbyId = activeLobby.Id;
 
@@ -549,15 +634,22 @@ public class LobbyManager : Singleton<LobbyManager>
 	}
 
 	/// <summary>
+	/// Asynchronously await for some amount of time
+	/// </summary>
+	/// <param name="seconds"></param>
+	//private async Task WaitForSecondsAsync(float seconds)
+	//{
+	//	await Task.Delay(TimeSpan.FromSeconds(seconds));
+	//}
+
+	/// <summary>
 	/// Check if players connected already use our name
 	/// Since we are already connected to a lobby at this point, we must check for 2 matches instead of 1
 	/// </summary>
 	public bool PlayerNameCheck(string ownerName)
 	{
 		int matches = 0;
-		List<Player> players = Instance.GetLobbyPlayers();
-
-		for (int i = 0; i < players.Count; i++)
+		for (int i = 0; i < activeLobby.Players.Count; i++)
 		{
 			//Debug.Log($"Name Check: Found player '{players[i].Data[PlayerDictionaryData.playerNameKey].Value}'");
 			if (ownerName == players[i].Data[PlayerDictionaryData.nameKey].Value)

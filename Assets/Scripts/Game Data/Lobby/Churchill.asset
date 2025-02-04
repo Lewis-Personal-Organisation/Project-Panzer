@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Churchill
   m_EditorClassIdentifier: 
   icon: {fileID: 21300000, guid: d17ae25349022184aa74c6c451a2e1da, type: 3}
-  type: 0
+  type: 1
   firepower: 0.66
   mobility: 0.33
   defence: 1

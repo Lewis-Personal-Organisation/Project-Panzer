@@ -11,13 +11,13 @@ public class VehicleData : Singleton<VehicleData>
 		base.Awake();
 	}
 
-	public VehicleLobbyData GetItem(int index)
+	public static VehicleLobbyData GetItem(int index)
 	{
-		if (data.Count > index)
-			return data[index];
+		if (Instance.data.Count > index)
+			return Instance.data[index];
 
 		return null;
 	}
 
-	public int ItemCount() => data.Count;
+	public static int ItemCount() => Instance.data.Count;
 }

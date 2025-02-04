@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using TMPro;
 using Unity.Services.Lobbies.Models;
+using Unity.Services.Matchmaker.Models;
 using UnityEngine;
 using UnityEngine.UI;
 using static LobbyManager;
@@ -14,13 +16,15 @@ public class LobbyUI : Panel
 	[SerializeField] private TextMeshProUGUI readyButtonText;
 	[SerializeField] private Color readyColour;
 	[SerializeField] private Color unreadyColour;
+	private bool isReady;
+	public Coroutine readyStateCoroutine;
 
 	[Header("Join Code UI")]
 	[SerializeField] private GameObject joinCodeGroup;
 	[SerializeField] private Button joinCodeCopyButton;
 	[SerializeField] private TextMeshProUGUI joinCodeText;
 
-	private bool isReady;
+	private List<Unity.Services.Lobbies.Models.Player> activeLobbyPlayers => LobbyManager.Instance.activeLobby.Players;
 
 	[SerializeField] private PlayerSlot[] playerSlots = new PlayerSlot[4];
 
@@ -45,7 +49,7 @@ public class LobbyUI : Panel
 			{
 				//if (this.vehicleName.text == VehicleData.Instance.GetItem(activeVehicleIndex).name) return;
 
-				VehicleLobbyData vData = VehicleData.Instance.GetItem(index);
+				VehicleLobbyData vData = VehicleData.GetItem(index);
 				this.vehicleName.text = vData.name;
 				this.vehicleType.text = vData.type.ToString();
 				this.vehicleImage.sprite = vData.icon;
@@ -81,12 +85,14 @@ public class LobbyUI : Panel
 
 			public async void OnVehicleUIArrowClicked(int direction)
 			{
-				if (activeVehicleIndex + direction == VehicleData.Instance.ItemCount())
-					activeVehicleIndex = 0;
-				else if (direction + activeVehicleIndex < 0)
-					activeVehicleIndex = VehicleData.Instance.ItemCount() - 1;
-				else
-					activeVehicleIndex += direction;
+				int newValue = activeVehicleIndex + direction;
+				activeVehicleIndex = (newValue == VehicleData.ItemCount() ? 0 : (newValue < 0 ? VehicleData.ItemCount() - 1 : newValue));
+				//if (activeVehicleIndex + direction == VehicleData.ItemCount())
+				//	activeVehicleIndex = 0;
+				//else if (direction + activeVehicleIndex < 0)
+				//	activeVehicleIndex = VehicleData.ItemCount() - 1;
+				//else
+				//	activeVehicleIndex += direction;
 
 				Set(activeVehicleIndex);
 
@@ -96,7 +102,6 @@ public class LobbyUI : Panel
 					rightArrow.interactable = false;
 
 					// Should only be called on the owning object
-					Debug.Log($"Requested Lobby Vehicle Swap");
 					await LobbyManager.Instance.SwapLobbyVehicle(activeVehicleIndex);
 				}
 				catch (Exception e)
@@ -171,6 +176,7 @@ public class LobbyUI : Panel
 	void OnLobbyChanged(Lobby updatedLobby, bool isGameReady)
 	{
 		AdjustPlayerSlots();
+		AdjustLocalReadyButton();
 
 		if (LobbyManager.Instance.isHost)
 		{
@@ -179,6 +185,20 @@ public class LobbyUI : Panel
 		else
 		{
 			OnJoinLobbyChanged(updatedLobby, isGameReady);
+		}
+	}
+
+	private void AdjustLocalReadyButton()
+	{
+		for (int i = 0; i < LobbyManager.Instance.activeLobby.Players.Count; i++)
+		{
+			if (LobbyManager.playerId == LobbyManager.Instance.activeLobby.Players[i].Id)
+			{
+				isReady = bool.Parse(LobbyManager.Instance.activeLobby.Players[i].Data[PlayerDictionaryData.isReadyKey].Value);
+				readyButton.image.color = isReady ? readyColour : unreadyColour;
+				readyButtonText.text = isReady ? "Unready" : "Ready";
+				
+			}
 		}
 	}
 
@@ -237,19 +257,12 @@ public class LobbyUI : Panel
 			readyButton.image.color = isReady ? readyColour : unreadyColour;
 			readyButtonText.text = isReady ? "Unready" : "Ready";
 
+			DisableReadyButtonTemp();
 			await LobbyManager.Instance.SetReadyState(isReady);
 		}
 		catch (Exception e)
 		{
 			Debug.LogException(e);
-		}
-		finally
-		{
-			if (this != null)
-			{
-				readyButton.interactable = !readyButton.interactable;
-				leaveButton.interactable = !leaveButton.interactable;
-			}
 		}
 	}
 
@@ -270,21 +283,47 @@ public class LobbyUI : Panel
 
 	public void AdjustPlayerSlots()
 	{
-		List<Player> activePlayers = LobbyManager.Instance.GetLobbyPlayers();
-
 		for (int i = 0; i < playerSlots.Length; i++)
 		{
-			if (i < activePlayers.Count)
+			if (i < activeLobbyPlayers.Count)
 			{
-				playerSlots[i].ConfigureVehicleChoiceButtons(LobbyManager.playerId == activePlayers[i].Id);
-				playerSlots[i].Show(activePlayers[i].Data[PlayerDictionaryData.nameKey].Value, int.Parse(activePlayers[i].Data[PlayerDictionaryData.vehicleIndexKey].Value));
-				playerSlots[i].SetReady(bool.Parse(activePlayers[i].Data[PlayerDictionaryData.isReadyKey].Value));
+				playerSlots[i].ConfigureVehicleChoiceButtons(LobbyManager.playerId == activeLobbyPlayers[i].Id);
+				playerSlots[i].Show(activeLobbyPlayers[i].Data[PlayerDictionaryData.nameKey].Value, int.Parse(activeLobbyPlayers[i].Data[PlayerDictionaryData.vehicleIndexKey].Value));
+				playerSlots[i].SetReady(bool.Parse(activeLobbyPlayers[i].Data[PlayerDictionaryData.isReadyKey].Value));
 			}
 			else
 			{
 				playerSlots[i].Hide();
 			}
 		}
+	}
+
+	/// <summary>
+	/// Disables the Ready Button to prevent breaking Unity Lobby Rate Limits
+	/// </summary>
+	public void DisableReadyButtonTemp()
+	{
+		if (readyStateCoroutine == null)
+		{
+			Debug.Log("LobbyUI -> Disabled Ready Button for 1s");
+			readyStateCoroutine = StartCoroutine(DisableReadyButton());
+		}
+		else
+		{
+			Debug.Log("LobbyUI -> Ready Button already off!");
+		}
+	}
+
+	/// <summary>
+	/// Disable the Ready Button for 1 second, so we can't spam requests
+	/// </summary>
+	private System.Collections.IEnumerator DisableReadyButton()
+	{
+		yield return new WaitForSeconds(RateLimits.RatePerSecond(RateLimits.RequestType.UpdatePlayers)); 
+		readyButton.interactable = !readyButton.interactable;
+		leaveButton.interactable = !leaveButton.interactable;
+		Debug.Log("LobbyUI -> Ready button wait complete. Activating");
+		readyStateCoroutine = null;
 	}
 
 	/// <summary>

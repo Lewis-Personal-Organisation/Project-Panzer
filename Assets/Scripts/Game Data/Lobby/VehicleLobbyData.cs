@@ -6,6 +6,10 @@ using UnityEngine.UI;
 public enum VehicleType
 {
 	SPG,
+	HVY,
+	MED,
+	LHT,
+	WHL,
 }
 
 [CreateAssetMenu]

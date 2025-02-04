@@ -60,13 +60,13 @@ namespace MiniTanks
             hullMaterial = hullTransform.GetComponent<Renderer>().material;
 
             // Get and Set the materials ColorOffset
-            /*
+
             paintMaterials = transform.GetComponentsInChildren<Renderer>();
-            
+
             foreach (Renderer renderer in paintMaterials)
             {
                 renderer.material.SetFloat("_ColorOffset", (teamColor - 1));
-            }*/
+            }
         }
 
         // Update is called once per frame

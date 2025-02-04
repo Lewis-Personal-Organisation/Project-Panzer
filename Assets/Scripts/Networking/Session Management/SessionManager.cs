@@ -22,6 +22,7 @@ public class SessionManager : Singleton<SessionManager>
 	public bool networkManagerInitialised = true;
 	private bool IsNetworkReady => UnityServices.State == ServicesInitializationState.Initialized && AuthenticationService.Instance.IsSignedIn;
 
+
 	[System.Serializable]
 	public class PlayerInfoData
 	{
