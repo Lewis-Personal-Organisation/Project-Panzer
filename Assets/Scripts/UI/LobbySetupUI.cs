@@ -78,7 +78,7 @@ public class LobbySetupUI : Panel
 
 		// Configures the LobbyUI Vehicle Arrow Buttons
 		//UIManager.LobbyUI.AssignVehicleUIArrowButtons(0);
-		UIManager.LobbyUI.Toggle(true, lobby.LobbyCode);
+		UIManager.LobbyUI.Toggle(true, lobby.LobbyCode, lobby.Name);
 	}
 
 	/// <summary>

@@ -8,7 +8,6 @@ using Unity.Collections;
 public class EditorMenu : MonoBehaviour
 {
 	private static EditorCoroutine screenshotHost = null;
-	//private static bool ScreenshotCaptureBusy = false;
 
 
 	[MenuItem("Screenshots/Take Screenshot (Game View)")]
@@ -54,31 +53,10 @@ public class EditorMenu : MonoBehaviour
 			}
 		}
 
-		//Texture2D newTexture = new Texture2D(tex.width, tex.height, TextureFormat.RGBA32, true);
-
-		//for (int i = 0; i < tex.GetPixels().Length; i++)
-		//{
-		//	//if ()
-		//}
-		//newTexture.SetPixels(tex.GetPixels(), 0);
-		//NativeArray<Color32> mip1Data = newTexture.GetPixelData<Color32>(0);
-
-		//Debug.Log(mip1Data.Length);
-		//Debug.Log($"Colours: {mip1Data[0]} v {Camera.current.backgroundColor}");
-		//for (int i = 0; i < mip1Data.Length; i++)
-		//{
-		//	if (mip1Data[i] == Camera.current.backgroundColor)
-		//	{
-		//		Debug.Log("Recoloured");
-		//		mip1Data[i] = new Color32(125, 255, 255, 0);
-		//	}
-		//}
-		////newTexture.SetPixelData(mip1Data, 0);
-		//newTexture.Apply();
-
 		byte[] bytes = tex.EncodeToPNG();
-		Debug.Log($"Encoding complete...");
 		System.IO.File.WriteAllBytes(filePath, bytes);
+		Debug.Log($"File complete. Path: {filePath}");
+		AssetDatabase.Refresh();
 		screenshotHost = null;
 	}
 

@@ -9,7 +9,6 @@ using Unity.Services.Samples.ServerlessMultiplayerGame;
 using System.Linq;
 using UnityEditor;
 using System.Collections;
-using static UnityEditor.Progress;
 
 [DisallowMultipleComponent]
 public class LobbyManager : Singleton<LobbyManager>
@@ -17,6 +16,7 @@ public class LobbyManager : Singleton<LobbyManager>
 	public Lobby activeLobby { get; private set; }
 	public static string playerId => AuthenticationService.Instance.PlayerId;
 	public List<Player> players { get; private set; }
+	public Player localPlayer { get; private set; }
 	public int numPlayers => players.Count;
 	public bool isHost { get; private set; }
 	public const string hostNameKey = "hostName";
@@ -27,8 +27,7 @@ public class LobbyManager : Singleton<LobbyManager>
 	float nextHostHeartbeatTime;
 	const float hostHeartbeatFrequency = 15;
 	float nextUpdatePlayersTime;
-	float nextSendUpdatePlayersTime;
-	[SerializeField] float updatePlayersFrequency = 1.5F;
+	//float nextSendUpdatePlayersTime;
 	bool wasGameStarted = false;
 
 	private PlayerDictionaryData playerDictionaryData;
@@ -44,18 +43,25 @@ public class LobbyManager : Singleton<LobbyManager>
 			LeaveOrRemovePlayers,
 		}
 
-		private static Dictionary<RequestType, int> TypeRates = new Dictionary<RequestType, int>
+		private static Dictionary<RequestType, float> TypeRates = new Dictionary<RequestType, float>
 		{
-			{ RequestType.UpdatePlayers, 1 },
-			{ RequestType.UpdateLobbies, 1 },
-			{ RequestType.DeleteLobby, 2 },
-			{ RequestType.LeaveOrRemovePlayers, 5 },
+			{ RequestType.UpdatePlayers, 1.1F },
+			{ RequestType.UpdateLobbies, 1.1F },
+			{ RequestType.DeleteLobby, 2.1F },
+			{ RequestType.LeaveOrRemovePlayers, 5.1F},
 		};
 
 		/// <summary>
 		/// Returns the time to wait for lobby request type
 		/// </summary>
-		public static int RatePerSecond(RequestType type) => TypeRates[type];
+		public static float Rate(RequestType type) => TypeRates[type];
+
+		/// <summary>
+		/// Use to override the default limit of a Request Type
+		/// </summary>
+		/// <param name="overrideType"></param>
+		/// <param name="newLimit"></param>
+		public static void OverrideRate(RequestType overrideType, float newLimit) => TypeRates[overrideType] = newLimit;
 	}
 
 	public class PlayerDictionaryData
@@ -72,7 +78,7 @@ public class LobbyManager : Singleton<LobbyManager>
 		public const string isReadyKey = "isReady";
 		public bool isReady = false;
 		public const string vehicleIndexKey = "vehicleIndex";
-		public int lobbyVehicleIndex = 0;
+		public int lobbyVehicleIndex = -1;
 	}
 
 	//ILobbyEvents activeLobbyEvents;
@@ -100,14 +106,7 @@ public class LobbyManager : Singleton<LobbyManager>
 				if (Time.realtimeSinceStartup >= nextUpdatePlayersTime)
 				{
 					await PeriodicGetUpdatedLobby();
-					//return;
 				}
-
-				//if (updatePlayerAsyncPending && Time.realtimeSinceStartup >= nextSendUpdatePlayersTime)
-				//{
-				//	await PeriodicSendUpdatedLobby();
-				//	//return;
-				//}
 			}
 		}
 		catch (Exception e)
@@ -116,7 +115,7 @@ public class LobbyManager : Singleton<LobbyManager>
 		}
 	}
 
-	async Task PeriodicHostHeartbeat()
+	private async Task PeriodicHostHeartbeat()
 	{
 		try
 		{
@@ -132,14 +131,14 @@ public class LobbyManager : Singleton<LobbyManager>
 		}
 	}
 
-	async Task PeriodicGetUpdatedLobby()
+	private async Task PeriodicGetUpdatedLobby()
 	{
 		try
 		{
-			//Debug.Log($"Trying to get updated Lobby. Next Update in {updatePlayersFrequency}s");
 			// Set next update time before calling Lobby Service since next update could also trigger an
 			// update which could cause throttling issues.
-			nextUpdatePlayersTime = Time.realtimeSinceStartup + updatePlayersFrequency;
+			nextUpdatePlayersTime = Time.realtimeSinceStartup + RateLimits.Rate(RateLimits.RequestType.UpdatePlayers);
+			Debug.Log($"Updating Lobby ({Time.realtimeSinceStartup}s). Interval -> {RateLimits.Rate(RateLimits.RequestType.UpdatePlayers)}s");
 			var updatedLobby = await LobbyService.Instance.GetLobbyAsync(activeLobby.Id);
 
 			if (this == null)
@@ -241,6 +240,7 @@ public class LobbyManager : Singleton<LobbyManager>
 			//Debug.Log("Update Lobby :: Players Changed - Lobby Updated!");
 			activeLobby = updatedLobby;
 			players = activeLobby?.Players;
+			CacheLocalPlayer();
 
 			// If our player exists, check if all other players are ready
 			if (updatedLobby.Players.Exists(player => player.Id == playerId))
@@ -340,7 +340,7 @@ public class LobbyManager : Singleton<LobbyManager>
 	{
 		try
 		{
-			playerDictionaryData = new(hostName, false, 0);
+			playerDictionaryData = new(hostName, false, -1);
 			isHost = true;
 			wasGameStarted = false;
 
@@ -365,6 +365,8 @@ public class LobbyManager : Singleton<LobbyManager>
 			//LobbyEventCallbacks callbacks = new LobbyEventCallbacks();
 			//callbacks.PlayerJoined += LobbyUI.instance.OnPlayerJoined;
 			//callbacks.PlayerLeft += LobbyUI.instance.OnPlayerLeft;
+			//callbacks.LobbyDeleted +=
+			//	callbacks.KickedFromLobby
 			//try
 			//{
 			//	activeLobbyEvents = await LobbyService.Instance.SubscribeToLobbyEventsAsync(activeLobby.Id, callbacks);
@@ -437,7 +439,7 @@ public class LobbyManager : Singleton<LobbyManager>
 	{
 		isHost = false;
 		this.wasGameStarted = false;
-		this.playerDictionaryData = new(playerName, false, 0);
+		this.playerDictionaryData = new(playerName, false, -1);
 
 		if (activeLobby != null)
 		{
@@ -614,6 +616,12 @@ public class LobbyManager : Singleton<LobbyManager>
 				return;
 			}
 
+			if (playerDictionaryData.lobbyVehicleIndex == index)
+			{
+				Debug.Log($"Vehicle Choice :: Player select same vehicle, no need to update Network");
+				return;
+			}
+
 			playerDictionaryData.lobbyVehicleIndex = index;
 			Debug.Log($"Updated Lobby Vehicle index for Sync");
 
@@ -769,7 +777,7 @@ public class LobbyManager : Singleton<LobbyManager>
 			}
 
 			UIManager.MainMenu.Toggle(false);
-			UIManager.LobbyUI.Toggle(true, lobbyJoined.LobbyCode);
+			UIManager.LobbyUI.Toggle(true, lobbyJoined.LobbyCode, lobbyJoined.Name);
 		}
 		catch (Exception e)
 		{
@@ -777,17 +785,21 @@ public class LobbyManager : Singleton<LobbyManager>
 		}
 	}
 
-	public int GetLocalPlayerIndexInLobby()
+	/// <summary>
+	/// Caches the Local Player for quick/efficient access
+	/// </summary>
+	/// <returns></returns>
+	public void CacheLocalPlayer()
 	{
 		if (activeLobby == null)
-			return -1;
+			return;
 
 		for (int i = 0; i < activeLobby.Players.Count; i++)
 		{
 			if (playerId == activeLobby.Players[i].Id)
-				return i;
+				localPlayer = activeLobby.Players[i];
 		}
 
-		return -1;
+		return;
 	}
 }

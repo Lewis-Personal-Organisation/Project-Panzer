@@ -34,7 +34,7 @@ public class SessionManager : Singleton<SessionManager>
 	new private void Awake()
 	{
 		base.Awake();
-		GameSave.PrintPrefix();
+		//GameSave.PrintPrefix();
 	}
 
 	public async Task InitialiseUnityServices()
