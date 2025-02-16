@@ -28,11 +28,12 @@ public class LobbySetupUI : Panel
 	[SerializeField] UnityTransport unityTransport;
 	private bool networkManagerInitialised = false;
 
+	private Coroutine transitionButtons;
+
 
 	private void Awake()
 	{
 		closeButton.onClick.AddListener(OnLobbyCreationCancelled);
-
 		privateButton.onClick.AddListener(delegate
 		{
 			isLobbyPrivate = true;
@@ -50,6 +51,11 @@ public class LobbySetupUI : Panel
 		});
 
 		confirmButton.onClick.AddListener(OnHostConfirmLobbyPressed);
+	}
+
+	private void Start()
+	{
+		privateButton.onClick.Invoke();
 	}
 
 	/// <summary>
@@ -121,7 +127,7 @@ public class LobbySetupUI : Panel
 	public override void Toggle(bool activeState)
 	{
 		base.Toggle(activeState);
-		privateButton.onClick.Invoke();
+		privateButton.Select();
 	}
 
 	public void SetLobbyNameText()

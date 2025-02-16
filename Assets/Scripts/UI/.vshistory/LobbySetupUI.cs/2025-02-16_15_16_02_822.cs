@@ -32,7 +32,6 @@ public class LobbySetupUI : Panel
 	private void Awake()
 	{
 		closeButton.onClick.AddListener(OnLobbyCreationCancelled);
-
 		privateButton.onClick.AddListener(delegate
 		{
 			isLobbyPrivate = true;

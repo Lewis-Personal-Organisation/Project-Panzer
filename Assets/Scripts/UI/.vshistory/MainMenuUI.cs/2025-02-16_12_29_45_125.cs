@@ -19,7 +19,7 @@ public class MainMenuUI : Panel
 
 	private void Awake()
 	{
-		hostGameButton.onClick.AddListener(OnHostButtonPressed);
+		//hostGameButton.onClick.AddListener(OnHostButtonPressed);
 		joinPrivateGameButton.onClick.AddListener(OnJoinPrivateGameButtonPressed);
 		//joinPublicGameButton.onClick.AddListener(OnJoinPublicGameButtonPressed);
 		nameDisplayButton.onClick.AddListener(delegate { UIManager.TextInputGroup.ToggleInputTextGroup(true); });
@@ -65,7 +65,7 @@ public class MainMenuUI : Panel
 	public void OnHostButtonPressed()
 	{
 		UIManager.LobbySetupMenu.Toggle(true);
-		UIManager.LobbySetupMenu.SetLobbyNameText();
+		UIManager.LobbySetupMenu.SetLobbyNameText(nameDisplayText.text);
 		Toggle(false);
 	}
 

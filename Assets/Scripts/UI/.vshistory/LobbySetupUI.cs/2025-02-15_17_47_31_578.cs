@@ -1,15 +1,13 @@
-using ElRaccoone.Tweens;
-using ElRaccoone.Tweens.Core;
-using System.Threading.Tasks;
+using UnityEngine.UI;
 using TMPro;
-using Unity.Netcode;
-using Unity.Netcode.Transports.UTP;
-using Unity.Networking.Transport;
+using UnityEngine;
 using Unity.Services.Lobbies.Models;
 using Unity.Services.Relay;
 using Unity.Services.Relay.Models;
-using UnityEngine;
-using UnityEngine.UI;
+using Unity.Netcode.Transports.UTP;
+using Unity.Networking.Transport;
+using Unity.Netcode;
+using System.Threading.Tasks;
 
 public class LobbySetupUI : Panel
 {
@@ -17,8 +15,8 @@ public class LobbySetupUI : Panel
 	[SerializeField] private TextMeshProUGUI lobbyNameText;
 	[SerializeField] private Button closeButton;
 	[SerializeField] private Button privateButton;
-	[SerializeField] private Color offColour;
-	[SerializeField] private Color onColour;
+	[SerializeField] private Color privateButtonFromColour;
+	[SerializeField] private Color privateButtonToColour;
 	[SerializeField] private Button publicButton;
 	[SerializeField] private Button confirmButton;
 
@@ -28,27 +26,21 @@ public class LobbySetupUI : Panel
 	[SerializeField] UnityTransport unityTransport;
 	private bool networkManagerInitialised = false;
 
+	private Coroutine buttonColourCoroutine;
+
 
 	private void Awake()
 	{
 		closeButton.onClick.AddListener(OnLobbyCreationCancelled);
-
-		privateButton.onClick.AddListener(delegate
-		{
-			isLobbyPrivate = true;
-			SetLobbyNameText();
-			privateButton.image.TweenGraphicColor(onColour, .2F);
-			publicButton.image.TweenGraphicColor(offColour, .2F);
+		privateButton.onClick.AddListener(delegate 
+		{ 
+			if (buttonColourCoroutine != null)
+				StopCoroutine(buttonColourCoroutine);
+			
+			buttonColourCoroutine = StartCoroutine(Utils.ColourLerpOverTime(.2F, privateButton.image, privateButtonFromColour, privateButtonToColour));
+			isLobbyPrivate = true; 
 		});
-
-		publicButton.onClick.AddListener(delegate
-		{
-			isLobbyPrivate = false;
-			SetLobbyNameText();
-			publicButton.image.TweenGraphicColor(onColour, .2F);
-			privateButton.image.TweenGraphicColor(offColour, .2F);
-		});
-
+		publicButton.onClick.AddListener(delegate { isLobbyPrivate = false; });
 		confirmButton.onClick.AddListener(OnHostConfirmLobbyPressed);
 	}
 
@@ -95,6 +87,8 @@ public class LobbySetupUI : Panel
 
 		Toggle(false);
 
+		// Configures the LobbyUI Vehicle Arrow Buttons
+		//UIManager.LobbyUI.AssignVehicleUIArrowButtons(0);
 		UIManager.LobbyUI.Toggle(true, lobby.LobbyCode, lobby.Name);
 	}
 
@@ -121,11 +115,12 @@ public class LobbySetupUI : Panel
 	public override void Toggle(bool activeState)
 	{
 		base.Toggle(activeState);
-		privateButton.onClick.Invoke();
+		privateButton.Select();
+		//isLobbyPrivate = false;
 	}
 
-	public void SetLobbyNameText()
+	public void SetLobbyNameText(string name)
 	{
-		lobbyNameText.text = $"{UIManager.MainMenu.nameDisplayText.text}'s {(isLobbyPrivate ? "Private" : "Public")} Lobby";
+		lobbyNameText.text = $"{name}'s Lobby";
 	}
 }

@@ -161,6 +161,7 @@ namespace Interface.Elements.Scripts
                 for (; i < normalStates.Count; i++)
                     highlightStates.Add(new ButtonState());
 
+            if (colourPersist == false)
             {
                 // Set click state to copy normal state
                 for (i = 0; i < clickStates.Count; i++)
@@ -316,5 +317,6 @@ namespace Interface.Elements.Scripts
         public Vector2 position;
         public Vector2 sizeDelta;
         public Vector3 rotation;
+        public bool colourPersist;
 	}
 }

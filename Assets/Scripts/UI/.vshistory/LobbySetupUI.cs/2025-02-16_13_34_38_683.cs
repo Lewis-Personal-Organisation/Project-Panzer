@@ -1,5 +1,3 @@
-using ElRaccoone.Tweens;
-using ElRaccoone.Tweens.Core;
 using System.Threading.Tasks;
 using TMPro;
 using Unity.Netcode;
@@ -10,6 +8,7 @@ using Unity.Services.Relay;
 using Unity.Services.Relay.Models;
 using UnityEngine;
 using UnityEngine.UI;
+using static UIManager;
 
 public class LobbySetupUI : Panel
 {
@@ -17,8 +16,8 @@ public class LobbySetupUI : Panel
 	[SerializeField] private TextMeshProUGUI lobbyNameText;
 	[SerializeField] private Button closeButton;
 	[SerializeField] private Button privateButton;
-	[SerializeField] private Color offColour;
-	[SerializeField] private Color onColour;
+	[SerializeField] private Color unselectedColour;
+	[SerializeField] private Color selectedColour;
 	[SerializeField] private Button publicButton;
 	[SerializeField] private Button confirmButton;
 
@@ -28,28 +27,37 @@ public class LobbySetupUI : Panel
 	[SerializeField] UnityTransport unityTransport;
 	private bool networkManagerInitialised = false;
 
+	private Coroutine transitionButtons;
+
 
 	private void Awake()
 	{
 		closeButton.onClick.AddListener(OnLobbyCreationCancelled);
-
 		privateButton.onClick.AddListener(delegate
 		{
 			isLobbyPrivate = true;
-			SetLobbyNameText();
-			privateButton.image.TweenGraphicColor(onColour, .2F);
-			publicButton.image.TweenGraphicColor(offColour, .2F);
+			TransitionButtons(new(.2F, privateButton.image, unselectedColour, selectedColour),
+							  new(.2F, publicButton.image, selectedColour, unselectedColour));
+
 		});
 
 		publicButton.onClick.AddListener(delegate
 		{
 			isLobbyPrivate = false;
-			SetLobbyNameText();
-			publicButton.image.TweenGraphicColor(onColour, .2F);
-			privateButton.image.TweenGraphicColor(offColour, .2F);
+			TransitionButtons(new(.2F, publicButton.image, unselectedColour, selectedColour),
+							  new(.2F, privateButton.image, selectedColour, unselectedColour));
+
 		});
 
 		confirmButton.onClick.AddListener(OnHostConfirmLobbyPressed);
+	}
+
+	private void TransitionButtons(params Utils.LerpGroup[] lerpGroups)
+	{
+		if (transitionButtons != null)
+			StopCoroutine(transitionButtons);
+
+		transitionButtons = StartCoroutine(Utils.LerpImageColours(lerpGroups));
 	}
 
 	/// <summary>
@@ -121,11 +129,11 @@ public class LobbySetupUI : Panel
 	public override void Toggle(bool activeState)
 	{
 		base.Toggle(activeState);
-		privateButton.onClick.Invoke();
+		privateButton.Select();
 	}
 
-	public void SetLobbyNameText()
+	public void SetLobbyNameText(string name)
 	{
-		lobbyNameText.text = $"{UIManager.MainMenu.nameDisplayText.text}'s {(isLobbyPrivate ? "Private" : "Public")} Lobby";
+		lobbyNameText.text = $"{name}'s Lobby";
 	}
 }

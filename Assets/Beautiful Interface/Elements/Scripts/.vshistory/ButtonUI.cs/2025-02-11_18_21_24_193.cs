@@ -160,19 +160,17 @@ namespace Interface.Elements.Scripts
             if (i < normalStates.Count)
                 for (; i < normalStates.Count; i++)
                     highlightStates.Add(new ButtonState());
-
+            
+            // Set click state to copy normal state
+            for (i = 0; i < clickStates.Count; i++)
             {
-                // Set click state to copy normal state
-                for (i = 0; i < clickStates.Count; i++)
+                if (normalStates.Count > i && clickStates[i].image == null)
                 {
-                    if (normalStates.Count > i && clickStates[i].image == null)
-                    {
-                        clickStates[i].image = normalStates[i].image;
-                        clickStates[i].color = normalStates[i].color;
-                        clickStates[i].position = normalStates[i].position;
-                        clickStates[i].rotation = normalStates[i].rotation;
-                        clickStates[i].sizeDelta = normalStates[i].sizeDelta;
-                    }
+                    clickStates[i].image = normalStates[i].image;
+                    clickStates[i].color = normalStates[i].color;
+                    clickStates[i].position = normalStates[i].position;
+                    clickStates[i].rotation = normalStates[i].rotation;
+                    clickStates[i].sizeDelta = normalStates[i].sizeDelta;
                 }
             }
             
@@ -316,5 +314,5 @@ namespace Interface.Elements.Scripts
         public Vector2 position;
         public Vector2 sizeDelta;
         public Vector3 rotation;
-	}
+    }
 }

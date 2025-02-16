@@ -28,28 +28,33 @@ public class LobbySetupUI : Panel
 	[SerializeField] UnityTransport unityTransport;
 	private bool networkManagerInitialised = false;
 
+	private Coroutine transitionButtons;
+
 
 	private void Awake()
 	{
 		closeButton.onClick.AddListener(OnLobbyCreationCancelled);
-
 		privateButton.onClick.AddListener(delegate
 		{
 			isLobbyPrivate = true;
 			SetLobbyNameText();
-			privateButton.image.TweenGraphicColor(onColour, .2F);
-			publicButton.image.TweenGraphicColor(offColour, .2F);
+			privateButton.image.TweenGraphicColor(onColour, .2F).SetEase(EaseType.ExpoOut);
+			publicButton.image.TweenGraphicColor(offColour, .2F).SetEase(EaseType.ExpoOut);
 		});
 
 		publicButton.onClick.AddListener(delegate
 		{
 			isLobbyPrivate = false;
 			SetLobbyNameText();
-			publicButton.image.TweenGraphicColor(onColour, .2F);
-			privateButton.image.TweenGraphicColor(offColour, .2F);
+			publicButton.image.TweenGraphicColor(onColour, .2F).SetEase(EaseType.ExpoOut);
+			privateButton.image.TweenGraphicColor(offColour, .2F).SetEase(EaseType.ExpoOut);
 		});
-
 		confirmButton.onClick.AddListener(OnHostConfirmLobbyPressed);
+	}
+
+	private void Start()
+	{
+		privateButton.onClick.Invoke();
 	}
 
 	/// <summary>
@@ -121,7 +126,7 @@ public class LobbySetupUI : Panel
 	public override void Toggle(bool activeState)
 	{
 		base.Toggle(activeState);
-		privateButton.onClick.Invoke();
+		privateButton.Select();
 	}
 
 	public void SetLobbyNameText()

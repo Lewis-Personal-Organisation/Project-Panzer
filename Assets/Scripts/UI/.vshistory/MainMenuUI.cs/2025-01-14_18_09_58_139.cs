@@ -65,7 +65,7 @@ public class MainMenuUI : Panel
 	public void OnHostButtonPressed()
 	{
 		UIManager.LobbySetupMenu.Toggle(true);
-		UIManager.LobbySetupMenu.SetLobbyNameText();
+		UIManager.LobbySetupMenu.SetLobbyNameText(nameDisplayText.text);
 		Toggle(false);
 	}
 

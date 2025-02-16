@@ -168,7 +168,8 @@ namespace Interface.Elements.Scripts
                     if (normalStates.Count > i && clickStates[i].image == null)
                     {
                         clickStates[i].image = normalStates[i].image;
-                        clickStates[i].color = normalStates[i].color;
+						if (clickStates[i].colourPersist == false)
+                            clickStates[i].color = normalStates[i].color;
                         clickStates[i].position = normalStates[i].position;
                         clickStates[i].rotation = normalStates[i].rotation;
                         clickStates[i].sizeDelta = normalStates[i].sizeDelta;
@@ -316,5 +317,6 @@ namespace Interface.Elements.Scripts
         public Vector2 position;
         public Vector2 sizeDelta;
         public Vector3 rotation;
+        public bool colourPersist;
 	}
 }

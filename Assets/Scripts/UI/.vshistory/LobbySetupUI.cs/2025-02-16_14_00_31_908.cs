@@ -1,5 +1,4 @@
 using ElRaccoone.Tweens;
-using ElRaccoone.Tweens.Core;
 using System.Threading.Tasks;
 using TMPro;
 using Unity.Netcode;
@@ -28,28 +27,47 @@ public class LobbySetupUI : Panel
 	[SerializeField] UnityTransport unityTransport;
 	private bool networkManagerInitialised = false;
 
+	private Coroutine transitionButtons;
+
 
 	private void Awake()
 	{
 		closeButton.onClick.AddListener(OnLobbyCreationCancelled);
-
 		privateButton.onClick.AddListener(delegate
 		{
-			isLobbyPrivate = true;
-			SetLobbyNameText();
 			privateButton.image.TweenGraphicColor(onColour, .2F);
 			publicButton.image.TweenGraphicColor(offColour, .2F);
 		});
 
 		publicButton.onClick.AddListener(delegate
 		{
-			isLobbyPrivate = false;
-			SetLobbyNameText();
 			publicButton.image.TweenGraphicColor(onColour, .2F);
 			privateButton.image.TweenGraphicColor(offColour, .2F);
 		});
 
+		//privateButton.onClick.AddListener(() => OnLobbyTypeButtonClicked(true, new(.2F, privateButton.image, offColour, onColour), new(.2F, publicButton.image, onColour, offColour)));
+		//publicButton.onClick.AddListener(() => OnLobbyTypeButtonClicked(false, new(.2F, publicButton.image, offColour, onColour), new(.2F, privateButton.image, onColour, offColour)));
 		confirmButton.onClick.AddListener(OnHostConfirmLobbyPressed);
+	}
+
+	private void Start()
+	{
+		//OnLobbyTypeButtonClicked(true, new(.2F, privateButton.image, offColour, onColour), new(.2F, publicButton.image, onColour, offColour));
+	}
+
+	/// <summary>
+	/// Sets the Lobby Access Type and animates the button colours
+	/// </summary>
+	/// <param name="isPrivate"></param>
+	/// <param name="lerpGroups"></param>
+	private void OnLobbyTypeButtonClicked(bool isPrivate, params Utils.LerpGroup[] lerpGroups)
+	{
+		isLobbyPrivate = isPrivate;
+		SetLobbyNameText();
+		if (transitionButtons != null)
+			StopCoroutine(transitionButtons);
+
+		transitionButtons = StartCoroutine(Utils.LerpImageColours(lerpGroups));
 	}
 
 	/// <summary>
@@ -121,7 +139,7 @@ public class LobbySetupUI : Panel
 	public override void Toggle(bool activeState)
 	{
 		base.Toggle(activeState);
-		privateButton.onClick.Invoke();
+		privateButton.Select();
 	}
 
 	public void SetLobbyNameText()
