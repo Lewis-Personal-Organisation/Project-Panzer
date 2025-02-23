@@ -1,8 +1,13 @@
+using System.Globalization;
 using TMPro;
+using Unity.Netcode;
+using Unity.Services.Core;
+using Unity.Services.Matchmaker.Models;
 using UnityEngine;
 using UnityEngine.UI;
 using static LobbyManager;
 
+//[System.Serializable]
 public class PlayerSlot : MonoBehaviour
 {
 	private const string SELECT_A_VEHICLE = "Select a \nVehicle";
@@ -39,14 +44,12 @@ public class PlayerSlot : MonoBehaviour
 	public void Hide()
 	{
 		playerNameTitle.text = string.Empty;
-		vehicleUISlot.LoadVehicleData(-1);
-		SetReady(false);
 		parent.SetActive(false);
 	}
 
 	public void ConfigureAndShow(Unity.Services.Lobbies.Models.Player player)
 	{
-		Debug.Log($"PlayerSlot :: Showing with {player.Data[PlayerDictionaryData.vehicleIndexKey].Value}");
+		Debug.Log($"Showing with {player.Data[PlayerDictionaryData.vehicleIndexKey].Value}");
 		bool isOwner = LobbyManager.playerId == player.Id;
 		int vehicleIndex = int.Parse(player.Data[PlayerDictionaryData.vehicleIndexKey].Value);
 

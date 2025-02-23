@@ -16,8 +16,6 @@ public class LobbySetupUI : Panel
 	[Header("Host Lobby")]
 	[SerializeField] private TextMeshProUGUI lobbyNameText;
 	[SerializeField] private Button closeButton;
-	[SerializeField] private Color closeButtonEnabledColour;
-	[SerializeField] private Color closeButtonDisabledColour;
 	[SerializeField] private Button privateButton;
 	[SerializeField] private Color offColour;
 	[SerializeField] private Color onColour;
@@ -59,6 +57,7 @@ public class LobbySetupUI : Panel
 	/// </summary>
 	private void OnLobbyCreationCancelled()
 	{
+		Debug.Log("Showing Main Menu");
 		UIManager.MainMenu.Toggle(true);
 		Toggle(false);
 	}
@@ -79,9 +78,6 @@ public class LobbySetupUI : Panel
 	/// </summary>
 	private async void OnHostConfirmLobbyPressed()
 	{
-		closeButton.image.color = closeButtonDisabledColour;
-		closeButton.enabled = false;
-
 		ToggleLobbyCreationInteractables(false);
 		UIManager.LoadingIcon.ShowWithText("Creating Lobby...");
 
@@ -91,15 +87,11 @@ public class LobbySetupUI : Panel
 		relayJoinCode = await InitialiseHostWithRelay(maxPlayers);
 		if (this == null) return;
 
-		
 		// Create lobby with Relay
 		Lobby lobby = await LobbyManager.Instance.CreateLobby(lobbyNameText.text, maxPlayers, GameSave.PlayerName, isLobbyPrivate, relayJoinCode);
 		if (this == null) return;
 
 		UIManager.LoadingIcon.Toggle(false);
-
-		closeButton.image.color = closeButtonEnabledColour;
-		closeButton.enabled = true;
 
 		Toggle(false);
 

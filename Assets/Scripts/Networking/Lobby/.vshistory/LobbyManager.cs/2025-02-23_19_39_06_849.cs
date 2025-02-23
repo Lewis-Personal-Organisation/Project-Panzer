@@ -286,7 +286,7 @@ public class LobbyManager : Singleton<LobbyManager>
 
 		StartCoroutine(ShutdownNetworkAndReturnToMainMenu());
 	}
-	public  IEnumerator ShutdownNetworkAndReturnToMainMenu()
+	private IEnumerator ShutdownNetworkAndReturnToMainMenu()
 	{
 		yield return StartCoroutine(SessionManager.Instance.IShutdownNetworkClient());
 		UIManager.MainMenu.Toggle(true);
@@ -601,9 +601,6 @@ public class LobbyManager : Singleton<LobbyManager>
 
 			var options = new UpdatePlayerOptions();
 			options.Data = CreatePlayerDictionary();
-			localPlayer.Data = options.Data;
-
-			UIManager.LobbyUI.AdjustLocalPlayerSlotReadyState();
 
 			var updatedLobby = await LobbyService.Instance.UpdatePlayerAsync(lobbyId, playerId, options);
 			if (this == null) return;
@@ -640,7 +637,6 @@ public class LobbyManager : Singleton<LobbyManager>
 
 			var options = new UpdatePlayerOptions();
 			options.Data = CreatePlayerDictionary();
-			localPlayer.Data = options.Data;
 
 			UIManager.LobbyUI.AdjustLocalPlayerSlot();
 

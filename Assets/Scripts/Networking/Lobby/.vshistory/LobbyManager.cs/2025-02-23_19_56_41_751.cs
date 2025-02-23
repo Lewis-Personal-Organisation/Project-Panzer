@@ -286,7 +286,7 @@ public class LobbyManager : Singleton<LobbyManager>
 
 		StartCoroutine(ShutdownNetworkAndReturnToMainMenu());
 	}
-	public  IEnumerator ShutdownNetworkAndReturnToMainMenu()
+	private IEnumerator ShutdownNetworkAndReturnToMainMenu()
 	{
 		yield return StartCoroutine(SessionManager.Instance.IShutdownNetworkClient());
 		UIManager.MainMenu.Toggle(true);

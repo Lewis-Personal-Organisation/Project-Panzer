@@ -1,8 +1,13 @@
+using System.Globalization;
 using TMPro;
+using Unity.Netcode;
+using Unity.Services.Core;
+using Unity.Services.Matchmaker.Models;
 using UnityEngine;
 using UnityEngine.UI;
 using static LobbyManager;
 
+//[System.Serializable]
 public class PlayerSlot : MonoBehaviour
 {
 	private const string SELECT_A_VEHICLE = "Select a \nVehicle";
@@ -39,8 +44,6 @@ public class PlayerSlot : MonoBehaviour
 	public void Hide()
 	{
 		playerNameTitle.text = string.Empty;
-		vehicleUISlot.LoadVehicleData(-1);
-		SetReady(false);
 		parent.SetActive(false);
 	}
 

@@ -1,8 +1,13 @@
+using System.Globalization;
 using TMPro;
+using Unity.Netcode;
+using Unity.Services.Core;
+using Unity.Services.Matchmaker.Models;
 using UnityEngine;
 using UnityEngine.UI;
 using static LobbyManager;
 
+//[System.Serializable]
 public class PlayerSlot : MonoBehaviour
 {
 	private const string SELECT_A_VEHICLE = "Select a \nVehicle";
@@ -39,14 +44,12 @@ public class PlayerSlot : MonoBehaviour
 	public void Hide()
 	{
 		playerNameTitle.text = string.Empty;
-		vehicleUISlot.LoadVehicleData(-1);
-		SetReady(false);
 		parent.SetActive(false);
 	}
 
 	public void ConfigureAndShow(Unity.Services.Lobbies.Models.Player player)
 	{
-		Debug.Log($"PlayerSlot :: Showing with {player.Data[PlayerDictionaryData.vehicleIndexKey].Value}");
+		//Debug.Log($"Showing with {activeLobbyPlayers[i].Data[PlayerDictionaryData.vehicleIndexKey].Value}");
 		bool isOwner = LobbyManager.playerId == player.Id;
 		int vehicleIndex = int.Parse(player.Data[PlayerDictionaryData.vehicleIndexKey].Value);
 
@@ -68,6 +71,26 @@ public class PlayerSlot : MonoBehaviour
 
 		parent.SetActive(true);
 	}
+
+	/// <summary>
+	/// Enable/Disabled buttons events for if we own these buttons
+	/// </summary>
+	//public void ConfigureOpenVehicleSelectionButton(bool isOwner)
+	//{
+	//	openVehicleSelectionButton.onClick.RemoveAllListeners();
+
+	//	if (isOwner)
+	//	{
+	//		//Debug.Log($"Added listener to Open Veh Sel Button");
+	//		openVehicleSelectionButton.onClick.AddListener(delegate
+	//		{
+	//			UIManager.LobbyUI.chooseVehicleViewGameObject.SetActive(true);
+	//			//Debug.Log($"Clicked on our Vehicle Selection Button");
+	//		});
+	//	}
+
+	//	openVehicleSelectionButton.gameObject.SetActive(isOwner);
+	//}
 
 	public void SetReady(bool isReady) => readyGameObject.SetActive(isReady);
 }

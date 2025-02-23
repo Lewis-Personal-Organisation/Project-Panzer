@@ -176,14 +176,12 @@ public class LobbyUI : Panel
 			else
 			{
 				playerSlots[i].Hide();
-				Debug.Log($"LobbyUI :: Hiding PlayerSlot {i}");
 			}
 		}
 	}
 
 	public void AdjustLocalPlayerSlot()
 	{
-		Debug.Log($"LobbyUI :: AdjustPlayerSlots :: Showing slot {LobbyManager.Instance.localPlayerIndex} with {LobbyManager.Instance.localPlayer.Data[PlayerDictionaryData.vehicleIndexKey].Value}");
 		playerSlots[LobbyManager.Instance.localPlayerIndex].ConfigureAndShow(LobbyManager.Instance.localPlayer);
 	}
 	public void AdjustLocalPlayerSlotReadyState()

@@ -17,7 +17,6 @@ public class LobbyManager : Singleton<LobbyManager>
 	public static string playerId => AuthenticationService.Instance.PlayerId;
 	public List<Player> players { get; private set; }
 	public Player localPlayer { get; private set; }
-	public int localPlayerIndex { get; private set; }
 	public int numPlayers => players.Count;
 	public bool isHost { get; private set; }
 	public const string hostNameKey = "hostName";
@@ -275,18 +274,14 @@ public class LobbyManager : Singleton<LobbyManager>
 
 	public void OnPlayerNotInLobby()
 	{
-		//activeLobbyEvents.UnsubscribeAsync()
-		activeLobbyEvents = null;
-
 		if (activeLobby != null)
 		{
 			activeLobby = null;
 			UIManager.LobbyUI.LeaveLobby();
+			StartCoroutine(ShutdownNetworkAndReturnToMainMenu());
 		}
-
-		StartCoroutine(ShutdownNetworkAndReturnToMainMenu());
 	}
-	public  IEnumerator ShutdownNetworkAndReturnToMainMenu()
+	private IEnumerator ShutdownNetworkAndReturnToMainMenu()
 	{
 		yield return StartCoroutine(SessionManager.Instance.IShutdownNetworkClient());
 		UIManager.MainMenu.Toggle(true);
@@ -391,7 +386,6 @@ public class LobbyManager : Singleton<LobbyManager>
 
 			if (this == null) return default;
 
-			CacheLocalPlayer();
 			players = activeLobby?.Players;
 			LogLobbyCreation(activeLobby);
 		}
@@ -503,7 +497,7 @@ public class LobbyManager : Singleton<LobbyManager>
 	{
 		if (activeLobby.Players == null)
 		{
-			Debug.Log("LobbyManager :: Players are null. Returning");
+			Debug.Log("Players are null. Returning");
 			return;
 		}
 
@@ -570,17 +564,17 @@ public class LobbyManager : Singleton<LobbyManager>
 		var lobbyData = lobby.Data.Select(kvp => $"{kvp.Key} is {kvp.Value.Value}");
 		var lobbyDataStr = string.Join(", ", lobbyData);
 
-		Debug.Log($"LobbyManager :: Lobby '{lobby.Name}' Created. " +
-			$"{lobby.Players.Count}/{lobby.MaxPlayers} Players, " +
-			$"Visibility: {(lobby.IsPrivate ? "Private" : "Public")}, " +
-			$"Access: {(lobby.IsLocked ? "Locked" : "Unlocked")}, " +
-			$"Lobby Code: {lobby.LobbyCode}, " +
-			$"Id: {lobby.Id}, " +
-			$"Created at: {lobby.Created}, " +
-			$"HostId: {lobby.HostId}, " +
-			$"EnvironmentId: {lobby.EnvironmentId}, " +
-			$"Upid: {lobby.Upid}, " +
-			$"Data: {lobbyDataStr}");
+		Debug.Log($"LobbyManager :: Lobby Named:{lobby.Name}, " +
+			$"Players:{lobby.Players.Count}/{lobby.MaxPlayers}, " +
+			$"IsPrivate:{lobby.IsPrivate}, " +
+			$"IsLocked:{lobby.IsLocked}, " +
+			$"LobbyCode:{lobby.LobbyCode}, " +
+			$"Id:{lobby.Id}, " +
+			$"Created:{lobby.Created}, " +
+			$"HostId:{lobby.HostId}, " +
+			$"EnvironmentId:{lobby.EnvironmentId}, " +
+			$"Upid:{lobby.Upid}, " +
+			$"Lobby.Data: {lobbyDataStr}");
 
 		Instance.LogLobbyPlayers();
 	}
@@ -591,7 +585,7 @@ public class LobbyManager : Singleton<LobbyManager>
 		{
 			if (activeLobby == null)
 			{
-				Debug.Log("LobbyManager :: Attempting to toggle ready state when not already in a lobby.");
+				Debug.Log("Attempting to toggle ready state when not already in a lobby.");
 				return;
 			}
 
@@ -601,14 +595,11 @@ public class LobbyManager : Singleton<LobbyManager>
 
 			var options = new UpdatePlayerOptions();
 			options.Data = CreatePlayerDictionary();
-			localPlayer.Data = options.Data;
-
-			UIManager.LobbyUI.AdjustLocalPlayerSlotReadyState();
 
 			var updatedLobby = await LobbyService.Instance.UpdatePlayerAsync(lobbyId, playerId, options);
 			if (this == null) return;
 
-			//UpdateLobby(updatedLobby);
+			UpdateLobby(updatedLobby);
 		}
 		catch (Exception e)
 		{
@@ -623,31 +614,28 @@ public class LobbyManager : Singleton<LobbyManager>
 		{
 			if (activeLobby == null)
 			{
-				Debug.Log("LobbyManager :: Attempting to swap vehicle when not already in a lobby.");
+				Debug.Log("Attempting to swap vehicle when not already in a lobby.");
 				return;
 			}
 
 			if (playerDictionaryData.lobbyVehicleIndex == index)
 			{
-				Debug.Log($"LobbyManager :: Player select same vehicle, no need to update Network");
+				Debug.Log($"Vehicle Choice :: Player select same vehicle, no need to update Network");
 				return;
 			}
 
 			playerDictionaryData.lobbyVehicleIndex = index;
-			Debug.Log($"LobbyManager :: Updated Lobby Vehicle index for Sync");
+			Debug.Log($"Updated Lobby Vehicle index for Sync");
 
 			var lobbyId = activeLobby.Id;
 
 			var options = new UpdatePlayerOptions();
 			options.Data = CreatePlayerDictionary();
-			localPlayer.Data = options.Data;
-
-			UIManager.LobbyUI.AdjustLocalPlayerSlot();
 
 			var updatedLobby = await LobbyService.Instance.UpdatePlayerAsync(lobbyId, playerId, options);
 			if (this == null) return;
 
-			//UpdateLobby(updatedLobby);
+			UpdateLobby(updatedLobby);
 		}
 		catch (Exception e)
 		{
@@ -714,9 +702,10 @@ public class LobbyManager : Singleton<LobbyManager>
 	//}
 	public void OnLobbyChangedNotif(ILobbyChanges changes)
 	{
+
 		if (changes.LobbyDeleted)
 		{
-			Debug.Log($"LobbyManager :: Lobby has been Deleted");
+			Debug.Log($"Lobby has been Deleted");
 		}
 		else
 		{
@@ -724,13 +713,12 @@ public class LobbyManager : Singleton<LobbyManager>
 
 			if (changes.PlayerData.Changed || changes.PlayerJoined.Changed || changes.PlayerLeft.Changed)
 			{
-				Debug.Log($"LobbyManager :: {changes.PlayerData.Changed}, {changes.PlayerJoined.Changed}, {changes.PlayerLeft.Changed}, {changes.HostId.Value}");
+				Debug.Log($"{changes.PlayerData.Changed}, {changes.PlayerJoined.Changed}, {changes.PlayerLeft.Changed}");
 
 				CacheLocalPlayer();
 
 				if (activeLobby.Players.Exists(player => player.Id == playerId))
 				{
-					Debug.Log($"LobbyManager :: Our Player exist. Checking if Game is ready'd up. Also adjusting player slots etc");
 					var isGameReady = AllPlayersReady(activeLobby);
 
 					// Trigger event with value (This starts the game if all players are ready)
@@ -794,30 +782,6 @@ public class LobbyManager : Singleton<LobbyManager>
 				return;
 			}
 
-			// Callbacks
-			LobbyEventCallbacks callbacks = new LobbyEventCallbacks();
-			callbacks.LobbyEventConnectionStateChanged += OnConnectionStateChanged;
-			//callbacks.PlayerJoined += OnPlayersJoinedLobby;
-			//callbacks.PlayerLeft += OnPlayersLeftLobby;
-			callbacks.LobbyChanged += OnLobbyChangedNotif;
-			//callbacks.LobbyDeleted +=
-			//	callbacks.KickedFromLobby
-			try
-			{
-				activeLobbyEvents = await LobbyService.Instance.SubscribeToLobbyEventsAsync(activeLobby.Id, callbacks);
-			}
-			catch (LobbyServiceException ex)
-			{
-				switch (ex.Reason)
-				{
-					case LobbyExceptionReason.AlreadySubscribedToLobby: Debug.LogWarning($"Already subscribed to lobby[{activeLobby.Id}]. We did not need to try and subscribe again. Exception Message: {ex.Message}"); break;
-					case LobbyExceptionReason.SubscriptionToLobbyLostWhileBusy: Debug.LogError($"Subscription to lobby events was lost while it was busy trying to subscribe. Exception Message: {ex.Message}"); throw;
-					case LobbyExceptionReason.LobbyEventServiceConnectionError: Debug.LogError($"Failed to connect to lobby events. Exception Message: {ex.Message}"); throw;
-					default: throw;
-				}
-			}
-
-
 			UIManager.LoadingIcon.Toggle(false);
 			Debug.Log($"Checking Name {playername}");
 			Instance.LogLobbyPlayers();
@@ -878,7 +842,6 @@ public class LobbyManager : Singleton<LobbyManager>
 
 			UIManager.MainMenu.Toggle(false);
 			UIManager.LobbyUI.Toggle(true, lobbyJoined.LobbyCode, lobbyJoined.Name);
-			CacheLocalPlayer();
 		}
 		catch (Exception e)
 		{
@@ -898,10 +861,7 @@ public class LobbyManager : Singleton<LobbyManager>
 		for (int i = 0; i < activeLobby.Players.Count; i++)
 		{
 			if (playerId == activeLobby.Players[i].Id)
-			{
 				localPlayer = activeLobby.Players[i];
-				localPlayerIndex = i;
-			}
 		}
 
 		return;

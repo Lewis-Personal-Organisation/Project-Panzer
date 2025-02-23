@@ -1,4 +1,3 @@
-using System.Xml.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -23,8 +22,7 @@ public class VehicleSlot : MonoBehaviour
 		// The default "Select a Vehicle" slot representation
 		if (index == -1)
 		{
-			Debug.Log($"Vehicle Slot :: Loaded Default Empty Slot");
-			ResetSlot();
+			Debug.Log($"LobbyUI :: Loaded Default Empty Player Slot Vehicle");
 		}
 		else
 		{
@@ -49,22 +47,13 @@ public class VehicleSlot : MonoBehaviour
 			this.defenceImage.fillAmount = vData.defence;
 
 			statsGroupGameObject.SetActive(true);
-			Debug.Log($"Vehicle Slot :: Loaded Vehicle {this.vehicleNameText.text} into slot");
+			Debug.Log($"LobbyUI :: Loaded Vehicle {this.vehicleNameText.text} into slot");
 		}
-	}
-
-	public void ResetSlot()
-	{
-		this.vehicleNameText.text = string.Empty;
-		this.vehicleTypeText.text = string.Empty;
-		this.firepowerImage.transform.parent.gameObject.SetActive(false);
-		this.vehicleImage.gameObject.SetActive(false);
-		statsGroupGameObject.SetActive(false);
 	}
 
 	public async void OnVehicleClicked()
 	{
-		Debug.Log($"Vehicle Slot :: Clicked on Vehicle for Selection");
+		Debug.Log($"Clicked on Vehicle for Selection");
 
 		await LobbyManager.Instance.SwapLobbyVehicle(dataIndex);
 		UIManager.LobbyUI.chooseVehicleViewGameObject.SetActive(false);

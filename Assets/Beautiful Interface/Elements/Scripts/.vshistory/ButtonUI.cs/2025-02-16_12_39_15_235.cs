@@ -192,6 +192,7 @@ namespace Interface.Elements.Scripts
 
         public void ResetState()
         {
+            Debug.Log($"Resetting Button {this.gameObject.name} state Values!");
             RectTransform rectTransform = ((RectTransform)this.transform);
 
             if (rectTransform.TryGetComponent(out Graphic graphic))

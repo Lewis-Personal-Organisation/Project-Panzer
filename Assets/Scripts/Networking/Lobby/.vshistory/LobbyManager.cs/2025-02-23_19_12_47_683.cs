@@ -17,7 +17,6 @@ public class LobbyManager : Singleton<LobbyManager>
 	public static string playerId => AuthenticationService.Instance.PlayerId;
 	public List<Player> players { get; private set; }
 	public Player localPlayer { get; private set; }
-	public int localPlayerIndex { get; private set; }
 	public int numPlayers => players.Count;
 	public bool isHost { get; private set; }
 	public const string hostNameKey = "hostName";
@@ -286,7 +285,7 @@ public class LobbyManager : Singleton<LobbyManager>
 
 		StartCoroutine(ShutdownNetworkAndReturnToMainMenu());
 	}
-	public  IEnumerator ShutdownNetworkAndReturnToMainMenu()
+	private IEnumerator ShutdownNetworkAndReturnToMainMenu()
 	{
 		yield return StartCoroutine(SessionManager.Instance.IShutdownNetworkClient());
 		UIManager.MainMenu.Toggle(true);
@@ -391,7 +390,6 @@ public class LobbyManager : Singleton<LobbyManager>
 
 			if (this == null) return default;
 
-			CacheLocalPlayer();
 			players = activeLobby?.Players;
 			LogLobbyCreation(activeLobby);
 		}
@@ -601,9 +599,6 @@ public class LobbyManager : Singleton<LobbyManager>
 
 			var options = new UpdatePlayerOptions();
 			options.Data = CreatePlayerDictionary();
-			localPlayer.Data = options.Data;
-
-			UIManager.LobbyUI.AdjustLocalPlayerSlotReadyState();
 
 			var updatedLobby = await LobbyService.Instance.UpdatePlayerAsync(lobbyId, playerId, options);
 			if (this == null) return;
@@ -640,13 +635,11 @@ public class LobbyManager : Singleton<LobbyManager>
 
 			var options = new UpdatePlayerOptions();
 			options.Data = CreatePlayerDictionary();
-			localPlayer.Data = options.Data;
-
-			UIManager.LobbyUI.AdjustLocalPlayerSlot();
 
 			var updatedLobby = await LobbyService.Instance.UpdatePlayerAsync(lobbyId, playerId, options);
 			if (this == null) return;
 
+			UIManager.LobbyUI.AdjustPlayerSlots();
 			//UpdateLobby(updatedLobby);
 		}
 		catch (Exception e)
@@ -878,7 +871,6 @@ public class LobbyManager : Singleton<LobbyManager>
 
 			UIManager.MainMenu.Toggle(false);
 			UIManager.LobbyUI.Toggle(true, lobbyJoined.LobbyCode, lobbyJoined.Name);
-			CacheLocalPlayer();
 		}
 		catch (Exception e)
 		{
@@ -898,10 +890,7 @@ public class LobbyManager : Singleton<LobbyManager>
 		for (int i = 0; i < activeLobby.Players.Count; i++)
 		{
 			if (playerId == activeLobby.Players[i].Id)
-			{
 				localPlayer = activeLobby.Players[i];
-				localPlayerIndex = i;
-			}
 		}
 
 		return;

@@ -33,7 +33,6 @@ public class LobbyUI : Panel
 	[SerializeField] private PlayerSlot[] playerSlots = new PlayerSlot[4];
 	[SerializeField] private VehicleSlot[] vehicleSlots = new VehicleSlot[5];
 
-
 	private void Awake()
 	{
 		// Setup Vehicle Select slots
@@ -176,19 +175,8 @@ public class LobbyUI : Panel
 			else
 			{
 				playerSlots[i].Hide();
-				Debug.Log($"LobbyUI :: Hiding PlayerSlot {i}");
 			}
 		}
-	}
-
-	public void AdjustLocalPlayerSlot()
-	{
-		Debug.Log($"LobbyUI :: AdjustPlayerSlots :: Showing slot {LobbyManager.Instance.localPlayerIndex} with {LobbyManager.Instance.localPlayer.Data[PlayerDictionaryData.vehicleIndexKey].Value}");
-		playerSlots[LobbyManager.Instance.localPlayerIndex].ConfigureAndShow(LobbyManager.Instance.localPlayer);
-	}
-	public void AdjustLocalPlayerSlotReadyState()
-	{
-		playerSlots[LobbyManager.Instance.localPlayerIndex].SetReady(bool.Parse(LobbyManager.Instance.localPlayer.Data[PlayerDictionaryData.isReadyKey].Value));
 	}
 
 	/// <summary>

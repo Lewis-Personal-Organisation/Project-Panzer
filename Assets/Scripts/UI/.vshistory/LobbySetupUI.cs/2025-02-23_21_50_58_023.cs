@@ -30,7 +30,6 @@ public class LobbySetupUI : Panel
 	[SerializeField] UnityTransport unityTransport;
 	private bool networkManagerInitialised = false;
 
-
 	private void Awake()
 	{
 		closeButton.onClick.AddListener(OnLobbyCreationCancelled);
@@ -80,8 +79,6 @@ public class LobbySetupUI : Panel
 	private async void OnHostConfirmLobbyPressed()
 	{
 		closeButton.image.color = closeButtonDisabledColour;
-		closeButton.enabled = false;
-
 		ToggleLobbyCreationInteractables(false);
 		UIManager.LoadingIcon.ShowWithText("Creating Lobby...");
 
@@ -99,8 +96,6 @@ public class LobbySetupUI : Panel
 		UIManager.LoadingIcon.Toggle(false);
 
 		closeButton.image.color = closeButtonEnabledColour;
-		closeButton.enabled = true;
-
 		Toggle(false);
 
 		UIManager.LobbyUI.Toggle(true, lobby.LobbyCode, lobby.Name);

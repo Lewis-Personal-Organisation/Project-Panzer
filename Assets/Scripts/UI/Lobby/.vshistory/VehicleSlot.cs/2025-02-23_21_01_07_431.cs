@@ -24,7 +24,12 @@ public class VehicleSlot : MonoBehaviour
 		if (index == -1)
 		{
 			Debug.Log($"Vehicle Slot :: Loaded Default Empty Slot");
-			ResetSlot();
+
+			this.vehicleNameText.text = string.Empty;
+			this.vehicleTypeText.text = string.Empty;
+			this.firepowerImage.transform.parent.gameObject.SetActive(false);
+			this.vehicleImage.gameObject.SetActive(false);
+			statsGroupGameObject.SetActive(false);
 		}
 		else
 		{
@@ -53,13 +58,9 @@ public class VehicleSlot : MonoBehaviour
 		}
 	}
 
-	public void ResetSlot()
+	public void Reset()
 	{
-		this.vehicleNameText.text = string.Empty;
-		this.vehicleTypeText.text = string.Empty;
-		this.firepowerImage.transform.parent.gameObject.SetActive(false);
-		this.vehicleImage.gameObject.SetActive(false);
-		statsGroupGameObject.SetActive(false);
+
 	}
 
 	public async void OnVehicleClicked()
