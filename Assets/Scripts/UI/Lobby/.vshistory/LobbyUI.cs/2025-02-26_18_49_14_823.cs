@@ -119,7 +119,7 @@ public class LobbyUI : Panel
 	public void Toggle(bool activeState, string lobbyCode, string lobbyTittle)
 	{
 		base.Toggle(activeState);
-		//readyButton.interactable = true;
+		readyButton.interactable = true;
 		leaveButton.interactable = true;
 
 		joinCodeText.text = lobbyCode;
@@ -148,10 +148,8 @@ public class LobbyUI : Panel
 			Debug.LogException(e);
 		}
 	}
-
-	public void OnVehicleSelected()
+	private void OnVehicleSelected()
 	{
-		chooseVehicleViewGameObject.SetActive(false);
 		readyButton.interactable = true;
 	}
 

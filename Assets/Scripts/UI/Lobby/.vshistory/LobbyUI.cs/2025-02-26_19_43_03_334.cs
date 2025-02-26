@@ -148,11 +148,10 @@ public class LobbyUI : Panel
 			Debug.LogException(e);
 		}
 	}
-
 	public void OnVehicleSelected()
 	{
-		chooseVehicleViewGameObject.SetActive(false);
 		readyButton.interactable = true;
+		chooseVehicleViewGameObject.SetActive(false);
 	}
 
 	private async void OnLeaveClicked()

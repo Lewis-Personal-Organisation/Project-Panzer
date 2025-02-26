@@ -1093,8 +1093,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 168, y: -67}
-  m_SizeDelta: {x: 291.1, y: 80.3}
+  m_AnchoredPosition: {x: 175, y: -67}
+  m_SizeDelta: {x: 310, y: 80.3}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &155966706
 GameObject:
@@ -3131,7 +3131,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 737083431}
   m_OnClick:
     m_PersistentCalls:
@@ -7599,15 +7599,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7686477390665353160, guid: c451b676c28ecb54a9e3acb4f842fe34, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7686477390665353160, guid: c451b676c28ecb54a9e3acb4f842fe34, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7686477390665353160, guid: c451b676c28ecb54a9e3acb4f842fe34, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -472.5
+      value: -27.5
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

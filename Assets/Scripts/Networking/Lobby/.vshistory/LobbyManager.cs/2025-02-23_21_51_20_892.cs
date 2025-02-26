@@ -9,7 +9,6 @@ using Unity.Services.Samples.ServerlessMultiplayerGame;
 using System.Linq;
 using UnityEditor;
 using System.Collections;
-using System.Net.Mail;
 
 [DisallowMultipleComponent]
 public class LobbyManager : Singleton<LobbyManager>
@@ -398,7 +397,7 @@ public class LobbyManager : Singleton<LobbyManager>
 		}
 		catch (Exception e)
 		{
-			Debug.LogError($"LobbyManager :: CreateLobby :: Failed to Create Lobby - {e.Message}");
+			Debug.LogException(e);
 		}
 
 		return activeLobby;
