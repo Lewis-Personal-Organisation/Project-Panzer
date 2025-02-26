@@ -119,7 +119,7 @@ public class LobbyUI : Panel
 	public void Toggle(bool activeState, string lobbyCode, string lobbyTittle)
 	{
 		base.Toggle(activeState);
-		//readyButton.interactable = true;
+		readyButton.interactable = true;
 		leaveButton.interactable = true;
 
 		joinCodeText.text = lobbyCode;
@@ -148,10 +148,8 @@ public class LobbyUI : Panel
 			Debug.LogException(e);
 		}
 	}
-
-	public void OnVehicleSelected()
+	private void OnVehicleSelected()
 	{
-		chooseVehicleViewGameObject.SetActive(false);
 		readyButton.interactable = true;
 	}
 
@@ -189,7 +187,7 @@ public class LobbyUI : Panel
 
 	public void AdjustLocalPlayerSlot()
 	{
-		Debug.Log($"LobbyUI :: AdjustLocalPlayerSlot :: Showing slot {LobbyManager.Instance.localPlayerIndex} with {LobbyManager.Instance.localPlayer.Data[PlayerDictionaryData.vehicleIndexKey].Value}");
+		Debug.Log($"LobbyUI :: AdjustPlayerSlots :: Showing slot {LobbyManager.Instance.localPlayerIndex} with {LobbyManager.Instance.localPlayer.Data[PlayerDictionaryData.vehicleIndexKey].Value}");
 		playerSlots[LobbyManager.Instance.localPlayerIndex].ConfigureAndShow(LobbyManager.Instance.localPlayer);
 	}
 	public void AdjustLocalPlayerSlotReadyState()

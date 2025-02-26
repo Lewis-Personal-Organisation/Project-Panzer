@@ -66,8 +66,7 @@ public class VehicleSlot : MonoBehaviour
 	{
 		Debug.Log($"Vehicle Slot :: Clicked on Vehicle for Selection");
 		await LobbyManager.Instance.SwapLobbyVehicle(dataIndex);
-
-		UIManager.LobbyUI.OnVehicleSelected();
+		UIManager.LobbyUI.chooseVehicleViewGameObject.SetActive(false);
 	}
 
 	public void SetStatsGroupVisible(bool choice) => statsGroupGameObject.SetActive(choice);
