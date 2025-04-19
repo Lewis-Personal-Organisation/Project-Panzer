@@ -6,6 +6,7 @@ using TMPro;
 using Unity.Services.Lobbies.Models;
 using Unity.Services.Matchmaker.Models;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 using static LobbyManager;
 
@@ -30,9 +31,16 @@ public class LobbyUI : Panel
 
 	private List<Unity.Services.Lobbies.Models.Player> activeLobbyPlayers => LobbyManager.Instance.activeLobby.Players;
 
+	[Header("Player Slots")]
+	public float playerSlotResizeTime;
+	public Vector2 playerSlotEndSize;
+	public AnimationCurve sizeCurve;
 	[SerializeField] private PlayerSlot[] playerSlots = new PlayerSlot[4];
+	
+	[Header("Vehicle Slots")]
 	[SerializeField] private VehicleSlot[] vehicleSlots = new VehicleSlot[5];
 
+	
 
 	private void Awake()
 	{

@@ -3,28 +3,29 @@ using UnityEngine;
 using UnityEngine.UI;
 using static LobbyManager;
 using Interface.Elements.Scripts;
-using System.Collections;
-using UnityEngine.EventSystems;
 
 public class PlayerSlot : MonoBehaviour
 {
 	private const string SELECT_A_VEHICLE = "Select a \nVehicle";
 	private const string SELECTING_VEHICLE = "Selecting \nVehicle...";
 
-	[SerializeField] private RectTransform parentRectTransform;
-	[SerializeField] private RectTransform scalingTransform;
+	[SerializeField] private GameObject parent;
 	[SerializeField] private TextMeshProUGUI playerNameTitle;
 	[SerializeField] private GameObject readyGameObject;
 	public VehicleSlot vehicleUISlot;
 	[SerializeField] private Button openVehicleSelectionButton;
 	[SerializeField] private TextMeshProUGUI openVehicleSelectionButtonText;
-	[SerializeField] private EventTrigger rescaleEventTrigger;
-	public bool IsFree() => !parentRectTransform.gameObject.activeInHierarchy;
-	public void SetReady(bool isReady) => readyGameObject.SetActive(isReady);
 
-	private Coroutine scaleRoutine;
-	float scaleTimer = 0;
-	
+	public bool IsFree() => !parent.activeInHierarchy;
+	public bool isMouseHovering = false;
+	public Vector2 baseSize;
+	public Vector2 startSize;
+	public Vector2 endSize;
+
+	private void Awake()
+	{
+		baseSize = ((RectTransform)transform).sizeDelta;
+	}
 
 	/// <summary>
 	/// Called when all of the Player slots are synchronised
@@ -39,7 +40,7 @@ public class PlayerSlot : MonoBehaviour
 			openVehicleSelectionButtonText.enabled = false;
 		}
 
-		parentRectTransform.gameObject.SetActive(true);
+		parent.SetActive(true);
 	}
 
 	/// <summary>
@@ -50,7 +51,7 @@ public class PlayerSlot : MonoBehaviour
 		playerNameTitle.text = string.Empty;
 		vehicleUISlot.LoadVehicleData(-1);
 		SetReady(false);
-		parentRectTransform.gameObject.SetActive(false);
+		parent.SetActive(false);
 	}
 
 	public void ConfigureAndShow(Unity.Services.Lobbies.Models.Player player)
@@ -67,48 +68,24 @@ public class PlayerSlot : MonoBehaviour
 		// Set UI listeners
 		openVehicleSelectionButton.onClick.RemoveAllListeners();
 		openVehicleSelectionButton.enabled = isOwner;
-		rescaleEventTrigger.triggers = null;
-		
 		if (isOwner)
-		{
 			openVehicleSelectionButton.onClick.AddListener(delegate
 			{
 				UIManager.LobbyUI.chooseVehicleViewGameObject.SetActive(true);
 			});
-			
-			EventTrigger.Entry scaleUp = new EventTrigger.Entry();
-			scaleUp.eventID = EventTriggerType.PointerEnter;
-			scaleUp.callback.AddListener((eventData) => Scale(true));
-			
-			EventTrigger.Entry scaleDown = new EventTrigger.Entry();
-			scaleDown.eventID = EventTriggerType.PointerExit;
-			scaleDown.callback.AddListener((eventData) => Scale(false));
-			
-			rescaleEventTrigger.triggers.Add(scaleUp);
-			rescaleEventTrigger.triggers.Add(scaleDown);
-		}
 
 		readyGameObject.SetActive(bool.Parse(player.Data[PlayerDictionaryData.isReadyKey].Value));
-		parentRectTransform.gameObject.SetActive(true);
-	}
-	
-	public void Scale(bool upscale)
-	{
-		if (scaleRoutine != null)
-			StopCoroutine(scaleRoutine);
 
-		scaleRoutine =  StartCoroutine(IEScale(upscale));
+		parent.SetActive(true);
 	}
 
-	private IEnumerator IEScale(bool grow)
+	private void Update()
 	{
-		float speed = UIManager.LobbyUI.playerSlotResizeTime;
-		
-		while (true)
+		if (isMouseHovering)
 		{
-			scaleTimer = Mathf.Clamp(scaleTimer + (grow ? Time.deltaTime / speed : -(Time.deltaTime / speed)), 0F, 1F);
-			parentRectTransform.localScale = Vector2.one + Vector2.one * UIManager.LobbyUI.sizeCurve.Evaluate(scaleTimer);
-			yield return null;
+
 		}
 	}
+
+	public void SetReady(bool isReady) => readyGameObject.SetActive(isReady);
 }

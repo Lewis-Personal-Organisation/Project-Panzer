@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class UIManager : Singleton<UIManager>
@@ -12,6 +13,12 @@ public class UIManager : Singleton<UIManager>
 	[SerializeField] private LoadingIcon loadingIcon;
 	[SerializeField] private ErrorUI errorUI;
 
+	
+	new private void Awake()
+	{
+		base.Awake();
+	}
+	
 	public static LobbySetupUI LobbySetupMenu
 	{
 		get
@@ -60,11 +67,5 @@ public class UIManager : Singleton<UIManager>
 		{
 			return Instance.errorUI;
 		}
-	}
-
-
-	new private void Awake()
-	{
-		base.Awake();
 	}
 }
