@@ -114,12 +114,11 @@ public class LobbySetupUI : Panel
 	{
 		Allocation allocation = await RelayService.Instance.CreateAllocationAsync(maxPlayerCount);
 		var joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
-		NetworkEndPoint endPoint = NetworkEndPoint.Parse(allocation.RelayServer.IpV4,
-			(ushort)allocation.RelayServer.Port);
+		
+		NetworkEndPoint endPoint = NetworkEndPoint.Parse(allocation.RelayServer.IpV4, (ushort)allocation.RelayServer.Port);
+		
 		var ipAddress = endPoint.Address.Split(':')[0];
-		unityTransport.SetHostRelayData(ipAddress, endPoint.Port,
-			allocation.AllocationIdBytes, allocation.Key,
-			allocation.ConnectionData, false);
+		unityTransport.SetHostRelayData(ipAddress, endPoint.Port, allocation.AllocationIdBytes, allocation.Key, allocation.ConnectionData, false);
 
 		NetworkManager.Singleton.StartHost();
 		networkManagerInitialised = true;

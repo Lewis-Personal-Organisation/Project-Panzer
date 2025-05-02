@@ -4,6 +4,29 @@ using UnityEngine;
 
 public class DataStructs : MonoBehaviour
 {
+	[Serializable]
+	public struct PlayerStats
+	{
+		public string playerName;
+		public List<int> highScores;
+		public int winCount;
+		public int gameCount;
+
+		public PlayerStats(string playerName)
+		{
+			this.playerName = playerName;
+			highScores = new List<int>();
+			winCount = 0;
+			gameCount = 0;
+		}
+
+		public override string ToString()
+		{
+			var scores = highScores is null ? "" : string.Join(",", highScores.ToArray());
+			return $"playerName:\"{playerName}\" highScores:[{scores}] wins:{winCount}/{gameCount}";
+		}
+	}
+	
 	public struct GameResultsData
 	{
 		public string winnerPlayerName;
@@ -29,11 +52,11 @@ public class DataStructs : MonoBehaviour
 
 		public int score;
 
-		//public PlayerScoreData(PlayerAvatar playerAvatar)
-		//{
-		//	playerId = playerAvatar.playerId;
-		//	playerName = playerAvatar.playerName;
-		//	score = playerAvatar.score;
-		//}
+		public PlayerScoreData(PlayerAvatar playerAvatar)
+		{
+			playerId = playerAvatar.playerId;
+			playerName = playerAvatar.playerName;
+			score = playerAvatar.score;
+		}
 	}
 }

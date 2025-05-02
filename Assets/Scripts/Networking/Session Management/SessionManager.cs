@@ -91,11 +91,12 @@ public class SessionManager : Singleton<SessionManager>
 		try
 		{
 			await AuthenticationService.Instance.SignInAnonymouslyAsync();
-			playerInfo = new PlayerInfoData();
-			playerInfo.creationTime = AuthenticationService.Instance.PlayerInfo.CreatedAt;
-			playerInfo.ID = AuthenticationService.Instance.PlayerInfo.Id;
-			playerInfo.username = AuthenticationService.Instance.PlayerInfo.Username;
-
+			playerInfo = new PlayerInfoData
+			{
+				creationTime = AuthenticationService.Instance.PlayerInfo.CreatedAt,
+				ID = AuthenticationService.Instance.PlayerInfo.Id,
+				username = AuthenticationService.Instance.PlayerInfo.Username
+			};
 		}
 		catch (Exception e)
 		{
@@ -112,11 +113,10 @@ public class SessionManager : Singleton<SessionManager>
 		try
 		{
 			string relayJoinCode = lobbyJoined.Data[LobbyManager.relayJoinCodeKey].Value;
-			//await InitializeClient(relayJoinCode);
+			// await InitializeClient(relayJoinCode);
 
 			var joinAllocation = await RelayService.Instance.JoinAllocationAsync(relayJoinCode);
-			var endPoint = NetworkEndPoint.Parse(joinAllocation.RelayServer.IpV4,
-				(ushort)joinAllocation.RelayServer.Port);
+			var endPoint = NetworkEndPoint.Parse(joinAllocation.RelayServer.IpV4, (ushort)joinAllocation.RelayServer.Port);
 
 			var ipAddress = endPoint.Address.Split(':')[0];
 
@@ -127,7 +127,8 @@ public class SessionManager : Singleton<SessionManager>
 			//NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
 			NetworkManager.Singleton.StartClient();
 			Instance.networkManagerInitialised = true;
-			Debug.Log("Relay Allocation complete. Starting as Client");
+			Debug.Log($"Relay Allocation complete. Starting as Client. Scene Sync: {NetworkManager.Singleton.SceneManager.ActiveSceneSynchronizationEnabled}");
+			// NetworkManager.Singleton.SceneManager.ActiveSceneSynchronizationEnabled;
 		}
 		catch (Exception e)
 		{
@@ -135,7 +136,7 @@ public class SessionManager : Singleton<SessionManager>
 		}
 	}
 
-	public IEnumerator IShutdownNetworkClient()
+	public IEnumerator IEShutdownNetworkClient()
 	{
 		Debug.Log($"Network Client Shutting down....");
 		NetworkManager.Singleton.Shutdown();

@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using TMPro;
+using Unity.Netcode;
 using Unity.Services.Lobbies.Models;
-using Unity.Services.Matchmaker.Models;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 using static LobbyManager;
@@ -99,13 +100,14 @@ public class LobbyUI : Panel
 
 	public void OnHostLobbyChanged(Lobby updatedLobby, bool isGameReady)
 	{
-		//Debug.Log("OnLobbyChanged :: Host");
+		// Debug.Log("LobbyUI :: OnHostLobbyChanged");
 		//sceneView.SetHostLobbyPlayers(updatedLobby.Players);
 
 		if (isGameReady)
 		{
 			// GAME IS READY TO START
-			//NetworkManager.Singleton.SceneManager.LoadScene("Game", LoadSceneMode.Single);
+			NetworkManager.Singleton.SceneManager.LoadScene("Gameplay Scene", LoadSceneMode.Single);
+			Debug.Log($"LobbyUI :: OnHostLobbyChanged :: Everyone is ready! Loading Gameplay Scene");
 		}
 
 		//LobbyManager.instance.LogLobbyPlayers();
@@ -113,7 +115,11 @@ public class LobbyUI : Panel
 
 	public void OnJoinLobbyChanged(Lobby updatedLobby, bool isGameReady)
 	{
-		//Debug.Log("OnLobbyChanged :: Client");
+		if (isGameReady)
+		{
+			Debug.Log($"LobbyUI :: OnJoinLobbyChanged :: Everyone is ready! Loading Gameplay Scene");
+		}
+		// Debug.Log($"LobbyUI :: OnJoinLobbyChanged :: {NetworkManager.Singleton.SceneManager.ActiveSceneSynchronizationEnabled}");
 		//sceneView.SetJoinLobbyPlayers(updatedLobby.Players);
 	}
 
@@ -184,22 +190,24 @@ public class LobbyUI : Panel
 		{
 			if (i < activeLobbyPlayers.Count)
 			{
-				Debug.Log($"LobbyUI :: AdjustPlayerSlots :: Showing slot {i} with {activeLobbyPlayers[i].Data[PlayerDictionaryData.vehicleIndexKey].Value}");
+				// Debug.Log($"LobbyUI :: AdjustPlayerSlots :: Showing slot {i} with {activeLobbyPlayers[i].Data[PlayerDictionaryData.vehicleIndexKey].Value}");
 				playerSlots[i].ConfigureAndShow(activeLobbyPlayers[i]);
 			}
 			else
 			{
 				playerSlots[i].Hide();
-				Debug.Log($"LobbyUI :: Hiding PlayerSlot {i}");
+				// Debug.Log($"LobbyUI :: Hiding PlayerSlot {i}");
 			}
 		}
 	}
 
 	public void AdjustLocalPlayerSlot()
 	{
-		Debug.Log($"LobbyUI :: AdjustLocalPlayerSlot :: Showing slot {LobbyManager.Instance.localPlayerIndex} with {LobbyManager.Instance.localPlayer.Data[PlayerDictionaryData.vehicleIndexKey].Value}");
+		string vName = VehicleData.GetLobbyItem(int.Parse(LobbyManager.Instance.localPlayerVehicleKey)).name;
+		Debug.Log($"LobbyUI :: AdjustLocalPlayerSlot :: Showing slot {LobbyManager.Instance.localPlayerIndex} with {vName}");
 		playerSlots[LobbyManager.Instance.localPlayerIndex].ConfigureAndShow(LobbyManager.Instance.localPlayer);
 	}
+	
 	public void AdjustLocalPlayerSlotReadyState()
 	{
 		playerSlots[LobbyManager.Instance.localPlayerIndex].SetReady(bool.Parse(LobbyManager.Instance.localPlayer.Data[PlayerDictionaryData.isReadyKey].Value));

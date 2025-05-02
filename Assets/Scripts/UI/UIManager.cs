@@ -12,7 +12,15 @@ public class UIManager : Singleton<UIManager>
 	[SerializeField] private FadedBackgroundUI fadedBackground;
 	[SerializeField] private LoadingIcon loadingIcon;
 	[SerializeField] private ErrorUI errorUI;
-
+	
+	public DataStructs.GameResultsData previousGameResults { get; private set; }
+	public bool arePreviousGameResultsSet { get; private set; }
+	public void SetPreviousGameResults(DataStructs.GameResultsData results)
+	{
+		previousGameResults = results;
+		arePreviousGameResultsSet = true;
+	}
+	
 	
 	new private void Awake()
 	{

@@ -74,3 +74,36 @@ MonoBehaviour:
     - <TypeName>k__BackingField: Unity.Multiplayer.Tools.MetricTypes.DirectedMetricType,
         Unity.Multiplayer.Tools.MetricTypes, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
       <ValueName>k__BackingField: TotalBytesReceived
+  - <FieldsInitialized>k__BackingField: 1
+    <Type>k__BackingField: 0
+    <Label>k__BackingField: Scene Events
+    <Stats>k__BackingField:
+    - <TypeIndex>k__BackingField: 0
+      <EnumValue>k__BackingField: 42
+    - <TypeIndex>k__BackingField: 0
+      <EnumValue>k__BackingField: 41
+    <CounterConfiguration>k__BackingField:
+      <SmoothingMethod>k__BackingField: 0
+      <AggregationMethod>k__BackingField: 0
+      m_SignificantDigits: 3
+      <HighlightLowerBound>k__BackingField: -3.4028235e+38
+      <HighlightUpperBound>k__BackingField: 3.4028235e+38
+      <ExponentialMovingAverageParams>k__BackingField:
+        m_HalfLife: 1
+      <SimpleMovingAverageParams>k__BackingField:
+        m_SampleCount: 64
+        <SampleRate>k__BackingField: 0
+    <GraphConfiguration>k__BackingField:
+      m_SampleCount: 256
+      <SampleRate>k__BackingField: 1
+      <VariableColors>k__BackingField: []
+      <XAxisType>k__BackingField: 0
+      <LineGraphConfiguration>k__BackingField:
+        m_LineThickness: 1
+    <SerializedStats>k__BackingField:
+    - <TypeName>k__BackingField: Unity.Multiplayer.Tools.MetricTypes.DirectedMetricType,
+        Unity.Multiplayer.Tools.MetricTypes, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+      <ValueName>k__BackingField: SceneEventSent
+    - <TypeName>k__BackingField: Unity.Multiplayer.Tools.MetricTypes.DirectedMetricType,
+        Unity.Multiplayer.Tools.MetricTypes, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+      <ValueName>k__BackingField: SceneEventReceived

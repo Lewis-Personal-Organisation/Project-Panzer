@@ -21,11 +21,3 @@ public class VehicleLobbyData : ScriptableObject
 	[Range(0, 1)] public float mobility;
 	[Range(0, 1)] public float defence;
 }
-
-// GAMEPLAY USE
-//public struct Armour
-//{
-//	[SerializeField] private float frontThickness;
-//	[SerializeField] private float sideThickness;
-//	[SerializeField] private float backThickness;
-//}

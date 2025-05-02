@@ -17,7 +17,10 @@ public class LobbyManager : Singleton<LobbyManager>
 	public Lobby activeLobby { get; private set; }
 	public static string playerId => AuthenticationService.Instance.PlayerId;
 	public List<Player> players { get; private set; }
+	public string GetPlayerID(int playerIndex) => players[playerIndex].Id;
+	public string GetPlayerName(int playerIndex) => players[playerIndex].Data[PlayerDictionaryData.nameKey].Value;
 	public Player localPlayer { get; private set; }
+	public string localPlayerVehicleKey => localPlayer.Data[PlayerDictionaryData.vehicleIndexKey].Value;
 	public int localPlayerIndex { get; private set; }
 	public int numPlayers => players.Count;
 	public bool isHost { get; private set; }
@@ -237,30 +240,36 @@ public class LobbyManager : Singleton<LobbyManager>
 			return;
 		}
 
-		if (DidPlayersChange(activeLobby.Players, updatedLobby.Players))
-		{
-			//Debug.Log("Update Lobby :: Players Changed - Lobby Updated!");
-			activeLobby = updatedLobby;
-			players = activeLobby?.Players;
-			CacheLocalPlayer();
+		Debug.Log($"LobbyManager :: We clicked Ready Button. Checking if Game is ready'd up");
+		var isGameReady = AllPlayersReady(activeLobby);
 
-			// Check our lobby Players for our Player. If we exist, set the game ready state
-			if (updatedLobby.Players.Exists(player => player.Id == playerId))
-			{
-				var isGameReady = AllPlayersReady(updatedLobby);
-
-				// Trigger event with value (This starts the game if all players are ready)
-				OnLobbyChanged?.Invoke(updatedLobby, isGameReady);
-			}
-			else
-			{
-				Debug.Log("Update Lobby : Player Kicked");
-				ServerlessMultiplayerGameSampleManager.instance.SetReturnToMenuReason(
-					ServerlessMultiplayerGameSampleManager.ReturnToMenuReason.PlayerKicked);
-
-				OnPlayerNotInLobby();
-			}
-		}
+		// Trigger event with value (This starts the game if all players are ready)
+		OnLobbyChanged?.Invoke(activeLobby, isGameReady);
+		
+		// if (DidPlayersChange(activeLobby.Players, updatedLobby.Players))
+		// {
+		// 	//Debug.Log("Update Lobby :: Players Changed - Lobby Updated!");
+		// 	activeLobby = updatedLobby;
+		// 	players = activeLobby?.Players;
+		// 	CacheLocalPlayer();
+		//
+		// 	// Check our lobby Players for our Player. If we exist, set the game ready state
+		// 	if (updatedLobby.Players.Exists(player => player.Id == playerId))
+		// 	{
+		// 		var isGameReady = AllPlayersReady(updatedLobby);
+		//
+		// 		// Trigger event with value (This starts the game if all players are ready)
+		// 		OnLobbyChanged?.Invoke(updatedLobby, isGameReady);
+		// 	}
+		// 	else
+		// 	{
+		// 		Debug.Log("Update Lobby : Player Kicked");
+		// 		ServerlessMultiplayerGameSampleManager.instance.SetReturnToMenuReason(
+		// 			ServerlessMultiplayerGameSampleManager.ReturnToMenuReason.PlayerKicked);
+		//
+		// 		OnPlayerNotInLobby();
+		// 	}
+		// }
 	}
 
 	/// <summary>
@@ -287,9 +296,9 @@ public class LobbyManager : Singleton<LobbyManager>
 
 		StartCoroutine(ShutdownNetworkAndReturnToMainMenu());
 	}
-	public  IEnumerator ShutdownNetworkAndReturnToMainMenu()
+	public IEnumerator ShutdownNetworkAndReturnToMainMenu()
 	{
-		yield return StartCoroutine(SessionManager.Instance.IShutdownNetworkClient());
+		yield return StartCoroutine(SessionManager.Instance.IEShutdownNetworkClient());
 		UIManager.MainMenu.Toggle(true);
 		UIManager.LobbySetupMenu.ToggleLobbyCreationInteractables(true);
 		Debug.Log("LobbyUI :: Re-enabled buttons after shutdown");
@@ -609,7 +618,7 @@ public class LobbyManager : Singleton<LobbyManager>
 			var updatedLobby = await LobbyService.Instance.UpdatePlayerAsync(lobbyId, playerId, options);
 			if (this == null) return;
 
-			//UpdateLobby(updatedLobby);
+			UpdateLobby(updatedLobby);
 		}
 		catch (Exception e)
 		{
@@ -725,7 +734,7 @@ public class LobbyManager : Singleton<LobbyManager>
 
 			if (changes.PlayerData.Changed || changes.PlayerJoined.Changed || changes.PlayerLeft.Changed)
 			{
-				Debug.Log($"LobbyManager :: {changes.PlayerData.Changed}, {changes.PlayerJoined.Changed}, {changes.PlayerLeft.Changed}, {changes.HostId.Value}");
+				Debug.Log($"LobbyManager :: PlayerData Changed? {changes.PlayerData.Changed}, PlayersJoined? {changes.PlayerJoined.Changed}, PlayerLeft? {changes.PlayerLeft.Changed}");
 
 				CacheLocalPlayer();
 
@@ -906,5 +915,21 @@ public class LobbyManager : Singleton<LobbyManager>
 		}
 
 		return;
+	}
+	
+	public void OnGameStarted()
+	{
+		// When game starts actually starts, the host stops updating
+		if (isHost)
+		{
+			wasGameStarted = true;
+		}
+
+		// When the game actually starts, all clients clear the active lobby. This is possible because the host will
+		// actually delete the lobby itself once all clients have acknowledged that they've started.
+		else
+		{
+			activeLobby = null;
+		}
 	}
 }

@@ -12,7 +12,7 @@ public enum TextSubmissionContext
 
 public class TextInputUI : Panel
 {
-	private int MaxInputTextLength => textInputContext == TextSubmissionContext.PlayerName ? 10 : RelayData.maxCodeLength;
+	private int MaxInputTextLength => textInputContext == TextSubmissionContext.PlayerName ? 10 : JoinCode.maxLength;
 
 	[Header("Text Input")]
 	[SerializeField] private TextSubmissionContext textInputContext;
@@ -139,7 +139,7 @@ public class TextInputUI : Panel
 				}
 				break;
 			case TextSubmissionContext.RelayJoinCode:
-				if (RelayData.CodeIsValid(inputText.text.ToUpper()))
+				if (JoinCode.IsValid(inputText.text.ToUpper()))
 				{
 					enteredJoinCode = inputText.text;
 					LobbyManager.Instance.JoinPrivateLobbyAsClient(enteredJoinCode, GameSave.PlayerName);

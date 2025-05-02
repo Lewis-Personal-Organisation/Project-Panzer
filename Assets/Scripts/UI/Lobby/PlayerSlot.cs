@@ -55,7 +55,7 @@ public class PlayerSlot : MonoBehaviour
 
 	public void ConfigureAndShow(Unity.Services.Lobbies.Models.Player player)
 	{
-		Debug.Log($"PlayerSlot :: Showing with {player.Data[PlayerDictionaryData.vehicleIndexKey].Value}");
+		// Debug.Log($"PlayerSlot :: Showing with {player.Data[PlayerDictionaryData.vehicleIndexKey].Value}");
 		bool isOwner = LobbyManager.playerId == player.Id;
 		int vehicleIndex = int.Parse(player.Data[PlayerDictionaryData.vehicleIndexKey].Value);
 

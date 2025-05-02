@@ -23,12 +23,12 @@ public class VehicleSlot : MonoBehaviour
 		// The default "Select a Vehicle" slot representation
 		if (index == -1)
 		{
-			Debug.Log($"Vehicle Slot :: Loaded Default Empty Slot");
+			// Debug.Log($"Vehicle Slot :: Loaded Default Empty Slot");
 			ResetSlot();
 		}
 		else
 		{
-			VehicleLobbyData vData = VehicleData.GetItem(index);
+			VehicleLobbyData vData = VehicleData.GetLobbyItem(index);
 
 			//Debug.Log($"Loading {vData.name}. Vehicle Select button is null? {vehicleSelectButton == null}");
 			// Will be null if this script is within a Player Slot
@@ -49,7 +49,7 @@ public class VehicleSlot : MonoBehaviour
 			this.defenceImage.fillAmount = vData.defence;
 
 			statsGroupGameObject.SetActive(true);
-			Debug.Log($"Vehicle Slot :: Loaded Vehicle {this.vehicleNameText.text} into slot");
+			// Debug.Log($"Vehicle Slot :: Loaded Vehicle {this.vehicleNameText.text} into slot");
 		}
 	}
 

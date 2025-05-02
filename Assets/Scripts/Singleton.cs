@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 /* Singleton Pattern
  *  Desc: Any class inherited from this will have a Singleton instance created and assigned automatically. 
@@ -19,5 +20,10 @@ public class Singleton<T> : MonoBehaviour where T : Singleton<T>
             return;
         }
         Instance = (T)this;
+    }
+
+    protected void OnDestroy()
+    {
+        Instance = null;
     }
 }
