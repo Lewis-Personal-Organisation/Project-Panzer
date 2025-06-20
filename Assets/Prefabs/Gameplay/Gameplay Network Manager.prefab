@@ -45,7 +45,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 1945295959
+  GlobalObjectIdHash: 3239340895
   InScenePlacedSourceGlobalObjectIdHash: 0
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
@@ -70,3 +70,8 @@ MonoBehaviour:
   playerRadiusIncreasePerPlayer: 1
   playerAvatarPrefabs:
   - {fileID: 8066199893152834821, guid: a985a14ea77ffa9499a68e72353be759, type: 3}
+  - {fileID: 8066199893152834821, guid: a985a14ea77ffa9499a68e72353be759, type: 3}
+  - {fileID: 8066199893152834821, guid: a985a14ea77ffa9499a68e72353be759, type: 3}
+  - {fileID: 8066199893152834821, guid: a985a14ea77ffa9499a68e72353be759, type: 3}
+  - {fileID: 8066199893152834821, guid: a985a14ea77ffa9499a68e72353be759, type: 3}
+  <networkObject>k__BackingField: {fileID: 6137588125434361003}

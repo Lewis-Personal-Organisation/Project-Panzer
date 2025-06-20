@@ -32,18 +32,14 @@ public class ProjectileTest : MonoBehaviour
     {
         if (!Physics.Raycast(projectileTip.position, Vector3.down, out RaycastHit hit, Mathf.Infinity, terrainHitMask.value))
         {
-            Debug.DrawLine(projectileTip.position, projectileTip.position + Vector3.down * Mathf.Infinity, Color.red);
+            Debug.DrawLine(projectileTip.position, projectileTip.position + Vector3.down * Mathf.Infinity, Color.red, Time.deltaTime);
             return;
         }
 
-        Debug.DrawLine(projectileTip.position, projectileTip.position + Vector3.down * Mathf.Infinity, Color.green);
+        Debug.DrawLine(projectileTip.position, projectileTip.position + Vector3.down * Mathf.Infinity, Color.green, Time.deltaTime);
 
         shellGuiderTR.rotation = Quaternion.FromToRotation(shellGuiderTR.up, hit.normal) * shellGuiderTR.rotation;
         shellVisuals.transform.position = shellGuiderTR.position;
         shellVisuals.transform.rotation = Quaternion.RotateTowards(shellVisuals.transform.rotation, shellGuiderTR.rotation, projectileRotationSpeed * Time.deltaTime);
     }
 }
-
-// float v = Vector3.Cross(Vector3.forward, shellGuiderTR.forward).x;
-// shellAngleText.text = $"Cross Prod on Forward Axis: {v}";
-// groundAngleText.text = $"Face Angle: {hit.normal.z}";

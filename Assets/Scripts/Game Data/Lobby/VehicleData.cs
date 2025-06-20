@@ -9,7 +9,7 @@ public class VehicleData : Singleton<VehicleData>
 	[SerializeField] private List<VehicleGameplayData> gameplay;
 
 
-	new private void Awake()
+	private new void Awake()
 	{
 		base.Awake();
 		DontDestroyOnLoad(this);

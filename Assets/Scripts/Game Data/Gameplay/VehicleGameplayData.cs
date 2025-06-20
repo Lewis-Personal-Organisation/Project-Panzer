@@ -6,13 +6,10 @@ using UnityEngine;
 public class VehicleGameplayData : ScriptableObject
 {
     [Header("Misc")] 
-    [SerializeField] private string name;
+    [SerializeField] public string name;
     [SerializeField] public VehicleType type;
 
-    [Header("Weapon")]
-    [SerializeField] private float reloadTime;
-    [SerializeField] private int shellsInClip;
-    [SerializeField] private float shellVelocity;
+    [field: SerializeField] public TankWeapon tankWeapon { get; private set; }
     
     [Header("Turret")]
     [SerializeField] private float turretRotationSpeed;         // Acts as Gun Rotation Speed, if no turret is present
@@ -24,7 +21,7 @@ public class VehicleGameplayData : ScriptableObject
     
     [Header("Mobility")]
     [SerializeField] private float acceleration;
-    [SerializeField] private float forwardsTopSpeed;
-    [SerializeField] private float backwardsTopSpeed;
-    [SerializeField] private bool neutralSteering;              // Implement later
+    [field: SerializeField] public float forwardSpeed { get; private set; }
+    [field: SerializeField] public float backwardSpeed { get; private set; }
+    [field: SerializeField] public float neutralSteeringInfluence{ get; private set; }        // The forced speed for steering
 }

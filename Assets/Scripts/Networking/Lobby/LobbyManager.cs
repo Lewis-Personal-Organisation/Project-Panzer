@@ -17,8 +17,7 @@ public class LobbyManager : Singleton<LobbyManager>
 	public Lobby activeLobby { get; private set; }
 	public static string playerId => AuthenticationService.Instance.PlayerId;
 	public List<Player> players { get; private set; }
-	public string GetPlayerID(int playerIndex) => players[playerIndex].Id;
-	public string GetPlayerName(int playerIndex) => players[playerIndex].Data[PlayerDictionaryData.nameKey].Value;
+	
 	public Player localPlayer { get; private set; }
 	public string localPlayerVehicleKey => localPlayer.Data[PlayerDictionaryData.vehicleIndexKey].Value;
 	public int localPlayerIndex { get; private set; }
@@ -27,15 +26,15 @@ public class LobbyManager : Singleton<LobbyManager>
 	public const string hostNameKey = "hostName";
 	public const string relayJoinCodeKey = "relayJoinCode";
 	public static event Action<Lobby, bool> OnLobbyChanged;
-	//public static event Action OnPlayerNotInLobbyEvent;
 	public static bool lobbyPreviouslyRefusedUsername = false;
 	float nextHostHeartbeatTime;
 	const float hostHeartbeatFrequency = 15;
 	float nextUpdatePlayersTime;
-	//float nextSendUpdatePlayersTime;
 	bool wasGameStarted = false;
+	
+	public ILobbyEvents activeLobbyEvents;
 
-	private PlayerDictionaryData playerDictionaryData;
+	public PlayerDictionaryData playerDictionaryData { get; private set; }
 
 
 	public static class RateLimits
@@ -86,7 +85,6 @@ public class LobbyManager : Singleton<LobbyManager>
 		public int lobbyVehicleIndex = -1;
 	}
 
-	ILobbyEvents activeLobbyEvents;
 
 
 	new private void Awake()
@@ -103,15 +101,7 @@ public class LobbyManager : Singleton<LobbyManager>
 				if (isHost && Time.realtimeSinceStartup >= nextHostHeartbeatTime)
 				{
 					await PeriodicHostHeartbeat();
-
-					// Exit this update now so we'll only ever update 1 item (heartbeat or lobby changes) in 1 Update().
-					return;
 				}
-
-				//if (Time.realtimeSinceStartup >= nextUpdatePlayersTime)
-				//{
-				//	await PeriodicGetUpdatedLobby();
-				//}
 			}
 		}
 		catch (Exception e)
@@ -136,51 +126,51 @@ public class LobbyManager : Singleton<LobbyManager>
 		}
 	}
 
-	private async Task PeriodicGetUpdatedLobby()
-	{
-		try
-		{
-			// Set next update time before calling Lobby Service since next update could also trigger an
-			// update which could cause throttling issues.
-			nextUpdatePlayersTime = Time.realtimeSinceStartup + RateLimits.Rate(RateLimits.RequestType.UpdatePlayers);
-			//Debug.Log($"LobbyManager :: Updating Lobby ({Time.realtimeSinceStartup}s). Interval -> {RateLimits.Rate(RateLimits.RequestType.UpdatePlayers)}s");
-			var updatedLobby = await LobbyService.Instance.GetLobbyAsync(activeLobby.Id);
-
-			if (this == null)
-			{
-				return;
-			}
-
-			UpdateLobby(updatedLobby);
-		}
-
-		// Handle lobby no longer exists (host canceled game and returned to main menu).
-		catch (LobbyServiceException e) when (e.Reason == LobbyExceptionReason.LobbyNotFound)
-		{
-			if (this == null) return;
-
-			// Lobby has closed
-			//ServerlessMultiplayerGameSampleManager.instance.SetReturnToMenuReason(
-			//	ServerlessMultiplayerGameSampleManager.ReturnToMenuReason.LobbyClosed);
-			Debug.Log("Lobby Not Found or Closed. Returning to Main Menu");
-			OnPlayerNotInLobby();
-		}
-
-		// Handle player no longer allowed to view lobby (host booted player so player is no longer in the lobby).
-		catch (LobbyServiceException e) when (e.Reason == LobbyExceptionReason.Forbidden)
-		{
-			if (this == null) return;
-
-			//ServerlessMultiplayerGameSampleManager.instance.SetReturnToMenuReason(
-			//	ServerlessMultiplayerGameSampleManager.ReturnToMenuReason.PlayerKicked);
-
-			OnPlayerNotInLobby();
-		}
-		catch (Exception e)
-		{
-			Debug.LogException(e);
-		}
-	}
+	// private async Task PeriodicGetUpdatedLobby()
+	// {
+	// 	try
+	// 	{
+	// 		// Set next update time before calling Lobby Service since next update could also trigger an
+	// 		// update which could cause throttling issues.
+	// 		nextUpdatePlayersTime = Time.realtimeSinceStartup + RateLimits.Rate(RateLimits.RequestType.UpdatePlayers);
+	// 		//Debug.Log($"LobbyManager :: Updating Lobby ({Time.realtimeSinceStartup}s). Interval -> {RateLimits.Rate(RateLimits.RequestType.UpdatePlayers)}s");
+	// 		var updatedLobby = await LobbyService.Instance.GetLobbyAsync(activeLobby.Id);
+	//
+	// 		if (this == null)
+	// 		{
+	// 			return;
+	// 		}
+	//
+	// 		UpdateLobby(updatedLobby);
+	// 	}
+	//
+	// 	// Handle lobby no longer exists (host canceled game and returned to main menu).
+	// 	catch (LobbyServiceException e) when (e.Reason == LobbyExceptionReason.LobbyNotFound)
+	// 	{
+	// 		if (this == null) return;
+	//
+	// 		// Lobby has closed
+	// 		//ServerlessMultiplayerGameSampleManager.instance.SetReturnToMenuReason(
+	// 		//	ServerlessMultiplayerGameSampleManager.ReturnToMenuReason.LobbyClosed);
+	// 		Debug.Log("Lobby Not Found or Closed. Returning to Main Menu");
+	// 		OnPlayerNotInLobby();
+	// 	}
+	//
+	// 	// Handle player no longer allowed to view lobby (host booted player so player is no longer in the lobby).
+	// 	catch (LobbyServiceException e) when (e.Reason == LobbyExceptionReason.Forbidden)
+	// 	{
+	// 		if (this == null) return;
+	//
+	// 		//ServerlessMultiplayerGameSampleManager.instance.SetReturnToMenuReason(
+	// 		//	ServerlessMultiplayerGameSampleManager.ReturnToMenuReason.PlayerKicked);
+	//
+	// 		OnPlayerNotInLobby();
+	// 	}
+	// 	catch (Exception e)
+	// 	{
+	// 		Debug.LogException(e);
+	// 	}
+	// }
 	//async Task PeriodicSendUpdatedLobby()
 	//{
 	//	try
@@ -240,6 +230,8 @@ public class LobbyManager : Singleton<LobbyManager>
 			return;
 		}
 
+		activeLobby = updatedLobby;
+		
 		Debug.Log($"LobbyManager :: We clicked Ready Button. Checking if Game is ready'd up");
 		var isGameReady = AllPlayersReady(activeLobby);
 
@@ -285,23 +277,24 @@ public class LobbyManager : Singleton<LobbyManager>
 
 	public void OnPlayerNotInLobby()
 	{
-		//activeLobbyEvents.UnsubscribeAsync()
+		// activeLobbyEvents.UnsubscribeAsync();
 		activeLobbyEvents = null;
 
 		if (activeLobby != null)
 		{
 			activeLobby = null;
-			UIManager.LobbyUI.LeaveLobby();
 		}
 
-		StartCoroutine(ShutdownNetworkAndReturnToMainMenu());
+		if (UIManager.GameView != View.Gameplay)
+			StartCoroutine(ShutdownNetworkAndReturnToMainMenu());
 	}
+	
 	public IEnumerator ShutdownNetworkAndReturnToMainMenu()
 	{
+		Debug.Log("Lobby Manager :: ShutdownNetworkAndReturnToMainMenu :: Shutting down and returning to main menu");
 		yield return StartCoroutine(SessionManager.Instance.IEShutdownNetworkClient());
 		UIManager.MainMenu.Toggle(true);
 		UIManager.LobbySetupMenu.ToggleLobbyCreationInteractables(true);
-		Debug.Log("LobbyUI :: Re-enabled buttons after shutdown");
 	}
 
 	static bool DidPlayersChange(List<Player> oldPlayers, List<Player> newPlayers)
@@ -654,10 +647,8 @@ public class LobbyManager : Singleton<LobbyManager>
 
 			UIManager.LobbyUI.AdjustLocalPlayerSlot();
 
-			var updatedLobby = await LobbyService.Instance.UpdatePlayerAsync(lobbyId, playerId, options);
+			activeLobby = await LobbyService.Instance.UpdatePlayerAsync(lobbyId, playerId, options);
 			if (this == null) return;
-
-			//UpdateLobby(updatedLobby);
 		}
 		catch (Exception e)
 		{
@@ -734,13 +725,13 @@ public class LobbyManager : Singleton<LobbyManager>
 
 			if (changes.PlayerData.Changed || changes.PlayerJoined.Changed || changes.PlayerLeft.Changed)
 			{
-				Debug.Log($"LobbyManager :: PlayerData Changed? {changes.PlayerData.Changed}, PlayersJoined? {changes.PlayerJoined.Changed}, PlayerLeft? {changes.PlayerLeft.Changed}");
+				Debug.Log($"LobbyManager :: OnLobbyChangedNotif :: PlayerData Changed? {changes.PlayerData.Changed}, PlayersJoined? {changes.PlayerJoined.Changed}, PlayerLeft? {changes.PlayerLeft.Changed}");
 
 				CacheLocalPlayer();
 
 				if (activeLobby.Players.Exists(player => player.Id == playerId))
 				{
-					Debug.Log($"LobbyManager :: Our Player exist. Checking if Game is ready'd up. Also adjusting player slots etc");
+					Debug.Log($"LobbyManager :: OnLobbyChangedNotif :: Our Player exists. Checking if Game is ready'd up. Also adjusting player slots etc");
 					var isGameReady = AllPlayersReady(activeLobby);
 
 					// Trigger event with value (This starts the game if all players are ready)
@@ -748,18 +739,10 @@ public class LobbyManager : Singleton<LobbyManager>
 				}
 				else
 				{
-					Debug.Log("Update Lobby : Player Kicked");
-					ServerlessMultiplayerGameSampleManager.instance.SetReturnToMenuReason(
-						ServerlessMultiplayerGameSampleManager.ReturnToMenuReason.PlayerKicked);
-
+					Debug.Log("Lobby Manager :: OnLobbyChangedNotif : Player Not in Lobby");
 					OnPlayerNotInLobby();
 				}
 				return;
-			}
-
-			if (changes.PlayerData.Changed)
-			{
-
 			}
 			if (changes.PlayerJoined.Changed)
 			{
@@ -773,7 +756,6 @@ public class LobbyManager : Singleton<LobbyManager>
 				for (int i = 0; i < changes.PlayerLeft.Value.Count; i++)
 				{
 					Debug.Log($"LobbyManager :: OnLobbyChangedNotif :: Player {changes.PlayerLeft.Value[i]} Left!");
-					//We could use this value on the old list of players... players[changes.PlayerLeft.Value[i]].Data[PlayerDictionaryData.nameKey].Value
 				}
 			}
 		}

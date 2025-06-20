@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 469c24fdb3bd6431b92cc1465bd9166b, type: 3}
+  m_Name: RemoteConfigDataStoreAsset
+  m_EditorClassIdentifier: 
+  _rsKeyList: "[\r\n  {\r\n    \"metadata\": {\r\n      \"entityId\": \"f1a02d99-7bf4-42f1-be33-a2f8867ff6cf\"\r\n   
+    },\r\n    \"rs\": {\r\n      \"key\": \"MULTIPLAYER_GAME_SETTINGS\",\r\n     
+    \"type\": \"json\",\r\n      \"schemaId\": null,\r\n      \"value\": {\r\n       
+    \"playerOptions\": [\r\n          {\r\n            \"players\": 2,\r\n           
+    \"gameDuration\": 16,\r\n            \"initialSpawnDelay\": 1,\r\n           
+    \"spawnInterval\": 6,\r\n            \"destroyInterval\": 7,\r\n            \"cluster1\":
+    1,\r\n            \"cluster2\": 1,\r\n            \"cluster3\": 0\r\n         
+    },\r\n          {\r\n            \"players\": 3,\r\n            \"gameDuration\":
+    60,\r\n            \"initialSpawnDelay\": 2,\r\n            \"spawnInterval\":
+    5,\r\n            \"destroyInterval\": 5.5,\r\n            \"cluster1\": 1,\r\n           
+    \"cluster2\": 1,\r\n            \"cluster3\": 1\r\n          },\r\n         
+    {\r\n            \"players\": 4,\r\n            \"gameDuration\": 60,\r\n           
+    \"initialSpawnDelay\": 3,\r\n            \"spawnInterval\": 4,\r\n           
+    \"destroyInterval\": 4.5,\r\n            \"cluster1\": 1,\r\n            \"cluster2\":
+    2,\r\n            \"cluster3\": 1\r\n          }\r\n        ]\r\n      }\r\n   
+    }\r\n  }\r\n]"
+  _rsLastCachedKeyList: "[\r\n  {\r\n    \"metadata\": {\r\n      \"entityId\": \"f1a02d99-7bf4-42f1-be33-a2f8867ff6cf\"\r\n   
+    },\r\n    \"rs\": {\r\n      \"key\": \"MULTIPLAYER_GAME_SETTINGS\",\r\n     
+    \"type\": \"json\",\r\n      \"schemaId\": null,\r\n      \"value\": {\r\n       
+    \"playerOptions\": [\r\n          {\r\n            \"players\": 2,\r\n           
+    \"gameDuration\": 16,\r\n            \"initialSpawnDelay\": 1,\r\n           
+    \"spawnInterval\": 6,\r\n            \"destroyInterval\": 7,\r\n            \"cluster1\":
+    1,\r\n            \"cluster2\": 1,\r\n            \"cluster3\": 0\r\n         
+    },\r\n          {\r\n            \"players\": 3,\r\n            \"gameDuration\":
+    60,\r\n            \"initialSpawnDelay\": 2,\r\n            \"spawnInterval\":
+    5,\r\n            \"destroyInterval\": 5.5,\r\n            \"cluster1\": 1,\r\n           
+    \"cluster2\": 1,\r\n            \"cluster3\": 1\r\n          },\r\n         
+    {\r\n            \"players\": 4,\r\n            \"gameDuration\": 60,\r\n           
+    \"initialSpawnDelay\": 3,\r\n            \"spawnInterval\": 4,\r\n           
+    \"destroyInterval\": 4.5,\r\n            \"cluster1\": 1,\r\n            \"cluster2\":
+    2,\r\n            \"cluster3\": 1\r\n          }\r\n        ]\r\n      }\r\n   
+    }\r\n  }\r\n]"
+  _environments: "[\r\n  {\r\n    \"projectId\": \"0fc7dd26-7ef3-44e4-82c9-7b058d71ec69\",\r\n   
+    \"name\": \"production\",\r\n    \"id\": \"73a849f6-31ca-4584-8fe0-8fa465e389da\",\r\n   
+    \"isDefault\": true,\r\n    \"createdAt\": \"2025-01-04T20:21:44Z\",\r\n    \"updatedAt\":
+    \"2025-01-04T20:21:44Z\"\r\n  }\r\n]"

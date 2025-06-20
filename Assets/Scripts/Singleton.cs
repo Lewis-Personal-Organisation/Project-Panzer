@@ -15,8 +15,8 @@ public class Singleton<T> : MonoBehaviour where T : Singleton<T>
     {
         if (Instance != null)
         {
-            Debug.LogError($"An instance of {this.GetType().Name} already exists");
-            Destroy(this);
+            Debug.LogWarning($"An instance of {this.GetType().Name} exists. Destroying this new instance.");
+            Destroy(this.gameObject);
             return;
         }
         Instance = (T)this;

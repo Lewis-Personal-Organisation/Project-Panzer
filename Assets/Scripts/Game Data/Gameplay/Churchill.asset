@@ -14,14 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   name: Churchill
   type: 1
-  reloadTime: 1
-  shellsInClip: 1
-  shellVelocity: 750
+  <tankWeapon>k__BackingField: {fileID: 11400000, guid: 4b01a56eb4ce8da4dbf4d6360d452f18, type: 2}
   turretRotationSpeed: 20
   frontThickness: 80
   sideThickness: 50
   rearThickness: 35
   acceleration: 0.4
-  forwardsTopSpeed: 10
-  backwardsTopSpeed: 2.5
-  neutralSteering: 1
+  <forwardSpeed>k__BackingField: 16.8
+  <backwardSpeed>k__BackingField: 7
+  <neutralSteeringInfluence>k__BackingField: 2

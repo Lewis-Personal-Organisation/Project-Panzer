@@ -6,7 +6,7 @@ using Unity.Services.CloudSave;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public class CloudSaveManager : MonoBehaviour
+public class CloudSaveManager : Singleton<CloudSaveManager>
 {
     const string k_PlayerStatsKey = "MULTIPLAYER_GAME_PLAYER_STATS";
 
@@ -15,20 +15,13 @@ public class CloudSaveManager : MonoBehaviour
     public static CloudSaveManager instance { get; private set; }
 
     public DataStructs.PlayerStats playerStats => m_PlayerStats;
-    DataStructs.PlayerStats m_PlayerStats;
+    [SerializeField] DataStructs.PlayerStats m_PlayerStats;
 
     public string playerName => playerStats.playerName;
 
-    void Awake()
+    private new void Awake()
     {
-        if (instance != null && instance != this)
-        {
-            Destroy(this);
-        }
-        else
-        {
-            instance = this;
-        }
+        base.Awake();
     }
 
     public async Task LoadAndCacheData()
@@ -60,6 +53,7 @@ public class CloudSaveManager : MonoBehaviour
         try
         {
             m_PlayerStats.playerName = playerName;
+            Debug.Log($"SetPlayerName: {m_PlayerStats.playerName}");
 
             var data = new Dictionary<string, object>();
             data[k_PlayerStatsKey] = JsonUtility.ToJson(m_PlayerStats);

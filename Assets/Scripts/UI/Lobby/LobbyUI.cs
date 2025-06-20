@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using TMPro;
 using Unity.Netcode;
+using Unity.Services.Lobbies;
 using Unity.Services.Lobbies.Models;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -66,7 +67,7 @@ public class LobbyUI : Panel
 	/// </summary>
 	private void OnApplicationQuit()
 	{
-		LobbyManager.Instance.LeaveLobbyOnQuit();
+		LobbyManager.Instance?.LeaveLobbyOnQuit();
 	}
 
 	public void OnLobbyChanged(Lobby updatedLobby, bool isGameReady)
@@ -80,7 +81,7 @@ public class LobbyUI : Panel
 		}
 		else
 		{
-			OnJoinLobbyChanged(updatedLobby, isGameReady);
+			OnClientLobbyChanged(updatedLobby, isGameReady);
 		}
 	}
 
@@ -98,37 +99,32 @@ public class LobbyUI : Panel
 		}
 	}
 
-	public void OnHostLobbyChanged(Lobby updatedLobby, bool isGameReady)
-	{
-		// Debug.Log("LobbyUI :: OnHostLobbyChanged");
-		//sceneView.SetHostLobbyPlayers(updatedLobby.Players);
-
-		if (isGameReady)
-		{
-			// GAME IS READY TO START
-			NetworkManager.Singleton.SceneManager.LoadScene("Gameplay Scene", LoadSceneMode.Single);
-			Debug.Log($"LobbyUI :: OnHostLobbyChanged :: Everyone is ready! Loading Gameplay Scene");
-		}
-
-		//LobbyManager.instance.LogLobbyPlayers();
-	}
-
-	public void OnJoinLobbyChanged(Lobby updatedLobby, bool isGameReady)
+	private async Task OnHostLobbyChanged(Lobby updatedLobby, bool isGameReady)
 	{
 		if (isGameReady)
 		{
-			Debug.Log($"LobbyUI :: OnJoinLobbyChanged :: Everyone is ready! Loading Gameplay Scene");
+			await LobbyManager.Instance.activeLobbyEvents.UnsubscribeAsync();
+			LobbyManager.Instance.activeLobbyEvents = null;
+			
+			UIManager.Instance.UpdateGameView(View.Gameplay);
+			
+			NetworkManager.Singleton.SceneManager.LoadScene(SceneHelper.Instance.mainGameplayScene.Name, LoadSceneMode.Single);
+			Debug.Log($"LobbyUI :: OnHostLobbyChanged :: Everyone is ready! Cancelling activeLobbyEvents and Loading Gameplay Scene");
 		}
-		// Debug.Log($"LobbyUI :: OnJoinLobbyChanged :: {NetworkManager.Singleton.SceneManager.ActiveSceneSynchronizationEnabled}");
-		//sceneView.SetJoinLobbyPlayers(updatedLobby.Players);
 	}
 
-	public void LeaveLobby()
+	private async Task OnClientLobbyChanged(Lobby updatedLobby, bool isGameReady)
 	{
-		Toggle(false); 
-		Debug.Log($"This player left the Lobby and returned to main menu");
-	}
+		if (isGameReady)
+		{
+			await LobbyManager.Instance.activeLobbyEvents.UnsubscribeAsync();
+			LobbyManager.Instance.activeLobbyEvents = null;			
+			
+			UIManager.Instance.UpdateGameView(View.Gameplay);
 
+			Debug.Log($"LobbyUI :: OnJoinLobbyChanged :: Everyone is ready! Cancelling activeLobbyEvents and Loading Gameplay Scene");
+		}
+	}
 
 	public void Toggle(bool activeState, string lobbyCode, string lobbyTittle)
 	{

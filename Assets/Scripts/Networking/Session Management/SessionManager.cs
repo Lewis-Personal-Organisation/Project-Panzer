@@ -12,6 +12,7 @@ using Unity.Networking.Transport;
 using Unity.Services.Lobbies.Models;
 using Unity.Services.Relay;
 using System.Collections;
+using UnityEngine.Events;
 
 public class SessionManager : Singleton<SessionManager>
 {
@@ -21,7 +22,7 @@ public class SessionManager : Singleton<SessionManager>
 	public PlayerInfoData playerInfo;
 	public bool networkManagerInitialised = true;
 	private bool IsNetworkReady => UnityServices.State == ServicesInitializationState.Initialized && AuthenticationService.Instance.IsSignedIn;
-
+	[SerializeField] public UnityEvent OnAuthenticated; 
 
 	[System.Serializable]
 	public class PlayerInfoData
@@ -35,6 +36,11 @@ public class SessionManager : Singleton<SessionManager>
 	{
 		base.Awake();
 		//GameSave.PrintPrefix();
+	}
+
+	private void Start()
+	{
+		DontDestroyOnLoad(this.gameObject);
 	}
 
 	public async Task InitialiseUnityServices()
@@ -86,17 +92,41 @@ public class SessionManager : Singleton<SessionManager>
 			playerInfo = null;
 			Debug.Log($"Unity Relay :: Player session could not be refreshed and expired.");
 		};
-		AuthenticationService.Instance.SignedIn += () => Debug.Log($"Unity Relay :: Player Signed in. ID: {AuthenticationService.Instance.PlayerId}");
+		AuthenticationService.Instance.SignedIn += () =>
+		{
+			Debug.Log($"Unity Relay :: Player Signed in. ID: {AuthenticationService.Instance.PlayerId}");
+			OnAuthenticated?.Invoke();
+		};
 
 		try
 		{
 			await AuthenticationService.Instance.SignInAnonymouslyAsync();
+			if (this == null)
+				return;
+			
 			playerInfo = new PlayerInfoData
 			{
 				creationTime = AuthenticationService.Instance.PlayerInfo.CreatedAt,
 				ID = AuthenticationService.Instance.PlayerInfo.Id,
 				username = AuthenticationService.Instance.PlayerInfo.Username
 			};
+			
+			await CloudSaveManager.Instance.LoadAndCacheData();
+			if (this == null)
+				return;
+			
+			string cloudSavePlayerName = CloudSaveManager.Instance.playerStats.playerName;
+
+			if (string.IsNullOrEmpty(cloudSavePlayerName))
+			{
+				Debug.Log($"No Player Name found! Saving Player Name as '{GameSave.PlayerName}' to Cloud");
+				await CloudSaveManager.Instance.SetPlayerName(GameSave.PlayerName);
+			}
+			else
+			{
+				Debug.Log($"Found Player Name '{cloudSavePlayerName}' from Cloud");
+			}
+			if (this == null) return;
 		}
 		catch (Exception e)
 		{

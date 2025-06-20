@@ -9,63 +9,63 @@ public class EditorMenu : MonoBehaviour
 {
 	private static EditorCoroutine screenshotHost = null;
 
-
 	[MenuItem("Screenshots/Take Screenshot (Game View)")]
 	private static void ScreenshotGameView()
 	{
-		string folderPath = Application.dataPath + "/Screenshots/";
-		string shotName = $"Screenshot {System.DateTime.Now.ToString("dd-MM-yyyy-HH-mm-ss")}.png";
-
 		if (screenshotHost != null)
 		{
 			Debug.Log($"A Screenshot is currently in progress. Returning...");
 			return;
 		}
 
-		if (!System.IO.Directory.Exists(folderPath)) // if this path does not exist yet
-			System.IO.Directory.CreateDirectory(folderPath);  // it will get created
+		string folderPath = Application.dataPath + "/Screenshots/";
+		string screenshotName = $"Screenshot {System.DateTime.Now.ToString("dd-MM-yyyy-HH-mm-ss")}.png";
+
+		// Create Dir if it doesn't exist
+		if (!System.IO.Directory.Exists(folderPath))						
+			System.IO.Directory.CreateDirectory(folderPath); 
 
 		Debug.Log($"Capturing Screenshot...");
-		ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(folderPath, shotName), 1); // takes the sceenshot, the "2" is for the scaled resolution, you can put this to 600 but it will take really long to scale the image up
-		screenshotHost = EditorCoroutineUtility.StartCoroutine(GetTextureFromPNG(System.IO.Path.Combine(folderPath, shotName)), Camera.main.gameObject);
+		ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(folderPath, screenshotName), 1); // takes the sceenshot, the "2" is for the scaled resolution, you can put this to 600 but it will take really long to scale the image up
+		screenshotHost = EditorCoroutineUtility.StartCoroutine(GetTextureFromPNG(System.IO.Path.Combine(folderPath, screenshotName), 10F), Camera.main.gameObject);
 	}
 
-	private static IEnumerator GetTextureFromPNG(string filePath)
+	private static IEnumerator GetTextureFromPNG(string filePath, float timeout)
 	{
+		float failTime = Time.time + timeout;
 		Debug.Log($"Waiting until Screenshot is saved...");
-		yield return new WaitUntil(() => System.IO.File.Exists(filePath));
-		Debug.Log($"Found Screenshot. Downloading Texture...");
-		Texture2D tex;
 
-		using (UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(filePath))
+		while (Time.time < failTime)
 		{
-			yield return uwr.SendWebRequest();
+			if (!System.IO.File.Exists(filePath))
+				yield return null;
 
-			if (uwr.result != UnityWebRequest.Result.Success)
+			Debug.Log($"Found Screenshot. Downloading Texture...");
+			Texture2D tex;
+
+			using (UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(filePath))
 			{
-				Debug.Log(uwr.error);
-				yield break;
+				yield return uwr.SendWebRequest();
+
+				if (uwr.result != UnityWebRequest.Result.Success)
+				{
+					Debug.Log(uwr.error);
+					yield break;
+				}
+				else
+				{
+					// Get downloaded texture
+					tex = DownloadHandlerTexture.GetContent(uwr);
+				}
 			}
-			else
-			{
-				// Get downloaded asset bundle
-				tex = DownloadHandlerTexture.GetContent(uwr);
-			}
+
+			byte[] bytes = tex.EncodeToPNG();
+			System.IO.File.WriteAllBytes(filePath, bytes);
+			Debug.Log($"File complete. Path: {filePath}");
+			AssetDatabase.Refresh();
+			screenshotHost = null;
 		}
-
-		byte[] bytes = tex.EncodeToPNG();
-		System.IO.File.WriteAllBytes(filePath, bytes);
-		Debug.Log($"File complete. Path: {filePath}");
-		AssetDatabase.Refresh();
-		screenshotHost = null;
 	}
-
-	//private static IEnumerator WaitForCaptureGeneration(string filePath)
-	//{
-	//	yield return new WaitUntil(() => System.IO.File.Exists(filePath));
-	//	AssetDatabase.Refresh();
-	//	Screenshot = null;
-	//}
 
 	[MenuItem("Game Data/Reset Player Name")]
 	private static void ResetPlayerPrefs()

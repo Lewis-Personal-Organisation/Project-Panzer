@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
+using UnityEngine.Serialization;
 using UnityEngine.Timeline;
 
 
@@ -21,8 +23,11 @@ namespace MiniTanks
         [Header("Color offset")]
         [Range(1, 12)]
         public int teamColor = 1;
+        [FormerlySerializedAs("vehicleData")]
+        [FormerlySerializedAs("vehicleGameplayData")]
         [Header("Tank Parameters")]
-        public float Speed = 10.0f;
+        public VehicleGameplayData data;
+        float speed => MovementInputValue >= 0 ? data.forwardSpeed : data.backwardSpeed;
         public float TurnSpeed = 180.0f;
         public float turretSpeed = 240.0f;
         public float trackMultiplier = 0.75f;
@@ -48,6 +53,7 @@ namespace MiniTanks
         private float isForward = 0.0f;
 
         private Renderer[] paintMaterials;
+        
 
 
         // Start is called before the first frame update
@@ -84,7 +90,7 @@ namespace MiniTanks
             TurnInputValue = Input.GetAxis("Horizontal");
 
             // Set track offset to match the movement
-            trackOffset += MovementInputValue * Speed * Time.deltaTime * trackMultiplier;
+            trackOffset += MovementInputValue * speed * Time.deltaTime * trackMultiplier;
             trackOffset %= 1.0f;
             trackMaterial.SetFloat("_TrackOffset", trackOffset);
 
@@ -118,24 +124,39 @@ namespace MiniTanks
 
         private void FixedUpdate()
         {
-            // move tank
-            Vector3 movement = MovementInputValue * Speed * Time.deltaTime * transform.forward;
-            Rigidbody.MovePosition(Rigidbody.position + movement);
-
-            // rotate tank
-            float turn = TurnInputValue * TurnSpeed * Time.deltaTime;
-            Quaternion turnRotation = Quaternion.Euler(0f, turn, 0f);
+            // Rotate tank
+            float yRotation = TurnInputValue * TurnSpeed * Time.deltaTime;
+            Quaternion turnRotation = Quaternion.Euler(0f, yRotation, 0f);
             Rigidbody.MoveRotation(Rigidbody.rotation * turnRotation);
 
-            // rotate turret
+            // Move Tank with/without neutral steering influence
+            if (data.neutralSteeringInfluence <= 0)
+            {
+                Rigidbody.MovePosition(Rigidbody.position + MovementInputValue * speed * Time.deltaTime * transform.forward);
+            }
+            else
+            {
+                float inputSpeed = MovementInputValue * speed; // The input speed, no delta
+
+                // If turning and input speed is more than neutral steer speed force neutral steering speed. Else, use input speed
+                if (yRotation is < 0.0f or > 0.0F && Mathf.Abs(inputSpeed) < data.neutralSteeringInfluence)
+                {
+                    Rigidbody.MovePosition(Rigidbody.position + data.neutralSteeringInfluence * Time.deltaTime * transform.forward);
+                }
+                else if (Mathf.Abs(inputSpeed) > data.neutralSteeringInfluence)
+                {
+                    Rigidbody.MovePosition(Rigidbody.position + inputSpeed * Time.deltaTime * transform.forward);
+                }
+            }
+
+            // Rotate turret
             targetPosition = hullBoneTransform.worldToLocalMatrix.MultiplyPoint(targetPosition);
             targetPosition.y = 0f;
             Quaternion rotTarget = Quaternion.LookRotation(targetPosition);
             turretTransform.localRotation = Quaternion.RotateTowards(turretTransform.localRotation, rotTarget, Time.deltaTime * turretSpeed);
 
-            // hull lean
+            // Hull lean
             targetHullLean = -TurnInputValue * HMaxLean;
-
             actHullLean = Mathf.Lerp(actHullLean, targetHullLean, Time.deltaTime * HleanSpeed);
             actHullForwardLean = Mathf.Lerp(actHullForwardLean, targetHullForwardLean, Time.deltaTime * VleanSpeed);
 
@@ -143,7 +164,6 @@ namespace MiniTanks
             { targetHullForwardLean = 0.0f; }
 
             hullBoneTransform.localRotation = Quaternion.Euler(actHullForwardLean, 0, actHullLean * MovementInputValue);
-
         }
     }
 }

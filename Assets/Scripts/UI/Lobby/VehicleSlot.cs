@@ -30,13 +30,11 @@ public class VehicleSlot : MonoBehaviour
 		{
 			VehicleLobbyData vData = VehicleData.GetLobbyItem(index);
 
-			//Debug.Log($"Loading {vData.name}. Vehicle Select button is null? {vehicleSelectButton == null}");
 			// Will be null if this script is within a Player Slot
 			if (vehicleSelectButton != null)
 			{
 				vehicleSelectButton.gameObject.SetActive(true);
 				vehicleSelectButton.onClick.AddListener(OnVehicleClicked);
-				//Debug.Log($"Assigned Listener");
 			}
 
 			this.vehicleNameText.text = vData.name;

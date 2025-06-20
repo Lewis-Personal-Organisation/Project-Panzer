@@ -9,10 +9,31 @@ using UnityEngine;
 public class RemoteConfigManager : Singleton<RemoteConfigManager>
 {
     public SettingsConfig settings { get; private set; }
-
-    void Awake()
+    public SettingsConfig vSettings;
+    
+    public bool isInitialized { get; private set; }
+    
+    private new void Awake()
     {
         base.Awake();
+        DontDestroyOnLoad(this);
+    }
+
+    public async void Setup()
+    {
+        try
+        {
+            if (this == null) return;
+            await FetchConfigs();
+            
+            if (this == null) return;
+            
+            isInitialized = true;
+        }
+        catch (Exception e)
+        {
+            Debug.LogException(e);
+        }
     }
 
     public async Task FetchConfigs()
@@ -48,16 +69,18 @@ public class RemoteConfigManager : Singleton<RemoteConfigManager>
 
     void GetConfigValues()
     {
-        var multiplayerGameConfigJson = RemoteConfigService.Instance.appConfig.GetJson("MULTIPLAYER_GAME_SETTINGS");
-        settings = JsonUtility.FromJson<SettingsConfig>(multiplayerGameConfigJson);
-
+        var configJson = RemoteConfigService.Instance.appConfig.GetJson("MULTIPLAYER_GAME_SETTINGS");
+        Debug.Log(configJson);
+        settings = JsonUtility.FromJson<SettingsConfig>(configJson);
+        vSettings = settings;
+        
         Debug.Log($"Read Remote Config settings: {settings}");
     }
 
-    void OnDestroy()
-    {
-        Instance.OnDestroy();
-    }
+    // void OnDestroy()
+    // {
+    //     Instance?.OnDestroy();
+    // }
 
     struct UserAttributes
     {

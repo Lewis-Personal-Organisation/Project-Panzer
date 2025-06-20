@@ -3,6 +3,7 @@ using UnityEngine;
 
 public class UIManager : Singleton<UIManager>
 {
+	public static View GameView { private set; get; }
 	[SerializeField] private MainMenuUI mainMenu;
 	[SerializeField] private LobbySetupUI lobbySetup;
 	[SerializeField] private LobbyUI lobby;
@@ -19,6 +20,18 @@ public class UIManager : Singleton<UIManager>
 	{
 		previousGameResults = results;
 		arePreviousGameResultsSet = true;
+	}
+
+	/// <summary>
+	/// Update the Game View state
+	/// </summary>
+	/// <param name="view"></param>
+	public void UpdateGameView(View view)
+	{
+		if (view == View.None)
+			return;
+		
+		GameView = view;
 	}
 	
 	
