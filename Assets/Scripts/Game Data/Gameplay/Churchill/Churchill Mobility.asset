@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 488e81b4017096f4f8a2f07f7c5b15fd, type: 3}
+  m_Name: Churchill Mobility
+  m_EditorClassIdentifier: 
+  acceleration: 0.4
+  <forwardSpeed>k__BackingField: 16.8
+  <backwardSpeed>k__BackingField: 7
+  <neutralSteeringInfluence>k__BackingField: 2
+  TurnSpeed: 60.5
+  turretSpeed: 151.1
+  trackMultiplier: 0.75
+  HleanSpeed: 4.61
+  VleanSpeed: 4.53
+  HMaxLean: 4
+  VMaxLean: 6

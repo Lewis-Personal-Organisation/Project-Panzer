@@ -1,3 +1,4 @@
+using MiniTanks;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -7,8 +8,7 @@ public class TankClipWeapon : TankWeaponController
     [SerializeField] private int shellsInClip;
     [SerializeField] private float shotDelayTime;
     [SerializeField] private float shotDelayTimer;
-    
-    
+
     private void Awake()
     {
         shellPool = new ObjectPool<TankShell>(
@@ -16,7 +16,7 @@ public class TankClipWeapon : TankWeaponController
             shell =>
             {
                 shell.Respawn();
-                Reset();
+                ResetWeapon();
                 shellsInClip--;
             },
             shell => shell.Despawn(),
@@ -25,7 +25,7 @@ public class TankClipWeapon : TankWeaponController
             initPoolSize,
             20);
         
-        Reset();
+        ResetWeapon();
     }
     
     public override void Fire()
@@ -64,7 +64,7 @@ public class TankClipWeapon : TankWeaponController
         }
     }
 
-    public override void Reset()
+    public override void ResetWeapon()
     {
         reloadTimer = tankWeapon.reloadTime;        // Reset this for balance purposes
         shotDelayTimer = shotDelayTime;

@@ -11,7 +11,7 @@ public class TankSingleShotWeapon : TankWeaponController
             shell =>
             {
                 shell.Respawn();
-                Reset();
+                ResetWeapon();
             },
             shell => shell.Despawn(),
             shell => Destroy(shell.gameObject),
@@ -19,7 +19,7 @@ public class TankSingleShotWeapon : TankWeaponController
             initPoolSize,
             20);
         
-        Reset();
+        ResetWeapon();
     }
     
     public override void Fire()
@@ -36,7 +36,7 @@ public class TankSingleShotWeapon : TankWeaponController
             reloadTimer -= Time.deltaTime;
     }
 
-    public override void Reset()
+    public override void ResetWeapon()
     {
         reloadTimer = tankWeapon.reloadTime;
     }

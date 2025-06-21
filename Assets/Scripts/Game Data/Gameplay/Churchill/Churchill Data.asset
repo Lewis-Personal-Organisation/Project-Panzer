@@ -10,16 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5186b7a05db361c419869e685820e300, type: 3}
-  m_Name: Churchill
+  m_Name: Churchill Data
   m_EditorClassIdentifier: 
   name: Churchill
   type: 1
-  <tankWeapon>k__BackingField: {fileID: 11400000, guid: 4b01a56eb4ce8da4dbf4d6360d452f18, type: 2}
-  turretRotationSpeed: 20
-  frontThickness: 80
-  sideThickness: 50
-  rearThickness: 35
-  acceleration: 0.4
-  <forwardSpeed>k__BackingField: 16.8
-  <backwardSpeed>k__BackingField: 7
-  <neutralSteeringInfluence>k__BackingField: 2
+  <weapon>k__BackingField: {fileID: 11400000, guid: 4b01a56eb4ce8da4dbf4d6360d452f18, type: 2}
+  <mobility>k__BackingField: {fileID: 11400000, guid: 69762a4f1512cb6488440afe9a287bb4, type: 2}
+  <armour>k__BackingField: {fileID: 11400000, guid: 0900cfc48731c544ebf5465185d208d4, type: 2}
