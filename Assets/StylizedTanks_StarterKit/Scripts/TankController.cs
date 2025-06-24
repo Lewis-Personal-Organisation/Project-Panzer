@@ -44,16 +44,12 @@ namespace MiniTanks
         private float isForward = 0.0f;
 
         private Renderer[] paintMaterials;
-
-        private void Reset()
-        {
-            if (hullRigidbody == null)
-                hullRigidbody = GetComponent<Rigidbody>();
-        }
+        
 
         // Start is called before the first frame update
         void Start()
         {
+            hullRigidbody = GetComponent<Rigidbody>();
             trackMaterial = trackTransform.GetComponent<Renderer>().material;
             
             // Get and Set the materials ColorOffset
@@ -101,19 +97,18 @@ namespace MiniTanks
             }
 
             // Set the material offset when a numerical key pressed
-            if (Input.inputString != "")
-            {
-                int number;
-                bool isNumber = Int32.TryParse(Input.inputString, out number);
-                if (isNumber && number >= 1 && number < 10)
-                {
-                    foreach (Renderer renderer in paintMaterials)
-                    {
-                        renderer.material.SetFloat("_ColorOffset", (number - 1));
-                    }
-                }
-            }
-
+            // if (Input.inputString != "")
+            // {
+            //     int number;
+            //     bool isNumber = Int32.TryParse(Input.inputString, out number);
+            //     if (isNumber && number >= 1 && number < 10)
+            //     {
+            //         foreach (Renderer renderer in paintMaterials)
+            //         {
+            //             renderer.material.SetFloat("_ColorOffset", (number - 1));
+            //         }
+            //     }
+            // }
         }
 
         private void FixedUpdate()

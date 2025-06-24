@@ -9,8 +9,8 @@ using UnityEngine.Serialization;
 public class ProjectileTest : MonoBehaviour
 {
     public Transform shellVisuals;
-    [FormerlySerializedAs("debugVisuals")] public Transform shellGuiderTR;
-    [FormerlySerializedAs("ProjectileTip")] public Transform projectileTip;
+    public Transform shellGuiderTR;
+    public Transform projectileTip;
     public float moveSpeed;
     public float projectileRotationSpeed = 5;
     public LayerMask terrainHitMask;

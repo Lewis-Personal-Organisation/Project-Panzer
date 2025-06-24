@@ -4,7 +4,7 @@ using UnityEngine.Pool;
 
 public class TankSingleShotWeapon : TankWeaponController
 {
-    private void Awake()
+    private void Start()
     {
         shellPool = new ObjectPool<TankShell>(
             () => Instantiate(tankWeapon.shellPrefab).Setup(this),
@@ -18,7 +18,7 @@ public class TankSingleShotWeapon : TankWeaponController
             false,
             initPoolSize,
             20);
-        
+
         ResetWeapon();
     }
     

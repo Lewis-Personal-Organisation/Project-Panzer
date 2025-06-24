@@ -9,7 +9,7 @@ public class TankClipWeapon : TankWeaponController
     [SerializeField] private float shotDelayTime;
     [SerializeField] private float shotDelayTimer;
 
-    private void Awake()
+    private void Start()
     {
         shellPool = new ObjectPool<TankShell>(
             () => Instantiate(tankWeapon.shellPrefab).Setup(this),

@@ -13,8 +13,14 @@ public abstract class TankWeaponController : MonoBehaviour
     [field: SerializeField] public ObjectPool<TankShell> shellPool { get; protected set; }
     [field: SerializeField] public Transform shellSpawnPoint {get; private set;}
     [SerializeField] protected float reloadTimer = 0;
+
     
-    
+    private void Awake()
+    {
+        if (tankController == null)
+            tankController = GetComponent<TankController>();
+    }
+
     private void Update()
     {
         if (Input.GetMouseButtonDown(0))
@@ -28,14 +34,4 @@ public abstract class TankWeaponController : MonoBehaviour
     public abstract void Fire();
     public abstract void Reload();
     public abstract void ResetWeapon();
-
-    /// <summary>
-    /// Called when this component is added to a gameobject.
-    /// With RequireComponent attribute above, ensures we always have reference to the correct Tank Controller
-    /// </summary>
-    private void Reset()
-    {
-        if (tankController == null)
-            tankController = GetComponent<TankController>();
-    }
 }
