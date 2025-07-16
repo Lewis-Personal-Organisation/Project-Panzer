@@ -9,8 +9,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7887288964081754851}
-  - component: {fileID: -3166400678120459460}
-  m_Layer: 0
+  - component: {fileID: 8715662910180380020}
+  m_Layer: 7
   m_Name: Shell
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -34,7 +34,7 @@ Transform:
   - {fileID: 5843174215792156783}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &-3166400678120459460
+--- !u!114 &8715662910180380020
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -46,14 +46,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10d4f391de0b35f42af41fe4ea12d4e3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  velocity: 15
+  networkObject: {fileID: 4771943817928738960}
   lifetime: 10
-  lifetimeTimer: 0
   trailRenderer: {fileID: 5465372071143477761}
+  velocity: 15
   shellVisuals: {fileID: 5843174215792156783}
   shellGuiderTR: {fileID: 6916389090894792822}
   projectileTip: {fileID: 5647791181036810834}
-  projectileRotationSpeed: 50
+  projectileRotationSpeed: 100
   rotationDetectionMask:
     serializedVersion: 2
     m_Bits: 8
@@ -99,6 +99,7 @@ GameObject:
   - component: {fileID: 5843174215792156783}
   - component: {fileID: 9001468528629114082}
   - component: {fileID: 3515887239797472959}
+  - component: {fileID: 4771943817928738960}
   m_Layer: 0
   m_Name: Shell Visuals
   m_TagString: Untagged
@@ -174,6 +175,27 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &4771943817928738960
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4828798087746008397}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 2796275016
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
 --- !u!1 &5064919033797377565
 GameObject:
   m_ObjectHideFlags: 0
@@ -323,7 +345,7 @@ TrailRenderer:
     textureScale: {x: 1, y: 1}
     shadowBias: 0.5
     generateLightingData: 0
-  m_MinVertexDistance: 1
+  m_MinVertexDistance: 0.5
   m_MaskInteraction: 0
   m_Autodestruct: 0
   m_Emitting: 0
@@ -421,7 +443,8 @@ GameObject:
   m_Component:
   - component: {fileID: 8887940534307136810}
   - component: {fileID: 4396912872771687290}
-  m_Layer: 0
+  - component: {fileID: 1446159588062704649}
+  m_Layer: 7
   m_Name: Collision
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -458,7 +481,7 @@ CapsuleCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
@@ -466,3 +489,30 @@ CapsuleCollider:
   m_Height: 0.58
   m_Direction: 2
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!54 &1446159588062704649
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8697347286172734158}
+  serializedVersion: 4
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0

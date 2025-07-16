@@ -28,9 +28,8 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
     int m_LastGameTimerShown;
     [SerializeField] RemoteConfigManager.PlayerOptionsConfig m_PlayerOptions;
     
-    [SerializeField] float playerMinRadius = 1.5f;
-    [SerializeField] float playerRadiusIncreasePerPlayer = 1;
-    [SerializeField] PlayerAvatar[] playerAvatarPrefabs;
+    [SerializeField] private PlayerAvatar[] playerAvatarPrefabs;
+    [SerializeField] private CameraController playerCameraPrefab;
     [field: SerializeField] public NetworkObject networkObject { get; private set; }
     
     // The host is always the first connected client in the Network Manager.
@@ -175,6 +174,7 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
     [ClientRpc]
     void UpdateCountdownClientRpc(int seconds)
     {
+        Debug.Log($"GameplayNetworkManager :: UpdateCountdownClientRpc [ClientRpc] :: Countdown Timer {seconds}");
         GameplaySceneManager.Instance?.SetCountdown(seconds);
 
         if (seconds <= 0)
@@ -198,7 +198,8 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
 
         if (localPlayerAvatar != null)
         {
-            localPlayerAvatar.AllowMovement();
+            Debug.Log($"GameplayNetworkManager :: StartPlayingGame() :: Timer complete, enabling player control");
+            localPlayerAvatar.vehicleController.enabled = true;
         }
     }
     
@@ -247,21 +248,31 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
         quaternion rot = GameplaySceneManager.Instance.spawnPoints[playerIndex].rotation;
         
         Debug.Log($"GameplayNetworkManager :: SpawnPlayer => Spawning Player with ID {playerIndex}");
-        var playerAvatar = GameObject.Instantiate(playerAvatarPrefabs[playerIndex], pos, rot);
+        PlayerAvatar playerAvatar = GameObject.Instantiate(playerAvatarPrefabs[playerIndex], pos, rot);
+        playerAvatar.gameObject.name = playerAvatarPrefabs[playerIndex].name;           // Remove clone from name field
 
         playerAvatar.networkObject.SpawnWithOwnership(relayClientId);
 
         playerAvatar.SetPlayerAvatarClientRpc(playerIndex, GetPlayerID(playerIndex), GetPlayerName(playerIndex), relayClientId);
+        
+        playerAvatar.vehicleController.Setup();
+    }
+
+    public void SpawnPlayerCamera()
+    {
+        CameraController playerCam = GameObject.Instantiate(playerCameraPrefab);
+        playerCam.transform.position = localPlayerAvatar.transform.position;
     }
     
     public void AddPlayerAvatar(PlayerAvatar playerAvatar, bool isLocalPlayer)
     {
         playerAvatars.Add(playerAvatar);
+    }
 
-        if (isLocalPlayer)
-        {
-            localPlayerAvatar = playerAvatar;
-        }
+    public void SetLocalAvatar(PlayerAvatar playerAvatar)
+    {
+        localPlayerAvatar = playerAvatar;
+        localPlayerAvatar.gameObject.name += " (Local Player)";
     }
     
     void InitializeGame()

@@ -1,23 +1,29 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Serialization;
 
 public class TankShell : MonoBehaviour
 {
-    private TankWeaponController controller;
-    [FormerlySerializedAs("shellVelocity")] [SerializeField] private float velocity;
-    [FormerlySerializedAs("duration")] [SerializeField] private float lifetime;
-    [FormerlySerializedAs("durationTimer")] [SerializeField] private float lifetimeTimer;
+    internal TankWeaponController controller;
+    [SerializeField] private NetworkObject networkObject;
+    public bool IsOwner => networkObject.IsOwner;
+    
+    
+    [Header("Lifetime")]
+    [SerializeField] private float lifetime;
+    private float lifetimeTimer;
     [SerializeField] private TrailRenderer trailRenderer;
 	
-    [Header("Shell Guide")]
+    [Header("Movement and Rotation")]
+    [SerializeField] private float velocity;
 	public Transform shellVisuals;
 	public Transform shellGuiderTR;
 	public Transform projectileTip;
 	public float projectileRotationSpeed = 5;
-	[FormerlySerializedAs("terrainHitMask")] public LayerMask rotationDetectionMask;
+	public LayerMask rotationDetectionMask;
 
 
 	public TankShell Setup(TankWeaponController controller)
@@ -58,7 +64,7 @@ public class TankShell : MonoBehaviour
         shellGuiderTR.transform.position = controller.shellSpawnPoint.transform.position;
         shellGuiderTR.transform.rotation = controller.shellSpawnPoint.transform.rotation;
         AdjustAngleToGround();
-        this.gameObject.SetActive(true);
+        this.transform.root.gameObject.SetActive(true);
     }
 
     /// <summary>
@@ -68,7 +74,7 @@ public class TankShell : MonoBehaviour
     {
 	    trailRenderer.emitting = false;
 	    trailRenderer.Clear();
-        this.gameObject.SetActive(false);
+	    this.transform.root.gameObject.SetActive(false);
     }
 
     /// <summary>
@@ -78,7 +84,7 @@ public class TankShell : MonoBehaviour
 	{
 		if (!Physics.Raycast(projectileTip.position, Vector3.down, out RaycastHit hit, Mathf.Infinity, rotationDetectionMask.value))
 		{
-			Debug.DrawLine(projectileTip.position, projectileTip.position + Vector3.down * Mathf.Infinity, Color.red, Time.deltaTime);
+			// Debug.DrawLine(projectileTip.position, projectileTip.position + Vector3.down * Mathf.Infinity, Color.red, Time.deltaTime);
 			return;
 		}
 

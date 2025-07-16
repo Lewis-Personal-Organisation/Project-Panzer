@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Serialization;
@@ -10,9 +11,10 @@ using UnityEngine.Timeline;
 namespace MiniTanks
 {
     [RequireComponent(typeof(Rigidbody))]
-    public class TankController : MonoBehaviour
+    public class TankController : NetworkBehaviour
     {
-        public Camera viewCamera;
+        // public NetworkVariable<Vector3> Position = new NetworkVariable<Vector3>();
+        [FormerlySerializedAs("viewCamera")] public CameraController cameraController;
 
         [Header("Tank parts")]
         public Transform hullBoneTransform;
@@ -23,35 +25,48 @@ namespace MiniTanks
         [Header("Color offset")]
         [Range(1, 12)]
         public int teamColor = 1;
-        [FormerlySerializedAs("vehicleData")]
-        [FormerlySerializedAs("vehicleGameplayData")]
         [Header("Tank Parameters")]
-        public VehicleGameplayData data;
-        float speedMulti => MovementInputValue >= 0 ? data.mobility.forwardSpeed : data.mobility.backwardSpeed;
+        [SerializeField] public VehicleType type;
+        public TankMobility data;
+        float speedMulti => forwardInputValue >= 0 ? data.forwardSpeed : data.backwardSpeed;
+        private float inputSpeed;
+        
+        [SerializeField] private Material trackMaterial;
+        [SerializeField] private Rigidbody hullRigidbody;
 
-        private Material trackMaterial;
-        private Rigidbody hullRigidbody;
-
-        private float MovementInputValue = 0.0f;
-        private float TurnInputValue = 0.0f;
+        private float forwardInputValue = 0.0f;
+        private float turnInputValue = 0.0f;
         private Vector3 targetPosition;
 
         private float trackOffset = 0.0f;
         private float targetHullLean = 0.0f;
         private float actHullLean = 0.0f;
         private float targetHullForwardLean = 0.0f;
+        [SerializeField] private float restingHullVertLean;
         private float actHullForwardLean = 0.0f;
         private float isForward = 0.0f;
 
         private Renderer[] paintMaterials;
+
+        public float testforce;
         
 
-        // Start is called before the first frame update
-        void Start()
+        private void Awake()
         {
-            hullRigidbody = GetComponent<Rigidbody>();
-            trackMaterial = trackTransform.GetComponent<Renderer>().material;
+            Setup();
+        }
+
+        // Start is called before the first frame update
+        public void Setup()
+        {
+            Debug.Log($"TankController :: Setup :: Are we host? {base.IsHost}");
+            // viewCamera = Camera.main;
             
+            if (!hullRigidbody)
+                hullRigidbody = GetComponent<Rigidbody>();
+            
+            trackMaterial = trackTransform.GetComponent<Renderer>().material;
+
             // Get and Set the materials ColorOffset
             paintMaterials = transform.GetComponentsInChildren<Renderer>();
 
@@ -65,76 +80,98 @@ namespace MiniTanks
         void Update()
         {
             // Hit the scene for target position
-            Ray screenRay = viewCamera.ScreenPointToRay(Input.mousePosition);
-            RaycastHit hit;
-            if (Physics.Raycast(screenRay, out hit))
+            Ray screenRay = cameraController.camera.ScreenPointToRay(Input.mousePosition);
+            
+            if (Physics.Raycast(screenRay, out RaycastHit hit))
             {
                 targetPosition = hit.point;
             }
-
+            
             // move the target object to the hit position
             targetTransform.position = targetPosition;
-
+            
             // Get input values for movement
-            MovementInputValue = Input.GetAxis("Vertical");
-            TurnInputValue = Input.GetAxis("Horizontal");
-
+            forwardInputValue = Input.GetAxis("Vertical");
+            turnInputValue = Input.GetAxis("Horizontal");
+            
             // Set track offset to match the movement
-            trackOffset += MovementInputValue * speedMulti * Time.deltaTime * data.mobility.trackMultiplier;
+            trackOffset += forwardInputValue * speedMulti * Time.deltaTime * data.trackMultiplier;
+            Debug.Log($"Speed: {forwardInputValue * speedMulti}");
             trackOffset %= 1.0f;
             trackMaterial.SetFloat("_TrackOffset", trackOffset);
-
+            
             // Lean the hull based on movement inputs
             if (Input.GetButtonDown("Vertical"))
             {
                 isForward = Input.GetAxisRaw("Vertical");
-                targetHullForwardLean = -data.mobility.VMaxLean * isForward;
+                targetHullForwardLean = -data.verticalMaxLean * isForward;
             }
-
+            
             if (Input.GetButtonUp("Vertical"))
             {
-                targetHullForwardLean = data.mobility.VMaxLean * isForward;
+                targetHullForwardLean = data.verticalMaxLean * isForward;
             }
-
-            // Set the material offset when a numerical key pressed
-            // if (Input.inputString != "")
-            // {
-            //     int number;
-            //     bool isNumber = Int32.TryParse(Input.inputString, out number);
-            //     if (isNumber && number >= 1 && number < 10)
-            //     {
-            //         foreach (Renderer renderer in paintMaterials)
-            //         {
-            //             renderer.material.SetFloat("_ColorOffset", (number - 1));
-            //         }
-            //     }
-            // }
         }
+
+        // [Rpc(SendTo.Server)]
+        // void SubmitPositionRequestRpc(RpcParams rpcParams = default)
+        // {
+        //     var randomPosition  = new Vector3(UnityEngine.Random.Range(-0.03f, 0.03f), 0, UnityEngine.Random.Range(-0.03f, 0.03f));
+        //     hullRigidbody.MovePosition(spawnPosition + randomPosition);
+        //     Position.Value = hullRigidbody.position;
+        // }
+        //
+        // [Rpc(SendTo.Server)]
+        // void SubmitRotationRequestRpc(RpcParams rpcParams = default)
+        // {
+        //     var randomPosition  = new Vector3(UnityEngine.Random.Range(-0.03f, 0.03f), 0, UnityEngine.Random.Range(-0.03f, 0.03f));
+        //     hullRigidbody.MovePosition(spawnPosition + randomPosition);
+        //     Position.Value = hullRigidbody.position;
+        // }
 
         private void FixedUpdate()
         {
-            // Rotate tank
-            float yRotation = TurnInputValue * data.mobility.TurnSpeed * Time.deltaTime;
-            Quaternion turnRotation = Quaternion.Euler(0f, yRotation, 0f);
-            hullRigidbody.MoveRotation(hullRigidbody.rotation * turnRotation);
-
-            // Move Tank with/without neutral steering influence
-            if (data.mobility.neutralSteeringInfluence <= 0)
+            if (NetworkManager != null)
             {
-                hullRigidbody.MovePosition(hullRigidbody.position + MovementInputValue * speedMulti * Time.deltaTime * transform.forward);
+                if (!IsOwner)
+                    return;
             }
             else
             {
-                float inputSpeed = MovementInputValue * speedMulti; // The input speed, no delta
+                // FIX FOR KINEMATIC BEING SET TRUE BY UNITY NETWORK
+                hullRigidbody.isKinematic = false;
+            }
+            
+            // Rotate tank
+            float yRotation = turnInputValue * data.TurnSpeed * Time.deltaTime;
+            Quaternion turnRotation = Quaternion.Euler(0f, yRotation, 0f);
+            hullRigidbody.MoveRotation(hullRigidbody.rotation * turnRotation);
+
+            inputSpeed = Mathf.MoveTowards(inputSpeed, forwardInputValue * speedMulti, data.speedChangeDelta * Time.deltaTime);
+            
+            // Move Tank with/without neutral steering influence
+            if (data.neutralSteeringInfluence <= 0)
+            {
+                Debug.Log($"Setting Velocity (NO NEUTRAL): {this.transform.forward * (inputSpeed * Time.deltaTime)}");
+                hullRigidbody.velocity = transform.forward * inputSpeed * testforce * Time.deltaTime;
+                // hullRigidbody.MovePosition(hullRigidbody.position + inputSpeed * Time.deltaTime * transform.forward);
+            }
+            else
+            {
+                // inputSpeed = movementInputValue * speedMulti; // The input speed, no delta
 
                 // If turning and input speed is more than neutral steer speed force neutral steering speed. Else, use input speed
-                if (yRotation is < 0.0f or > 0.0F && Mathf.Abs(inputSpeed) < data.mobility.neutralSteeringInfluence)
+                if (yRotation is < 0.0f or > 0.0F && Mathf.Abs(inputSpeed) < data.neutralSteeringInfluence)
                 {
-                    hullRigidbody.MovePosition(hullRigidbody.position + data.mobility.neutralSteeringInfluence * Time.deltaTime * transform.forward);
+                    Debug.Log($"Setting Velocity A: {this.transform.forward * (inputSpeed * Time.deltaTime)}");
+                    hullRigidbody.velocity = transform.forward * inputSpeed * testforce * Time.deltaTime;
+                    // hullRigidbody.MovePosition(hullRigidbody.position + data.neutralSteeringInfluence * Time.deltaTime * transform.forward);
                 }
-                else if (Mathf.Abs(inputSpeed) > data.mobility.neutralSteeringInfluence)
+                else if (Mathf.Abs(inputSpeed) > data.neutralSteeringInfluence)
                 {
-                    hullRigidbody.MovePosition(hullRigidbody.position + inputSpeed * Time.deltaTime * transform.forward);
+                    Debug.Log($"Setting Velocity B: {this.transform.forward * (inputSpeed * Time.deltaTime)}");
+                    hullRigidbody.velocity = transform.forward * inputSpeed * testforce * Time.deltaTime;
+                    // hullRigidbody.MovePosition(hullRigidbody.position + inputSpeed * Time.deltaTime * transform.forward);
                 }
             }
 
@@ -142,17 +179,21 @@ namespace MiniTanks
             targetPosition = hullBoneTransform.worldToLocalMatrix.MultiplyPoint(targetPosition);
             targetPosition.y = 0f;
             Quaternion rotTarget = Quaternion.LookRotation(targetPosition);
-            turretTransform.localRotation = Quaternion.RotateTowards(turretTransform.localRotation, rotTarget, Time.deltaTime * data.mobility.turretSpeed);
+            turretTransform.localRotation = Quaternion.RotateTowards(turretTransform.localRotation, rotTarget, Time.deltaTime * data.turretSpeed);
 
             // Hull lean
-            targetHullLean = -TurnInputValue * data.mobility.HMaxLean;
-            actHullLean = Mathf.Lerp(actHullLean, targetHullLean, Time.deltaTime * data.mobility.HleanSpeed);
-            actHullForwardLean = Mathf.Lerp(actHullForwardLean, targetHullForwardLean, Time.deltaTime * data.mobility.VleanSpeed);
+            targetHullLean = -turnInputValue * data.horizontalMaxLean;
+            actHullLean = Mathf.Lerp(actHullLean, targetHullLean, Time.deltaTime * data.horizontalLeanSpeed);
+            actHullForwardLean = Mathf.Lerp(actHullForwardLean, targetHullForwardLean, Time.deltaTime * data.verticalLeanSpeed);
 
             if (Mathf.Abs(actHullForwardLean) >= Mathf.Abs(targetHullForwardLean) - 1.0f)
-            { targetHullForwardLean = 0.0f; }
+            {
+                targetHullForwardLean = restingHullVertLean * -1;
+            }
 
-            hullBoneTransform.localRotation = Quaternion.Euler(actHullForwardLean, 0, actHullLean * MovementInputValue);
+            hullBoneTransform.localRotation = Quaternion.Euler(actHullForwardLean, 0, actHullLean * forwardInputValue);
+            
+            cameraController.inputValue = forwardInputValue;
         }
     }
 }

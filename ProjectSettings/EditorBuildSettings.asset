@@ -11,4 +11,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Gameplay.unity
     guid: 5fbe87066b4f971408609018adbe0723
+  - enabled: 1
+    path: Assets/Scenes/Projectile Movement/Projectile Movement.unity
+    guid: 98d50ce27f5c5774db3cc9dc321d0d52
   m_configObjects: {}

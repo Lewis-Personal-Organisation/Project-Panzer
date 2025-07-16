@@ -12,14 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 488e81b4017096f4f8a2f07f7c5b15fd, type: 3}
   m_Name: Churchill Mobility
   m_EditorClassIdentifier: 
-  acceleration: 0.4
+  acceleration: 0
+  <speedChangeDelta>k__BackingField: 18
   <forwardSpeed>k__BackingField: 16.8
   <backwardSpeed>k__BackingField: 7
   <neutralSteeringInfluence>k__BackingField: 2
   TurnSpeed: 60.5
   turretSpeed: 151.1
   trackMultiplier: 0.75
-  HleanSpeed: 4.61
-  VleanSpeed: 4.53
-  HMaxLean: 4
-  VMaxLean: 6
+  horizontalLeanSpeed: 4.61
+  verticalLeanSpeed: 4.53
+  horizontalMaxLean: 4
+  verticalMaxLean: 6

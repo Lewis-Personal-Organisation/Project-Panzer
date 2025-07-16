@@ -45,7 +45,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 3239340895
+  GlobalObjectIdHash: 3873063202
   InScenePlacedSourceGlobalObjectIdHash: 0
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
@@ -66,12 +66,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70f374a35deea124191abeacba74df31, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerMinRadius: 1.5
-  playerRadiusIncreasePerPlayer: 1
+  m_GameEndsTime: 3.4028235e+38
+  m_PlayerOptions:
+    players: 0
+    gameDuration: 0
+    initialSpawnDelay: 0
+    spawnInterval: 0
+    destroyInterval: 0
+    cluster1: 0
+    cluster2: 0
+    cluster3: 0
   playerAvatarPrefabs:
   - {fileID: 8066199893152834821, guid: a985a14ea77ffa9499a68e72353be759, type: 3}
   - {fileID: 8066199893152834821, guid: a985a14ea77ffa9499a68e72353be759, type: 3}
   - {fileID: 8066199893152834821, guid: a985a14ea77ffa9499a68e72353be759, type: 3}
   - {fileID: 8066199893152834821, guid: a985a14ea77ffa9499a68e72353be759, type: 3}
   - {fileID: 8066199893152834821, guid: a985a14ea77ffa9499a68e72353be759, type: 3}
+  playerCameraPrefab: {fileID: 7152439382088190353, guid: bc995d379784d524d85dfa1a9a6b7c47, type: 3}
   <networkObject>k__BackingField: {fileID: 6137588125434361003}

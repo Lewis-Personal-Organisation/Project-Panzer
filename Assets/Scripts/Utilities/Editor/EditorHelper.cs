@@ -42,4 +42,22 @@ public class EditorHelper : MonoBehaviour
             }
         }
     }
+    
+    [MenuItem("Scenes/Open Projectile Proto Scene", false, 1)]
+    private static void OpenProjectileProtoScene()
+    {
+        SceneHelper[] sceneHelpers = FindObjectsOfType(typeof(SceneHelper)) as SceneHelper[];
+
+        if (sceneHelpers is { Length: > 0 })
+        {
+            if (EditorApplication.isPlaying)
+            {
+                SceneManager.LoadScene(sceneHelpers[0].projectilePrototyping.Path);
+            }
+            else
+            {
+                EditorSceneManager.OpenScene(sceneHelpers[0].projectilePrototyping.Path);
+            }
+        }
+    }
 }

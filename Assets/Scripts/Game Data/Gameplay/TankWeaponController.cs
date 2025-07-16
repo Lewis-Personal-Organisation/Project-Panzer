@@ -7,12 +7,12 @@ using UnityEngine.Pool;
 [RequireComponent(typeof(TankController))]
 public abstract class TankWeaponController : MonoBehaviour
 {
-    protected TankWeapon tankWeapon => tankController.data.weapon;
+    [SerializeField] protected TankWeapon tankWeapon;
     [SerializeField] protected int initPoolSize;
     [field: HideInInspector] public TankController tankController { get; protected set; }
     [field: SerializeField] public ObjectPool<TankShell> shellPool { get; protected set; }
     [field: SerializeField] public Transform shellSpawnPoint {get; private set;}
-    [SerializeField] protected float reloadTimer = 0;
+    protected float reloadTimer = 0;
 
     
     private void Awake()

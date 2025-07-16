@@ -35,8 +35,6 @@ public class GameplaySceneManager : Singleton<GameplaySceneManager>
     public void SetCountdown(int seconds)
     {
         GameplaySceneManager.Instance.timer.text = $"{seconds}";
-        // sceneView.arenaUiOverlayPanelView.ShowCountdown();
-        // sceneView.arenaUiOverlayPanelView.SetCountdown(seconds);
     }
     
     // public void UpdateScores()

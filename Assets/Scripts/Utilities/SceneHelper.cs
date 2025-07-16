@@ -16,4 +16,5 @@ public class SceneHelper : Singleton<SceneHelper>
    
    [field: SerializeField] public SceneReference mainMenuScene { private set; get;}
    [field: SerializeField] public SceneReference mainGameplayScene { private set; get;}
+   [field: SerializeField] public SceneReference projectilePrototyping { private set; get;}
 }

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using MiniTanks;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -7,6 +8,8 @@ public class PlayerAvatar : NetworkBehaviour
 {
     [SerializeField] internal NetworkObject networkObject;
     [SerializeField] private Rigidbody rigidbody;
+    [SerializeField] internal TankController vehicleController;
+    [SerializeField] internal CameraController cameraController;
     
     bool m_IsMovementAllowed = false;
     
@@ -17,6 +20,13 @@ public class PlayerAvatar : NetworkBehaviour
     public int score { get; private set; }
     
     
+    /// <summary>
+    /// Called on all Clients to set up their Player Avatar
+    /// </summary>
+    /// <param name="playerIndex"></param>
+    /// <param name="playerId"></param>
+    /// <param name="playerName"></param>
+    /// <param name="relayClientId"></param>
     [ClientRpc]
     public void SetPlayerAvatarClientRpc(int playerIndex, string playerId, string playerName, ulong relayClientId)
     {
@@ -30,11 +40,27 @@ public class PlayerAvatar : NetworkBehaviour
 
         GameplayNetworkManager.Instance?.AddPlayerAvatar(this, IsOwner);
 
+        if (IsOwner)
+        {
+            GameplayNetworkManager.Instance?.SetLocalAvatar(this);
+            GameplayNetworkManager.Instance?.SpawnPlayerCamera();
+        }
+        
         Debug.Log($"Set player avatar for player #{playerIndex}: id:'{playerId}' name:'{playerName}' relay:{relayClientId}");
     }
-    
-    public void AllowMovement()
+
+    public override void OnNetworkSpawn()
     {
-        m_IsMovementAllowed = true;
+        if (!IsServer && IsOwner) //Only send an RPC to the server from the client that owns the NetworkObject of this NetworkBehaviour instance
+        {
+            Debug.Log("Spawned Player Avatar on Client. Sending message to server");
+            ServerOnlyRpc(0, NetworkObjectId);
+        }
+    }
+    
+    [Rpc(SendTo.Server)]
+    void ServerOnlyRpc(int value, ulong sourceNetworkObjectId)
+    {
+        Debug.Log($"Server Received the RPC #{value} on NetworkObject #{sourceNetworkObjectId}");
     }
 }
