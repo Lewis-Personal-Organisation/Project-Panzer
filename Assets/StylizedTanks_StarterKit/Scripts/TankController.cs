@@ -13,15 +13,16 @@ namespace MiniTanks
     [RequireComponent(typeof(Rigidbody))]
     public class TankController : NetworkBehaviour
     {
-        // public NetworkVariable<Vector3> Position = new NetworkVariable<Vector3>();
         [FormerlySerializedAs("viewCamera")] public CameraController cameraController;
 
         [Header("Tank parts")]
-        public Transform hullBoneTransform;
-        public Transform turretTransform;
-        public Transform trackTransform;
-        public Transform targetTransform;
-
+        [SerializeField] Transform hullBoneTransform;
+        [SerializeField] Transform turretTransform;
+        [SerializeField] Transform trackTransform;
+        [SerializeField] Transform targetTransform;
+        [SerializeField] private Transform movementCastPoint;
+        private readonly RaycastHit[] movementCastHit = new RaycastHit[1];
+        
         [Header("Color offset")]
         [Range(1, 12)]
         public int teamColor = 1;
@@ -37,18 +38,19 @@ namespace MiniTanks
         private float forwardInputValue = 0.0f;
         private float turnInputValue = 0.0f;
         private Vector3 targetPosition;
-
-        private float trackOffset = 0.0f;
+        private float yRotationDelta;
+        
+        [SerializeField] private float trackOffset = 0.0f;
         private float targetHullLean = 0.0f;
         private float actHullLean = 0.0f;
-        private float targetHullForwardLean = 0.0f;
+        [SerializeField] private float targetHullForwardLean = 0.0f;
         [SerializeField] private float restingHullVertLean;
         private float actHullForwardLean = 0.0f;
         private float isForward = 0.0f;
 
         private Renderer[] paintMaterials;
 
-        public float testforce;
+        private const float MOVE_FORCE_MULTIPLIER = 50F;
         
 
         private void Awake()
@@ -82,7 +84,7 @@ namespace MiniTanks
             // Hit the scene for target position
             Ray screenRay = cameraController.camera.ScreenPointToRay(Input.mousePosition);
             
-            if (Physics.Raycast(screenRay, out RaycastHit hit))
+            if (Physics.Raycast(screenRay, out RaycastHit hit, Mathf.Infinity, LayerMask.GetMask("Ground", "PlayerAimDetectable")))
             {
                 targetPosition = hit.point;
             }
@@ -96,7 +98,7 @@ namespace MiniTanks
             
             // Set track offset to match the movement
             trackOffset += forwardInputValue * speedMulti * Time.deltaTime * data.trackMultiplier;
-            Debug.Log($"Speed: {forwardInputValue * speedMulti}");
+            // Debug.Log($"Speed: {forwardInputValue * speedMulti}");
             trackOffset %= 1.0f;
             trackMaterial.SetFloat("_TrackOffset", trackOffset);
             
@@ -142,18 +144,34 @@ namespace MiniTanks
                 hullRigidbody.isKinematic = false;
             }
             
-            // Rotate tank
-            float yRotation = turnInputValue * data.TurnSpeed * Time.deltaTime;
-            Quaternion turnRotation = Quaternion.Euler(0f, yRotation, 0f);
-            hullRigidbody.MoveRotation(hullRigidbody.rotation * turnRotation);
+            yRotationDelta = turnInputValue * data.TurnSpeed * Time.deltaTime;
+            RotateTank();
+            MoveTank();
+            RotateTankTurret();
+            ApplyTankLean();
+            
+            cameraController.inputValue = forwardInputValue;
+        }
 
+        private void RotateTank()
+        {
+            Quaternion turnRotation = Quaternion.Euler(0f, yRotationDelta, 0f);
+            hullRigidbody.MoveRotation(hullRigidbody.rotation * turnRotation);
+        }
+
+        private void MoveTank()
+        {
+            // If no ground casts are found, dont move
+            if (Physics.RaycastNonAlloc(movementCastPoint.position, movementCastPoint.forward, movementCastHit, 0.03F, LayerMask.GetMask("Ground", "PlayerAimDetectable")) == 0)
+                return;
+            
             inputSpeed = Mathf.MoveTowards(inputSpeed, forwardInputValue * speedMulti, data.speedChangeDelta * Time.deltaTime);
             
             // Move Tank with/without neutral steering influence
             if (data.neutralSteeringInfluence <= 0)
             {
                 Debug.Log($"Setting Velocity (NO NEUTRAL): {this.transform.forward * (inputSpeed * Time.deltaTime)}");
-                hullRigidbody.velocity = transform.forward * inputSpeed * testforce * Time.deltaTime;
+                hullRigidbody.velocity = transform.forward * inputSpeed * MOVE_FORCE_MULTIPLIER * Time.deltaTime;
                 // hullRigidbody.MovePosition(hullRigidbody.position + inputSpeed * Time.deltaTime * transform.forward);
             }
             else
@@ -161,26 +179,32 @@ namespace MiniTanks
                 // inputSpeed = movementInputValue * speedMulti; // The input speed, no delta
 
                 // If turning and input speed is more than neutral steer speed force neutral steering speed. Else, use input speed
-                if (yRotation is < 0.0f or > 0.0F && Mathf.Abs(inputSpeed) < data.neutralSteeringInfluence)
+                if (yRotationDelta is < 0.0f or > 0.0F && Mathf.Abs(inputSpeed) < data.neutralSteeringInfluence)
                 {
                     Debug.Log($"Setting Velocity A: {this.transform.forward * (inputSpeed * Time.deltaTime)}");
-                    hullRigidbody.velocity = transform.forward * inputSpeed * testforce * Time.deltaTime;
+                    hullRigidbody.velocity = transform.forward * inputSpeed * MOVE_FORCE_MULTIPLIER * Time.deltaTime;
                     // hullRigidbody.MovePosition(hullRigidbody.position + data.neutralSteeringInfluence * Time.deltaTime * transform.forward);
                 }
                 else if (Mathf.Abs(inputSpeed) > data.neutralSteeringInfluence)
                 {
                     Debug.Log($"Setting Velocity B: {this.transform.forward * (inputSpeed * Time.deltaTime)}");
-                    hullRigidbody.velocity = transform.forward * inputSpeed * testforce * Time.deltaTime;
+                    hullRigidbody.velocity = transform.forward * inputSpeed * MOVE_FORCE_MULTIPLIER * Time.deltaTime;
                     // hullRigidbody.MovePosition(hullRigidbody.position + inputSpeed * Time.deltaTime * transform.forward);
                 }
             }
+        }
 
+        private void RotateTankTurret()
+        {
             // Rotate turret
             targetPosition = hullBoneTransform.worldToLocalMatrix.MultiplyPoint(targetPosition);
             targetPosition.y = 0f;
             Quaternion rotTarget = Quaternion.LookRotation(targetPosition);
             turretTransform.localRotation = Quaternion.RotateTowards(turretTransform.localRotation, rotTarget, Time.deltaTime * data.turretSpeed);
+        }
 
+        private void ApplyTankLean()
+        {
             // Hull lean
             targetHullLean = -turnInputValue * data.horizontalMaxLean;
             actHullLean = Mathf.Lerp(actHullLean, targetHullLean, Time.deltaTime * data.horizontalLeanSpeed);
@@ -188,12 +212,16 @@ namespace MiniTanks
 
             if (Mathf.Abs(actHullForwardLean) >= Mathf.Abs(targetHullForwardLean) - 1.0f)
             {
-                targetHullForwardLean = restingHullVertLean * -1;
+                targetHullForwardLean = forwardInputValue > 0 ? restingHullVertLean * -1 : 0;
             }
 
             hullBoneTransform.localRotation = Quaternion.Euler(actHullForwardLean, 0, actHullLean * forwardInputValue);
-            
-            cameraController.inputValue = forwardInputValue;
+        }
+
+        private void OnDrawGizmos()
+        {
+            Gizmos.color = Color.green;
+            Gizmos.DrawRay(movementCastPoint.position, movementCastPoint.forward * 0.03F);
         }
     }
 }
