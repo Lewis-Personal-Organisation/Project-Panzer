@@ -1,9 +1,8 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEditor;
 using Unity.EditorCoroutines.Editor;
-using UnityEngine.Networking;
-using Unity.Collections;
 
 public class EditorMenu : MonoBehaviour
 {
@@ -14,57 +13,81 @@ public class EditorMenu : MonoBehaviour
 	{
 		if (screenshotHost != null)
 		{
-			Debug.Log($"A Screenshot is currently in progress. Returning...");
+			Debug.LogWarning($"ScreenshotGameView :: A Screenshot is currently in progress. Returning...");
 			return;
 		}
-
+		
+		Camera gameCam = GetFirstActiveCamera();
+		
+		if (gameCam == null)
+		{
+			Debug.LogError($"ScreenshotGameView :: NO CAMERAS IN SCENE HIERARCHY...");
+			return;
+		}
+		
 		string folderPath = Application.dataPath + "/Screenshots/";
-		string screenshotName = $"Screenshot {System.DateTime.Now.ToString("dd-MM-yyyy-HH-mm-ss")}.png";
-
+		string screenshotName = $"Screenshot {System.DateTime.Now.ToString("dd-MM-yyyy.HH-mm-ss")}.png";
+		string path = System.IO.Path.Combine(folderPath, screenshotName);
+		
 		// Create Dir if it doesn't exist
-		if (!System.IO.Directory.Exists(folderPath))						
-			System.IO.Directory.CreateDirectory(folderPath); 
+		System.IO.Directory.CreateDirectory(folderPath);
 
-		Debug.Log($"Capturing Screenshot...");
-		ScreenCapture.CaptureScreenshot(System.IO.Path.Combine(folderPath, screenshotName), 1); // takes the sceenshot, the "2" is for the scaled resolution, you can put this to 600 but it will take really long to scale the image up
-		screenshotHost = EditorCoroutineUtility.StartCoroutine(GetTextureFromPNG(System.IO.Path.Combine(folderPath, screenshotName), 10F), Camera.main.gameObject);
+		ScreenCapture.CaptureScreenshot(path, 1);
+		screenshotHost = EditorCoroutineUtility.StartCoroutine(WaitForFile(path), gameCam);
 	}
 
-	private static IEnumerator GetTextureFromPNG(string filePath, float timeout)
+	// [MenuItem("Screenshots/Screenshot with Keybind (Start Listener) (Game View)")]
+	// private static void ScreenshotGameViewWithKeybind()
+	// {
+	// 	if (screenshotHost != null)
+	// 	{
+	// 		Debug.LogWarning($"ScreenshotGameViewWithKeybind :: A Screenshot is currently in progress. Returning...");
+	// 		return;
+	// 	}
+	// 	
+	// 	Camera gameCam = GetFirstActiveCamera();
+	// 	
+	// 	if (gameCam == null)
+	// 	{
+	// 		Debug.LogError($"ScreenshotGameView :: NO CAMERAS IN SCENE HIERARCHY...");
+	// 		return;
+	// 	}
+	//
+	// 	screenshotHost = EditorCoroutineUtility.StartCoroutine(WaitForKeybindScreenshot(gameCam), gameCam);
+	// }
+
+	// private static IEnumerator WaitForKeybindScreenshot(Camera cam)
+	// {
+	// 	Debug.Log("WaitforKeybindScreenshot :: Waiting for Keybinds (S, P)");
+	// 	float timeNow = DateTime.Today.Second + 5F;
+	// 	yield return new WaitUntil(() => Input.GetKey(KeyCode.S) && Input.GetKey(KeyCode.P) || DateTime.Today.Second > timeNow);
+	// 	Debug.Log("WaitforKeybindScreenshot :: Keybind hit! Taking Screenshot");
+	// 	
+	// 	string folderPath = Application.dataPath + "/Screenshots/";
+	// 	string screenshotName = $"Screenshot {System.DateTime.Now.ToString("dd-MM-yyyy.HH-mm-ss")}.png";
+	// 	string path = System.IO.Path.Combine(folderPath, screenshotName);
+	// 	
+	// 	// Create Dir if it doesn't exist
+	// 	System.IO.Directory.CreateDirectory(folderPath);
+	//
+	// 	ScreenCapture.CaptureScreenshot(path, 1);
+	// 	yield return EditorCoroutineUtility.StartCoroutine(WaitForFile(path), cam);
+	// }
+	
+	private static IEnumerator WaitForFile(string path)
 	{
-		float failTime = Time.time + timeout;
-		Debug.Log($"Waiting until Screenshot is saved...");
+		float timeNow = DateTime.Today.Second + 5F;
+		yield return new WaitUntil(() => System.IO.File.Exists(path) || DateTime.Today.Second > timeNow);
+		screenshotHost = null;
+		AssetDatabase.Refresh();
+		
+		Debug.Log($"ScreenshotGameView :: Screenshot created! ({path})");
+	}
 
-		while (Time.time < failTime)
-		{
-			if (!System.IO.File.Exists(filePath))
-				yield return null;
-
-			Debug.Log($"Found Screenshot. Downloading Texture...");
-			Texture2D tex;
-
-			using (UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(filePath))
-			{
-				yield return uwr.SendWebRequest();
-
-				if (uwr.result != UnityWebRequest.Result.Success)
-				{
-					Debug.Log(uwr.error);
-					yield break;
-				}
-				else
-				{
-					// Get downloaded texture
-					tex = DownloadHandlerTexture.GetContent(uwr);
-				}
-			}
-
-			byte[] bytes = tex.EncodeToPNG();
-			System.IO.File.WriteAllBytes(filePath, bytes);
-			Debug.Log($"File complete. Path: {filePath}");
-			AssetDatabase.Refresh();
-			screenshotHost = null;
-		}
+	private static Camera GetFirstActiveCamera()
+	{
+		Camera[] allActiveCams = GameObject.FindObjectsOfType<Camera>();
+		return allActiveCams.Length > 0 ? allActiveCams[0] : null;
 	}
 
 	[MenuItem("Game Data/Reset Player Name")]

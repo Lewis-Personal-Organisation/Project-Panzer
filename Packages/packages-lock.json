@@ -10,6 +10,13 @@
       },
       "hash": "b849990020c30ac6ead4e4fb4881428f86dcde0d"
     },
+    "com.guciodevs.simple-min-max-slider": {
+      "version": "https://github.com/GucioDevs/SimpleMinMaxSlider.git#upm",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "46ff35d22982657d55f7861ddc01b115a2db1554"
+    },
     "com.unity.burst": {
       "version": "1.8.17",
       "depth": 1,
@@ -361,6 +368,17 @@
         "com.unity.render-pipelines.core": "14.0.11",
         "com.unity.searcher": "4.9.2"
       }
+    },
+    "com.unity.splines": {
+      "version": "2.6.1",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.ugui": "1.0.0",
+        "com.unity.mathematics": "1.2.1",
+        "com.unity.settings-manager": "1.0.3"
+      },
+      "url": "https://packages.unity.com"
     },
     "com.unity.test-framework": {
       "version": "1.1.33",

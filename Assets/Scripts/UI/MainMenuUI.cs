@@ -22,7 +22,11 @@ public class MainMenuUI : Panel
 		hostGameButton.onClick.AddListener(OnHostButtonPressed);
 		joinPrivateGameButton.onClick.AddListener(OnJoinPrivateGameButtonPressed);
 		//joinPublicGameButton.onClick.AddListener(OnJoinPublicGameButtonPressed);
-		nameDisplayButton.onClick.AddListener(delegate { UIManager.TextInputGroup.ToggleInputTextGroup(true); });
+		nameDisplayButton.onClick.AddListener(delegate
+		{
+			// UIManager.PushPanels(UIManager.FadedBackgroundUI);
+			UIManager.PushPanels(UIManager.FadedBackgroundUI, UIManager.TextInputGroup.Prepare(true));
+		});
 #if UNITY_EDITOR
 		quitButton.onClick.AddListener(EditorApplication.ExitPlaymode);
 #else
@@ -35,8 +39,8 @@ public class MainMenuUI : Panel
 		// Ask Player to set their name if not retrieved from Disk
 		if (GameSave.PlayerName == string.Empty)
 		{
-			UIManager.TextInputGroup.ToggleInputTextGroup(true, TextSubmissionContext.PlayerName);
-			UIManager.MainMenu.Toggle(false);
+			UIManager.PushPanels(UIManager.FadedBackgroundUI, UIManager.TextInputGroup.Prepare(true, true));
+			// UIManager.PopAndPush(1, UIManager.TextInputGroup.Prepare(true, true));
 		}
 		else
 		{
@@ -54,19 +58,23 @@ public class MainMenuUI : Panel
 		nameDisplayText.text = name;
 	}
 
-	public override void Toggle(bool activeState)
+	public Panel Prepare(string name)
 	{
-		base.Toggle(activeState);
+		nameDisplayText.text = name;
+		return this;
 	}
+
+	// public override void Toggle(bool activeState)
+	// {
+	// 	base.Toggle(activeState);
+	// }
 
 	/// <summary>
 	/// Hides Game Connection buttons, shows the Lobby UI
 	/// </summary>
 	public void OnHostButtonPressed()
 	{
-		UIManager.LobbySetupMenu.Toggle(true);
-		UIManager.LobbySetupMenu.SetLobbyNameText();
-		Toggle(false);
+		UIManager.PopAndPush(1, UIManager.LobbySetupMenu.Prepare());
 	}
 
 
@@ -75,8 +83,7 @@ public class MainMenuUI : Panel
 	/// </summary>
 	public void OnJoinPrivateGameButtonPressed()
 	{
-		UIManager.TextInputGroup.ToggleInputTextGroup(true, TextSubmissionContext.RelayJoinCode);
-		Toggle(false);
+		UIManager.PopAndPush(1, UIManager.FadedBackgroundUI, UIManager.TextInputGroup.Prepare(true, false, TextSubmissionContext.RelayJoinCode));
 	}
 
 	/// <summary>

@@ -1,75 +1,16 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using Unity.Collections;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 [RequireComponent(typeof(Camera))]
 public class CameraController : MonoBehaviour
 {
     [field: SerializeField] public Camera camera {private set; get; }
-    // public bool enabled;
     public Transform trToLookAt;
-    private Vector3 cachedPositionOffset;
+    public Vector3 cachedPositionOffset;
     public Vector3 offset;
-    public float offsetT = 0;
+    private float interpolator = 0;
     public float lerpSpeed = 1;
-    public float inputValue = 0;
-    
-    // public CacheableVector3 offsetN;
-    //private Vector3 lookAtPos;
-    
-    // private void OnEnable()
-    // {
-    //     if (offsetN.cacheBase == null)
-    //         offsetN.cacheBase = ScriptableObject.CreateInstance<CacheableVector3.CacheableV3>();
-    // }
-    //
-    // private void Awake()
-    // {
-    //     EditorApplication.playModeStateChanged += offsetN.cacheBase.Restore;
-    // }
-    //
-    // private void OnValidate()
-    // {
-    //     if (offsetN.cacheBase == null)
-    //         return;
-    //     
-    //     offsetN.cacheBase.Save();
-    // }
-    //
-    // [System.Serializable]
-    // public class CacheableVector3
-    // {
-    //     [SerializeField] private Vector3 value;
-    //
-    //     [SerializeField] public CacheableV3 cacheBase;
-    //     
-    //     [FilePath("Persistent/V3Cache.foo", FilePathAttribute.Location.PreferencesFolder)]
-    //     public class CacheableV3 : ScriptableSingleton<CacheableV3>
-    //     {
-    //         private Vector3 value;
-    //         
-    //         public void Save()
-    //         {
-    //             base.Save(true);
-    //         }
-    //
-    //         public void Restore(PlayModeStateChange state)
-    //         {
-    //             switch (state)
-    //             {
-    //                 case PlayModeStateChange.ExitingPlayMode:
-    //                     this.value = instance.value;
-    //                     Debug.Log(instance.value);
-    //                     break;
-    //             }
-    //         }
-    //     }
-    //     
-    //     
-    // }
+    private float inputValue = 0;
+    // public Vector3 positionOffset;
 
     
     private void Awake()
@@ -78,6 +19,7 @@ public class CameraController : MonoBehaviour
             camera = GetComponent<Camera>();
         
         cachedPositionOffset = this.transform.position - trToLookAt.position;
+        // this.positionOffset = trToLookAt.position - this.transform.position;
     }
 
     private void FixedUpdate()
@@ -86,20 +28,14 @@ public class CameraController : MonoBehaviour
         this.transform.position = trToLookAt.position + cachedPositionOffset;
         
         // Adjust offsetT towards value
-        offsetT = Mathf.MoveTowards(offsetT, inputValue, Time.deltaTime * lerpSpeed);
-
-        Vector3 lookAtPos = Vector3.zero;
+        interpolator = Mathf.MoveTowards(interpolator, inputValue, Time.deltaTime * lerpSpeed);
         
-        if (offsetT < 0)
-        {
-            lookAtPos = trToLookAt.position + Vector3.Slerp(Vector3.zero, trToLookAt.forward * -offset.z, offsetT);
-        }
-        else if (offsetT >= 0)
-        {
-            lookAtPos = trToLookAt.position + Vector3.Slerp(Vector3.zero, trToLookAt.forward * offset.z, offsetT);
-        }
-        
+        // Position is equal to the forward axis * offset (pos or neg)
+        Vector3 lookAtPos = trToLookAt.position + Vector3.Slerp(Vector3.zero, trToLookAt.forward * (interpolator < 0 ? -offset.z : offset.z), Mathf.Abs(interpolator));
         this.transform.LookAt(lookAtPos);
+        
+        // Position our transform a distance away from the target on local Z
+        this.transform.position = trToLookAt.position - this.transform.forward * offset.y;
     }
 
     private void OnDrawGizmosSelected()
@@ -121,5 +57,10 @@ public class CameraController : MonoBehaviour
             Gizmos.color = Color.blue;
             Gizmos.DrawLine(trToLookAt.position, trToLookAt.position + trToLookAt.forward * offset.z);
         }
+    }
+
+    public void UpdateInputValue(float value)
+    {
+        this.inputValue = value;
     }
 }

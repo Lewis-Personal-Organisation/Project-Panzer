@@ -12,15 +12,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 488e81b4017096f4f8a2f07f7c5b15fd, type: 3}
   m_Name: Churchill Mobility
   m_EditorClassIdentifier: 
-  acceleration: 0
-  <speedChangeDelta>k__BackingField: 18
+  turnSpeed: 65
   <forwardSpeed>k__BackingField: 16.8
-  <backwardSpeed>k__BackingField: 7
-  <neutralSteeringInfluence>k__BackingField: 2
-  TurnSpeed: 60.5
+  <forceMultiplier>k__BackingField: 150
+  <backwardSpeed>k__BackingField: 9
+  <speedDelta>k__BackingField: 15
+  <brakeDelta>k__BackingField: -0.6
+  <maxDrag>k__BackingField: 1
+  <steerDrag>k__BackingField: 1
+  <steerVelocity>k__BackingField: 3
   turretSpeed: 151.1
   trackMultiplier: 0.75
+  <localGravity>k__BackingField: -32
+  <globalGravity>k__BackingField: -9.81
+  leanDescriptor: {x: 0, y: 4}
+  minForwardVelocity: 0.3
   horizontalLeanSpeed: 4.61
-  verticalLeanSpeed: 4.53
   horizontalMaxLean: 4
+  verticalLeanSpeed: 4.53
+  verticalRestingLean: 4
   verticalMaxLean: 6
+  verticalToRestingLeanValue: 1

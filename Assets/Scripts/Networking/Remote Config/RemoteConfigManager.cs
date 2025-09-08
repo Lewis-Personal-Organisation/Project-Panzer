@@ -13,14 +13,16 @@ public class RemoteConfigManager : Singleton<RemoteConfigManager>
     
     public bool isInitialized { get; private set; }
     
-    private new void Awake()
-    {
-        base.Awake();
-        DontDestroyOnLoad(this);
-    }
+    private new void Awake() { }
 
     public async void Setup()
     {
+        if (!Instance)
+        {
+            base.Awake();
+            DontDestroyOnLoad(this);
+        }
+        
         try
         {
             if (this == null) return;

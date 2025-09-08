@@ -33,7 +33,10 @@ public class LobbySetupUI : Panel
 
 	private void Awake()
 	{
-		closeButton.onClick.AddListener(OnLobbyCreationCancelled);
+		onPushAction.AddListener(privateButton.onClick.Invoke);
+		onPopAction.AddListener(privateButton.onClick.Invoke);
+		
+		closeButton.onClick.AddListener(() => UIManager.PopPanel());
 
 		privateButton.onClick.AddListener(delegate
 		{
@@ -57,11 +60,10 @@ public class LobbySetupUI : Panel
 	/// <summary>
 	/// Returns the Player to the Main Menu
 	/// </summary>
-	private void OnLobbyCreationCancelled()
-	{
-		UIManager.MainMenu.Toggle(true);
-		Toggle(false);
-	}
+	// private void OnLobbyCreationCancelled()
+	// {
+	// 	UIManager.Instance.PopPanel();
+	// }
 
 	/// <summary>
 	/// Toggles interactable buttons for Lobby creation UI
@@ -83,41 +85,36 @@ public class LobbySetupUI : Panel
 		closeButton.enabled = false;
 
 		ToggleLobbyCreationInteractables(false);
-		UIManager.LoadingIcon.ShowWithText("Creating Lobby...");
+		UIManager.PushPanel(UIManager.LoadingIcon.SetText("Creating Lobby..."));
 
-		await SessionManager.Instance.InitialiseUnityServices();
+		await SessionManager.Instance.InitialiseAndAuthenticatePlayer();
 
-		// Start Hosting using Relay
+		// Get a relayJoinCode for our server allocation
 		relayJoinCode = await InitialiseHostWithRelay(maxPlayers);
 		if (this == null) return;
-
 		
 		// Create lobby with Relay
 		Lobby lobby = await LobbyManager.Instance.CreateLobby(lobbyNameText.text, maxPlayers, GameSave.PlayerName, isLobbyPrivate, relayJoinCode);
 		if (this == null) return;
 
-		UIManager.LoadingIcon.Toggle(false);
-
 		closeButton.image.color = closeButtonEnabledColour;
 		closeButton.enabled = true;
-
-		Toggle(false);
-
-		UIManager.LobbyUI.Toggle(true, lobby.LobbyCode, lobby.Name);
+		
+		UIManager.PopAndPush(2, UIManager.LobbyUI.Prepare(lobby.LobbyCode, lobby.Name));
 	}
 
 	/// <summary>
 	/// Returns a Join Code after requesting Unity Relay to allocate/reserve space on a server
 	/// Also starts the Player as Host
 	/// </summary>
-	public async Task<string> InitialiseHostWithRelay(int maxPlayerCount)
+	private async Task<string> InitialiseHostWithRelay(int maxPlayerCount)
 	{
 		Allocation allocation = await RelayService.Instance.CreateAllocationAsync(maxPlayerCount);
-		var joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+		string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
 		
 		NetworkEndPoint endPoint = NetworkEndPoint.Parse(allocation.RelayServer.IpV4, (ushort)allocation.RelayServer.Port);
 		
-		var ipAddress = endPoint.Address.Split(':')[0];
+		string ipAddress = endPoint.Address.Split(':')[0];
 		unityTransport.SetHostRelayData(ipAddress, endPoint.Port, allocation.AllocationIdBytes, allocation.Key, allocation.ConnectionData, false);
 
 		NetworkManager.Singleton.StartHost();
@@ -125,12 +122,18 @@ public class LobbySetupUI : Panel
 		return joinCode;
 	}
 
-	public override void Toggle(bool activeState)
-	{
-		base.Toggle(activeState);
-		privateButton.onClick.Invoke();
-	}
+	// public override void Toggle(bool activeState)
+	// {
+	// 	base.Toggle(activeState);
+	// 	privateButton.onClick.Invoke();
+	// }
 
+	public Panel Prepare()
+	{
+		lobbyNameText.text = $"{UIManager.MainMenu.nameDisplayText.text}'s {(isLobbyPrivate ? "Private" : "Public")} Lobby";
+		return this;
+	}
+	
 	public void SetLobbyNameText()
 	{
 		lobbyNameText.text = $"{UIManager.MainMenu.nameDisplayText.text}'s {(isLobbyPrivate ? "Private" : "Public")} Lobby";

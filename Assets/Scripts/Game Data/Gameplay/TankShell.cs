@@ -1,9 +1,5 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public class TankShell : MonoBehaviour
 {
@@ -11,19 +7,13 @@ public class TankShell : MonoBehaviour
     [SerializeField] private NetworkObject networkObject;
     public bool IsOwner => networkObject.IsOwner;
     
-    
     [Header("Lifetime")]
     [SerializeField] private float lifetime;
     private float lifetimeTimer;
     [SerializeField] private TrailRenderer trailRenderer;
 	
-    [Header("Movement and Rotation")]
+    [Header("Movement")]
     [SerializeField] private float velocity;
-	public Transform shellVisuals;
-	public Transform shellGuiderTR;
-	public Transform projectileTip;
-	public float projectileRotationSpeed = 5;
-	public LayerMask rotationDetectionMask;
 
 
 	public TankShell Setup(TankWeaponController controller)
@@ -49,9 +39,8 @@ public class TankShell : MonoBehaviour
     /// </summary>
     private void FixedUpdate()
     {
-		shellGuiderTR.transform.position += shellGuiderTR.transform.forward * (velocity * Time.deltaTime);
-		shellVisuals.transform.position = shellGuiderTR.position;
-		AdjustAngleToGround();
+		this.transform.position += this.transform.forward * (velocity * Time.deltaTime);
+		// AdjustAngleToGround();
     }
 
     /// <summary>
@@ -61,9 +50,13 @@ public class TankShell : MonoBehaviour
     {
         lifetimeTimer = lifetime;
         trailRenderer.emitting = true;
-        shellGuiderTR.transform.position = controller.shellSpawnPoint.transform.position;
-        shellGuiderTR.transform.rotation = controller.shellSpawnPoint.transform.rotation;
-        AdjustAngleToGround();
+        this.transform.position = controller.shellSpawnPoint.transform.position;
+        
+        // Zero out X axis - the shell should always fly straight ahead
+        Vector3 rotation = controller.shellSpawnPoint.transform.rotation.eulerAngles;
+        rotation.x = 0F;
+        this.transform.rotation = Quaternion.Euler(rotation);
+        
         this.transform.root.gameObject.SetActive(true);
     }
 
@@ -76,21 +69,4 @@ public class TankShell : MonoBehaviour
 	    trailRenderer.Clear();
 	    this.transform.root.gameObject.SetActive(false);
     }
-
-    /// <summary>
-    /// Rotates the shell visuals to match the shell guide, if raycast is succesfull
-    /// </summary>
-	private void AdjustAngleToGround()
-	{
-		if (!Physics.Raycast(projectileTip.position, Vector3.down, out RaycastHit hit, Mathf.Infinity, rotationDetectionMask.value))
-		{
-			// Debug.DrawLine(projectileTip.position, projectileTip.position + Vector3.down * Mathf.Infinity, Color.red, Time.deltaTime);
-			return;
-		}
-
-		// Debug.DrawLine(projectileTip.position, projectileTip.position + Vector3.down * Mathf.Infinity, Color.green, Time.deltaTime);
-
-		shellGuiderTR.rotation = Quaternion.FromToRotation(shellGuiderTR.up, hit.normal) * shellGuiderTR.rotation;
-		shellVisuals.transform.rotation = Quaternion.RotateTowards(shellVisuals.transform.rotation, shellGuiderTR.rotation, projectileRotationSpeed * Time.deltaTime);
-	}
 }

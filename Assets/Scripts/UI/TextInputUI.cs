@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using System;
+using System.Diagnostics.Contracts;
 
 public enum TextSubmissionContext
 {
@@ -20,6 +21,7 @@ public class TextInputUI : Panel
 	[SerializeField] private TextMeshProUGUI inputText;
 	[SerializeField] private Button pasteButton;
 	[SerializeField] private Button submitButton;
+	[SerializeField] private Button closeButton;
 
 	public string enteredJoinCode = string.Empty;
 
@@ -33,6 +35,12 @@ public class TextInputUI : Panel
 	{
 		submitButton.onClick.AddListener(SubmitTextInput);
 		pasteButton.onClick.AddListener(OnPaste);
+		closeButton.onClick.AddListener(() =>
+		{
+			UIManager.PopUntil(UIManager.MainMenu);
+		});
+
+		onPopAction.AddListener(() => Prepare(false));
 	}
 
 	private void Update()
@@ -40,14 +48,8 @@ public class TextInputUI : Panel
 		OnUpdate?.Invoke();
 	}
 
-	/// <summary>
-	/// Toggles the UI responsible for Text Input for Username etc.,
-	/// </summary>
-	public void ToggleInputTextGroup(bool state, TextSubmissionContext context = TextSubmissionContext.PlayerName)
+	public Panel Prepare(bool state, bool forceHideCloseButton = false, TextSubmissionContext context = TextSubmissionContext.PlayerName)
 	{
-		base.Toggle(state);
-		UIManager.FadedBackgroundUI.Toggle(state);
-
 		if (state)
 		{
 			inputText.text = string.Empty;
@@ -55,11 +57,13 @@ public class TextInputUI : Panel
 			{
 				inputTitle.text = "Enter a Username";
 				pasteButton.gameObject.SetActive(false);
+				closeButton.gameObject.SetActive(false);
 			}
 			else
 			{
 				inputTitle.text = "Enter Join Code";
 				pasteButton.gameObject.SetActive(true);
+				closeButton.gameObject.SetActive(true);
 			}
 
 			textInputContext = context;
@@ -70,7 +74,41 @@ public class TextInputUI : Panel
 		{
 			OnUpdate -= TakeKeyboardInput;
 		}
+
+		return this;
 	}
+	
+	/// <summary>
+	/// Toggles the UI responsible for Text Input for Username etc.,
+	/// </summary>
+	// public void ToggleInputTextGroup(bool state, TextSubmissionContext context = TextSubmissionContext.PlayerName)
+	// {
+	// 	base.Toggle(state);
+	// 	UIManager.FadedBackgroundUI.Toggle(state);
+	//
+	// 	if (state)
+	// 	{
+	// 		inputText.text = string.Empty;
+	// 		if (context == TextSubmissionContext.PlayerName)
+	// 		{
+	// 			inputTitle.text = "Enter a Username";
+	// 			pasteButton.gameObject.SetActive(false);
+	// 		}
+	// 		else
+	// 		{
+	// 			inputTitle.text = "Enter Join Code";
+	// 			pasteButton.gameObject.SetActive(true);
+	// 		}
+	//
+	// 		textInputContext = context;
+	//
+	// 		OnUpdate += TakeKeyboardInput;
+	// 	}
+	// 	else
+	// 	{
+	// 		OnUpdate -= TakeKeyboardInput;
+	// 	}
+	// }
 
 	/// <summary>
 	/// Filter the string inputs from Keyboard - letters/numbers allowed, Characters can be removed with backspace.
@@ -115,25 +153,21 @@ public class TextInputUI : Panel
 	{
 		if (inputText.text.Length == 0)
 		{
-			UIManager.ErrorUI.ShowError("Text can't be empty");
+			UIManager.PushPanel(UIManager.ErrorUI.Prepare("Text can't be empty"));
 			return;
-		}
-		else
-		{
-			if (UIManager.ErrorUI.panelIsActive)
-				UIManager.ErrorUI.Toggle(false);
 		}
 
 		switch (textInputContext)
 		{
 			case TextSubmissionContext.PlayerName:
-				UIManager.MainMenu.SetMainMenuName(inputText.text);
+				// UIManager.PushPanel(UIManager.MainMenu.Prepare(inputText.text));
+				UIManager.MainMenu.Prepare(inputText.text);
 				GameSave.PlayerName = UIManager.MainMenu.nameDisplayText.text;
-				UIManager.MainMenu.Toggle(true);
-				ToggleInputTextGroup(false);
 				inputText.text = string.Empty;
+				
+				UIManager.PopUntil(UIManager.MainMenu);
 
-				if (LobbyManager.lobbyPreviouslyRefusedUsername)
+				if (LobbyManager.previouslyRefusedUsername)
 				{
 					LobbyManager.Instance.JoinPrivateLobbyAsClient(enteredJoinCode, GameSave.PlayerName);
 				}
@@ -143,15 +177,14 @@ public class TextInputUI : Panel
 				{
 					enteredJoinCode = inputText.text;
 					LobbyManager.Instance.JoinPrivateLobbyAsClient(enteredJoinCode, GameSave.PlayerName);
-					ToggleInputTextGroup(false);
+					UIManager.PopPanel();
 					inputText.text = string.Empty;
 
-					if (UIManager.ErrorUI.panelIsActive)
-						UIManager.ErrorUI.Toggle(false);
+					UIManager.PopPanel(UIManager.ErrorUI);
 				}
 				else
 				{
-					UIManager.ErrorUI.ShowError("Entered Relay Code is incorrect. Try again.");
+					UIManager.PushPanel(UIManager.ErrorUI.Prepare("Entered Relay Code is incorrect. Try again."));
 				}
 				break;
 		}

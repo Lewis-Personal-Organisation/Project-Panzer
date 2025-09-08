@@ -12,44 +12,51 @@ using Unity.Networking.Transport;
 using Unity.Services.Lobbies.Models;
 using Unity.Services.Relay;
 using System.Collections;
+using Unity.Services.Relay.Models;
 using UnityEngine.Events;
 
 public class SessionManager : Singleton<SessionManager>
 {
 	[SerializeField] internal UnityTransport unityTransport;
-	public bool useUnityServices = false;
 	public string uniqueProfileString = string.Empty;
-	public PlayerInfoData playerInfo;
-	public bool networkManagerInitialised = true;
 	private bool IsNetworkReady => UnityServices.State == ServicesInitializationState.Initialized && AuthenticationService.Instance.IsSignedIn;
-	[SerializeField] public UnityEvent OnAuthenticated; 
+	[Space(10)]
+	[SerializeField] public UnityEvent OnAuthenticated;
 
-	[System.Serializable]
-	public class PlayerInfoData
-	{
-		public DateTime? creationTime;
-		public string ID;
-		public string username;
-	}
-
-	new private void Awake()
+	private new void Awake()
 	{
 		base.Awake();
-		//GameSave.PrintPrefix();
 	}
 
-	private void Start()
+	private void Start() => DontDestroyOnLoad(this.gameObject);
+
+	public async Task InitialiseAndAuthenticatePlayer()
 	{
-		DontDestroyOnLoad(this.gameObject);
+		if (IsNetworkReady)
+			return;
+		
+		await SignIntoUnityServices();
+		await AuthenticatePlayer();
+		
+		// Wait until Cloud Save Manager is ready
+		await Task.Run(async () => 
+		{
+			while (!CloudSaveManager.Instance)
+				await Task.Yield();
+		});
+		
+		await InitialiseCloudSaveServices();
 	}
 
-	public async Task InitialiseUnityServices()
+	/// <summary>
+	/// Initialises Unity Services.
+	/// If in Editor, applies the appropriate profile string.
+	/// Else, since we can guarantee we are on separate devices, initialise
+	/// </summary>
+	private async Task SignIntoUnityServices()
 	{
 		try
 		{
-			if (IsNetworkReady)
-				return;
-
 #if UNITY_EDITOR
 			uniqueProfileString = GetProjectName();
 			if (ClonesManager.IsClone())
@@ -76,57 +83,35 @@ public class SessionManager : Singleton<SessionManager>
 		{
 			Debug.Log("Session Manager :: Unity Services initialised Successfully");
 		}
+	}
 
+	/// <summary>
+	/// Authenticates the Player by signing-in anonymously.
+	/// On Successful sign-in, OnAuthenticated Event is invoked.
+	/// </summary>
+	private async Task AuthenticatePlayer()
+	{
 		AuthenticationService.Instance.SignInFailed += (err) =>
 		{
-			playerInfo = null;
-			Debug.LogError($"Unity Relay :: {err}");
+			Debug.LogError($"SessionManager :: {err}");
 		};
 		AuthenticationService.Instance.SignedOut += () =>
 		{
-			playerInfo = null;
-			Debug.Log($"Unity Relay :: Player signed out.");
+			Debug.Log($"SessionManager :: Player signed out.");
 		};
 		AuthenticationService.Instance.Expired += () =>
 		{
-			playerInfo = null;
-			Debug.Log($"Unity Relay :: Player session could not be refreshed and expired.");
+			Debug.LogWarning($"SessionManager :: Player session has expired and Unity was unable to sign in automatically. Attempting manual sign-in.");
 		};
 		AuthenticationService.Instance.SignedIn += () =>
 		{
-			Debug.Log($"Unity Relay :: Player Signed in. ID: {AuthenticationService.Instance.PlayerId}");
+			Debug.Log($"SessionManager :: Unity Relay :: Player Signed in. ID: {AuthenticationService.Instance.PlayerId}");
 			OnAuthenticated?.Invoke();
 		};
 
 		try
 		{
 			await AuthenticationService.Instance.SignInAnonymouslyAsync();
-			if (this == null)
-				return;
-			
-			playerInfo = new PlayerInfoData
-			{
-				creationTime = AuthenticationService.Instance.PlayerInfo.CreatedAt,
-				ID = AuthenticationService.Instance.PlayerInfo.Id,
-				username = AuthenticationService.Instance.PlayerInfo.Username
-			};
-			
-			await CloudSaveManager.Instance.LoadAndCacheData();
-			if (this == null)
-				return;
-			
-			string cloudSavePlayerName = CloudSaveManager.Instance.playerStats.playerName;
-
-			if (string.IsNullOrEmpty(cloudSavePlayerName))
-			{
-				Debug.Log($"No Player Name found! Saving Player Name as '{GameSave.PlayerName}' to Cloud");
-				await CloudSaveManager.Instance.SetPlayerName(GameSave.PlayerName);
-			}
-			else
-			{
-				Debug.Log($"Found Player Name '{cloudSavePlayerName}' from Cloud");
-			}
-			if (this == null) return;
 		}
 		catch (Exception e)
 		{
@@ -134,6 +119,36 @@ public class SessionManager : Singleton<SessionManager>
 		}
 	}
 
+	/// <summary>
+	/// Initialises the Cloud Services and Loads its data
+	/// </summary>
+	private async Task InitialiseCloudSaveServices()
+	{
+		try
+		{
+			await CloudSaveManager.Instance.LoadAndCacheData();
+
+			if (this == null)
+				return;
+
+			string cloudSavePlayerName = CloudSaveManager.Instance.playerStats.playerName;
+
+			if (string.IsNullOrEmpty(cloudSavePlayerName))
+			{
+				Debug.Log($"Session Manager :: No Player Name found! Saving Player Name as '{GameSave.PlayerName}' to Cloud");
+				await CloudSaveManager.Instance.SetPlayerName(GameSave.PlayerName);
+			}
+			else
+			{
+				Debug.Log($"Session Manager :: Found Player Name '{cloudSavePlayerName}' from Cloud");
+			}
+		}
+		catch (Exception e)
+		{
+			Debug.LogException(e);
+		}
+	}
+	
 	/// <summary>
 	/// Requests to join a Relay Allocation using a Join Code
 	/// Starts the Player as a Client
@@ -145,20 +160,15 @@ public class SessionManager : Singleton<SessionManager>
 			string relayJoinCode = lobbyJoined.Data[LobbyManager.relayJoinCodeKey].Value;
 			// await InitializeClient(relayJoinCode);
 
-			var joinAllocation = await RelayService.Instance.JoinAllocationAsync(relayJoinCode);
-			var endPoint = NetworkEndPoint.Parse(joinAllocation.RelayServer.IpV4, (ushort)joinAllocation.RelayServer.Port);
+			JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(relayJoinCode);
+			NetworkEndPoint endPoint = NetworkEndPoint.Parse(joinAllocation.RelayServer.IpV4, (ushort)joinAllocation.RelayServer.Port);
 
-			var ipAddress = endPoint.Address.Split(':')[0];
-
-			SessionManager.Instance.unityTransport.SetClientRelayData(ipAddress, endPoint.Port,
+			Instance.unityTransport.SetClientRelayData(endPoint.Address.Split(':')[0], endPoint.Port,
 				joinAllocation.AllocationIdBytes, joinAllocation.Key,
 				joinAllocation.ConnectionData, joinAllocation.HostConnectionData, false);
 
-			//NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
 			NetworkManager.Singleton.StartClient();
-			Instance.networkManagerInitialised = true;
-			Debug.Log($"Relay Allocation complete. Starting as Client. Scene Sync: {NetworkManager.Singleton.SceneManager.ActiveSceneSynchronizationEnabled}");
-			// NetworkManager.Singleton.SceneManager.ActiveSceneSynchronizationEnabled;
+			Debug.Log($"Session Manager Relay Allocation complete. Starting as Client. Scene Sync: {NetworkManager.Singleton.SceneManager.ActiveSceneSynchronizationEnabled}");
 		}
 		catch (Exception e)
 		{
@@ -166,15 +176,19 @@ public class SessionManager : Singleton<SessionManager>
 		}
 	}
 
+	/// <summary>
+	/// Shuts down the NetworkManager and yields when done
+	/// </summary>
+	/// <returns></returns>
 	public IEnumerator IEShutdownNetworkClient()
 	{
-		Debug.Log($"Network Client Shutting down....");
 		NetworkManager.Singleton.Shutdown();
 		yield return new WaitUntil(() => !NetworkManager.Singleton.ShutdownInProgress);
-		Debug.Log($"Network Client Shutdown Succesfully");
-		Instance.networkManagerInitialised = false;
 	}
 
+	/// <summary>
+	/// Returns the Project Name
+	/// </summary>
 	private string GetProjectName()
 	{
 		string[] s = Application.dataPath.Split('/');

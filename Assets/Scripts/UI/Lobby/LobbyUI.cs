@@ -31,7 +31,7 @@ public class LobbyUI : Panel
 
 	public GameObject chooseVehicleViewGameObject;
 
-	private List<Unity.Services.Lobbies.Models.Player> activeLobbyPlayers => LobbyManager.Instance.activeLobby.Players;
+	private List<Player> activeLobbyPlayers => LobbyManager.Instance.activeLobby.Players;
 
 	[Header("Player Slots")]
 	public float playerSlotResizeTime;
@@ -126,9 +126,8 @@ public class LobbyUI : Panel
 		}
 	}
 
-	public void Toggle(bool activeState, string lobbyCode, string lobbyTittle)
+	public Panel Prepare(string lobbyCode, string lobbyTittle)
 	{
-		base.Toggle(activeState);
 		//readyButton.interactable = true;
 		leaveButton.interactable = true;
 
@@ -136,6 +135,7 @@ public class LobbyUI : Panel
 		joinCodeGroup.SetActive(true);
 		title.text = lobbyTittle;
 		AdjustPlayerSlots();
+		return this;
 	}
 
 	private async void OnReadyClicked()
@@ -180,27 +180,28 @@ public class LobbyUI : Panel
 		}
 	}
 
-	public void AdjustPlayerSlots()
+	private void AdjustPlayerSlots()
 	{
 		for (int i = 0; i < playerSlots.Length; i++)
 		{
 			if (i < activeLobbyPlayers.Count)
 			{
-				// Debug.Log($"LobbyUI :: AdjustPlayerSlots :: Showing slot {i} with {activeLobbyPlayers[i].Data[PlayerDictionaryData.vehicleIndexKey].Value}");
 				playerSlots[i].ConfigureAndShow(activeLobbyPlayers[i]);
 			}
 			else
 			{
 				playerSlots[i].Hide();
-				// Debug.Log($"LobbyUI :: Hiding PlayerSlot {i}");
 			}
 		}
 	}
 
+	/// <summary>
+	/// Adjusts the Local Player slot for our player
+	/// </summary>
 	public void AdjustLocalPlayerSlot()
 	{
-		string vName = VehicleData.GetLobbyItem(int.Parse(LobbyManager.Instance.localPlayerVehicleKey)).name;
-		Debug.Log($"LobbyUI :: AdjustLocalPlayerSlot :: Showing slot {LobbyManager.Instance.localPlayerIndex} with {vName}");
+		string vehicleName = VehicleData.GetLobbyItem(int.Parse(LobbyManager.Instance.localPlayerVehicleKey)).name;
+		Debug.Log($"LobbyUI :: AdjustLocalPlayerSlot() :: Showing slot {LobbyManager.Instance.localPlayerIndex} with {vehicleName}");
 		playerSlots[LobbyManager.Instance.localPlayerIndex].ConfigureAndShow(LobbyManager.Instance.localPlayer);
 	}
 	

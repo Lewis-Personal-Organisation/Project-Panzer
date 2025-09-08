@@ -6,5 +6,10 @@ using UnityEditor;
 
 public class LookAt : MonoBehaviour
 {
-    
+    [SerializeField] Transform target;
+
+    private void Update()
+    {
+        this.transform.LookAt(target);
+    }
 }

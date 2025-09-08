@@ -1,22 +1,44 @@
 using System.Collections;
 using System.Collections.Generic;
+using GD.MinMaxSlider;
 using UnityEngine;
 using UnityEngine.Serialization;
+using UnityEngine.UI;
 
 [CreateAssetMenu(fileName = "Tank Mobility", menuName = "Tanks/Mobility Data")]
 public class TankMobility : ScriptableObject
 {
-    [SerializeField] private float acceleration;
-    [field: SerializeField] public float speedChangeDelta { get; private set; }
+    [Header("Movement")]
+    public float turnSpeed = 180.0f;
     [field: SerializeField] public float forwardSpeed { get; private set; }
+    [field: SerializeField] public float forceMultiplier { get; private set; } = 150F;
     [field: SerializeField] public float backwardSpeed { get; private set; }
-    [field: SerializeField] public float neutralSteeringInfluence{ get; private set; }  
-    public float TurnSpeed = 180.0f;
+    [field: SerializeField] public float speedDelta { get; private set; }
+    [field: SerializeField] public float brakeDelta { get; private set; }
+    [field: SerializeField] public float maxDrag { get; private set; }
+    [field: SerializeField] public float steerDrag { get; private set; }
+    // [field: SerializeField] public float steerForce{ get; private set; }  
+    [field: SerializeField] public float steerVelocity{ get; private set; }  
+    
+    [Header("Turret")]
     public float turretSpeed = 240.0f;
+    
+    [Header("Other")]
     public float trackMultiplier = 0.75f;
-    [FormerlySerializedAs("HleanSpeed")] [Header("Lean Settings")]
+    [field: SerializeField] public float localGravity { get; private set; } = -32F;
+    [field: SerializeField] public float globalGravity { get; private set; } = -9.81F;
+
+
+    // [Header("Lean Settings")]
+
+    // [MinMaxSlider(0F, 6F)]
+    // public Vector2 leanDescriptor; 
+    public float minForwardVelocity = 0.3F;
     public float horizontalLeanSpeed = 8.0f;
-    [FormerlySerializedAs("VleanSpeed")] public float verticalLeanSpeed = 6.0f;
-    [FormerlySerializedAs("HMaxLean")] public float horizontalMaxLean = 15.0f;
-    [FormerlySerializedAs("VMaxLean")] public float verticalMaxLean = 15.0f;
+    public float horizontalMaxLean = 15.0f;
+    public float verticalLeanSpeed = 6.0f;
+    public float verticalRestingLean = 4F;
+    public float verticalMaxLean = 15.0f;
+    [Tooltip("The value to be met which triggers the resting lean value. Ideally, should be slightly below the max lean, but not excessively")]
+    public float verticalToRestingLeanValue;
 }

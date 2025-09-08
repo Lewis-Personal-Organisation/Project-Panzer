@@ -7,14 +7,14 @@ public class ErrorUI : Panel
 	[SerializeField] private TextMeshProUGUI errorText;
 
 
-	public void SetErrorText(string errorText)
+	// public void SetErrorText(string errorText)
+	// {
+	// 	this.errorText.text = $"{errorPrefix}{errorText}";
+	// }
+
+	public Panel Prepare(string errorText)
 	{
 		this.errorText.text = $"{errorPrefix}{errorText}";
-	}
-
-	public void ShowError(string errorText)
-	{
-		SetErrorText(errorText);
-		Toggle(true);
+		return this;
 	}
 }

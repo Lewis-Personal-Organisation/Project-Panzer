@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -22,22 +23,25 @@ public class TankSingleShotWeapon : TankWeaponController
         ResetWeapon();
     }
     
-    public override void Fire()
+    protected override void Fire()
     {
         if (reloadTimer > 0)
             return;
 
         shellPool.Get();
+        PrepareLean();
     }
 
-    public override void Reload()
+    protected override void Reload()
     {
         if (reloadTimer > 0)
             reloadTimer -= Time.deltaTime;
     }
 
-    public override void ResetWeapon()
+    protected override void ResetWeapon()
     {
         reloadTimer = tankWeapon.reloadTime;
     }
+
+    
 }

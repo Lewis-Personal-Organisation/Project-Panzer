@@ -16,7 +16,7 @@ public class TankDefence : MonoBehaviour
     {
         if ((shellMask.value & 1 << other.gameObject.layer) != 0)
         {
-            if (other.transform.root.TryGetComponent(out TankShell shell))
+            if (other.transform.root.TryGetComponent(out TankShellAdv shell))
             {
                 if (this.gameObject.GetInstanceID() == shell.controller.gameObject.GetInstanceID())
                     return;

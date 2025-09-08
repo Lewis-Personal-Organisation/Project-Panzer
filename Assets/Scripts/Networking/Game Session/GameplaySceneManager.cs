@@ -53,7 +53,7 @@ public class GameplaySceneManager : Singleton<GameplaySceneManager>
         // Note that we do not need to wait for async to finish writing as they won't be needed again until the
         // end of the next game anyway.
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-        CloudSaveManager.instance.UpdatePlayerStats(results);
+        CloudSaveManager.Instance.UpdatePlayerStats(results);
 #pragma warning restore CS4014
 
         // Save off game results so they can be shown when we return to the main menu.

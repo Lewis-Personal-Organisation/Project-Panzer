@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using static LobbyManager;
 using Interface.Elements.Scripts;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine.EventSystems;
 
 public class PlayerSlot : MonoBehaviour
@@ -67,24 +68,21 @@ public class PlayerSlot : MonoBehaviour
 		// Set UI listeners
 		openVehicleSelectionButton.onClick.RemoveAllListeners();
 		openVehicleSelectionButton.enabled = isOwner;
-		rescaleEventTrigger.triggers = null;
+		rescaleEventTrigger.triggers = new List<EventTrigger.Entry>();
 		
+		// Only assign interactable events if we are owner
 		if (isOwner)
 		{
-			openVehicleSelectionButton.onClick.AddListener(delegate
-			{
-				UIManager.LobbyUI.chooseVehicleViewGameObject.SetActive(true);
-			});
+			openVehicleSelectionButton.onClick.AddListener(() => UIManager.LobbyUI.chooseVehicleViewGameObject.SetActive(true));
 			
 			EventTrigger.Entry scaleUp = new EventTrigger.Entry();
 			scaleUp.eventID = EventTriggerType.PointerEnter;
-			scaleUp.callback.AddListener((eventData) => Scale(true));
+			scaleUp.callback.AddListener(_ => Scale(true));
+			rescaleEventTrigger.triggers.Add(scaleUp);
 			
 			EventTrigger.Entry scaleDown = new EventTrigger.Entry();
 			scaleDown.eventID = EventTriggerType.PointerExit;
-			scaleDown.callback.AddListener((eventData) => Scale(false));
-			
-			rescaleEventTrigger.triggers.Add(scaleUp);
+			scaleDown.callback.AddListener(_ => Scale(false));
 			rescaleEventTrigger.triggers.Add(scaleDown);
 		}
 
