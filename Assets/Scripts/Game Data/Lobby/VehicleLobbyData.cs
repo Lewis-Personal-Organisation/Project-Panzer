@@ -12,7 +12,7 @@ public enum VehicleType
 	WHL,
 }
 
-[CreateAssetMenu]
+[CreateAssetMenu(fileName = "Lobby Data", menuName = "Vehicles/Lobby")]
 public class VehicleLobbyData : ScriptableObject
 {
 	public Sprite icon;

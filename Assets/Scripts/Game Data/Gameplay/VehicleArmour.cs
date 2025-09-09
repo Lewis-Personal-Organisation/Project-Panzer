@@ -1,7 +1,7 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "Tank Armour", menuName = "Tanks/Armour Data")]
-public class TankArmour : ScriptableObject
+[CreateAssetMenu(fileName = "Armour", menuName = "Vehicles/Armour Data")]
+public class VehicleArmour : ScriptableObject
 {
     [SerializeField] private float frontThickness;
     [SerializeField] private float sideThickness;

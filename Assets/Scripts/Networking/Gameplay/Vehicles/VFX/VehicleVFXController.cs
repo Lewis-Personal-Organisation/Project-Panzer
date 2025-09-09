@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class TankVFXController : MonoBehaviour
+public class VehicleVFXController : MonoBehaviour
 {
     [System.Serializable]
     private class CachedParticleData

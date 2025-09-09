@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class TankShell : MonoBehaviour
 {
-    internal TankWeaponController controller;
+    internal VehicleWeaponController controller;
     [SerializeField] private NetworkObject networkObject;
     public bool IsOwner => networkObject.IsOwner;
     
@@ -16,7 +16,7 @@ public class TankShell : MonoBehaviour
     [SerializeField] private float velocity;
 
 
-	public TankShell Setup(TankWeaponController controller)
+	public TankShell Setup(VehicleWeaponController controller)
     {
         this.controller = controller;
         return this;

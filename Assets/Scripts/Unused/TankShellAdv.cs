@@ -7,7 +7,7 @@ using UnityEngine.Serialization;
 
 public class TankShellAdv : MonoBehaviour
 {
-    internal TankWeaponController controller;
+    internal VehicleWeaponController controller;
     [SerializeField] private NetworkObject networkObject;
     public bool IsOwner => networkObject.IsOwner;
     
@@ -26,7 +26,7 @@ public class TankShellAdv : MonoBehaviour
 	public LayerMask rotationDetectionMask;
 
 
-	public TankShellAdv Setup(TankWeaponController controller)
+	public TankShellAdv Setup(VehicleWeaponController controller)
     {
         this.controller = controller;
         return this;

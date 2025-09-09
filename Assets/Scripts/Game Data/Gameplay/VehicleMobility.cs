@@ -1,12 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
-using GD.MinMaxSlider;
 using UnityEngine;
-using UnityEngine.Serialization;
-using UnityEngine.UI;
 
-[CreateAssetMenu(fileName = "Tank Mobility", menuName = "Tanks/Mobility Data")]
-public class TankMobility : ScriptableObject
+[CreateAssetMenu(fileName = "Mobility", menuName = "Vehicles/Mobility Data")]
+public class VehicleMobility : ScriptableObject
 {
     [Header("Movement")]
     public float turnSpeed = 180.0f;

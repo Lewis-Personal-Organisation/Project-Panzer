@@ -5,12 +5,12 @@ using UnityEngine.Pool;
 using UnityEngine.Serialization;
 
 [DisallowMultipleComponent]
-[RequireComponent(typeof(TankController))]
-public abstract class TankWeaponController : MonoBehaviour
+[RequireComponent(typeof(VehicleController))]
+public abstract class VehicleWeaponController : MonoBehaviour
 {
-    [SerializeField] protected TankWeapon tankWeapon;
+    [FormerlySerializedAs("tankWeapon")] [SerializeField] protected VehicleWeapon vehicleWeapon;
     [SerializeField] protected int initPoolSize;
-    private TankController tankController;
+    private VehicleController vehicleController;
     [field: SerializeField] public ObjectPool<TankShell> shellPool { get; protected set; }
     [field: SerializeField] public Transform shellSpawnPoint {get; private set;}
     protected float reloadTimer = 0;
@@ -27,8 +27,8 @@ public abstract class TankWeaponController : MonoBehaviour
     
     private void Awake()
     {
-        if (tankController == null)
-            tankController = GetComponent<TankController>();
+        if (vehicleController == null)
+            vehicleController = GetComponent<VehicleController>();
     }
 
     private void Update()
@@ -55,12 +55,12 @@ public abstract class TankWeaponController : MonoBehaviour
     /// </summary>
     protected void PrepareLean()
     {
-        Vector3 shellForwardInHullSpace = tankController.hullBoneTransform.InverseTransformDirection(shellSpawnPoint.forward);
+        Vector3 shellForwardInHullSpace = vehicleController.hullBoneTransform.InverseTransformDirection(shellSpawnPoint.forward);
         turretCross = Vector3.Cross(shellForwardInHullSpace, Vector3.up);
         xLean = 0;
         zLean = 0;
-        xStep = tankWeapon.xLeanMax * Mathf.Abs(turretCross.x) * (1F / tankWeapon.leanTime);
-        zStep = tankWeapon.zLeanMax * Mathf.Abs(turretCross.z) * (1F / tankWeapon.leanTime);
+        xStep = vehicleWeapon.xLeanMax * Mathf.Abs(turretCross.x) * (1F / vehicleWeapon.leanTime);
+        zStep = vehicleWeapon.zLeanMax * Mathf.Abs(turretCross.z) * (1F / vehicleWeapon.leanTime);
         currentLeanTime = 0;
         reverse = false;
     }
@@ -68,15 +68,15 @@ public abstract class TankWeaponController : MonoBehaviour
     /// <summary>
     /// Applies lean for firing the weapon
     /// </summary>
-    protected void ApplyLean()
+    private void ApplyLean()
     {
         currentLeanTime += Time.deltaTime * (reverse ? -1F : 1F);
 
-        if (!reverse && currentLeanTime >= tankWeapon.leanTime * 0.5F)
+        if (!reverse && currentLeanTime >= vehicleWeapon.leanTime * 0.5F)
             reverse = true;
 
-        xLean = Mathf.MoveTowards(xLean, reverse ? 0 : tankWeapon.xLeanMax * turretCross.x, Time.deltaTime * xStep);
-        zLean = Mathf.MoveTowards(zLean, reverse ? 0 : tankWeapon.zLeanMax * turretCross.z, Time.deltaTime * zStep);
-        tankController.leanManager.UpdateWeaponLean(xLean, zLean);
+        xLean = Mathf.MoveTowards(xLean, reverse ? 0 : vehicleWeapon.xLeanMax * turretCross.x, Time.deltaTime * xStep);
+        zLean = Mathf.MoveTowards(zLean, reverse ? 0 : vehicleWeapon.zLeanMax * turretCross.z, Time.deltaTime * zStep);
+        vehicleController.LeanController.UpdateWeaponLean(xLean, zLean);
     }
 }

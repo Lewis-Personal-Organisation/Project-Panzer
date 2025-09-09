@@ -1,7 +1,7 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "Tank Weapon", menuName = "Tanks/Weapon Data")]
-public class TankWeapon : ScriptableObject
+[CreateAssetMenu(fileName = "Vehicle Weapon", menuName = "Vehicles/Weapon Data")]
+public class VehicleWeapon : ScriptableObject
 {
     [field: SerializeField] public TankShell shellPrefab { get; private set; }
     [field: SerializeField] public int ammoCount { get; private set; }

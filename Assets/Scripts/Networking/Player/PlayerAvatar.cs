@@ -8,7 +8,7 @@ public class PlayerAvatar : NetworkBehaviour
 {
     [SerializeField] internal NetworkObject networkObject;
     [SerializeField] private Rigidbody rigidbody;
-    [SerializeField] internal TankController vehicleController;
+    [SerializeField] internal VehicleController vehicleController;
     [SerializeField] internal CameraController cameraController;
     
     bool m_IsMovementAllowed = false;

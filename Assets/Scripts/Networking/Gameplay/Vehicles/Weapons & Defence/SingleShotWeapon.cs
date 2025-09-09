@@ -1,12 +1,12 @@
 using UnityEngine;
 using UnityEngine.Pool;
 
-public class TankSingleShotWeapon : TankWeaponController
+public class SingleShotWeapon : VehicleWeaponController
 {
     private void Start()
     {
         shellPool = new ObjectPool<TankShell>(
-            () => Instantiate(tankWeapon.shellPrefab).Setup(this),
+            () => Instantiate(vehicleWeapon.shellPrefab).Setup(this),
             shell =>
             {
                 shell.Respawn();
@@ -16,7 +16,7 @@ public class TankSingleShotWeapon : TankWeaponController
             shell => Destroy(shell.gameObject),
             false,
             initPoolSize,
-            tankWeapon.ammoCount);
+            vehicleWeapon.ammoCount);
 
         ResetWeapon();
     }
@@ -38,6 +38,6 @@ public class TankSingleShotWeapon : TankWeaponController
 
     protected override void ResetWeapon()
     {
-        reloadTimer = tankWeapon.reloadTime;
+        reloadTimer = vehicleWeapon.reloadTime;
     }
 }

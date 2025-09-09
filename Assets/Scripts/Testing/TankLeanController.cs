@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class TankLeanController : MonoBehaviour
 {
-    private readonly TankController controller;
+    private readonly VehicleController controller;
     private float xWeaponLean;
     private float zWeaponLean;
     private float xLean = 0.0f;
@@ -15,7 +15,7 @@ public class TankLeanController : MonoBehaviour
     [SerializeField] private float restingHullVertLean;
 
     public Transform hullBoneTransform;
-    public TankMobility data; 
+    public VehicleMobility data; 
     private Vector3 localVelocity;
     private float velocityMultiplier => localVelocity.z > 0F ? -1F : localVelocity.z < 0F ? 1F : 0F;
     private float turnInputValue;

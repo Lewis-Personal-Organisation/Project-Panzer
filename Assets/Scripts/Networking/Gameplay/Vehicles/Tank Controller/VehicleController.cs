@@ -5,12 +5,12 @@ using UnityEngine;
 using UnityEngine.Events;
 
 [RequireComponent(typeof(Rigidbody))]
-public class TankController : NetworkBehaviour
+public class VehicleController : NetworkBehaviour
 {
     [Serializable]
-    public class VehicleLean
+    public class VehicleLeanController
     {
-        private readonly TankController controller;
+        private readonly VehicleController controller;
         
         private float xWeaponLean;
         private float zWeaponLean;
@@ -22,8 +22,8 @@ public class TankController : NetworkBehaviour
         
         private float zLean = 0.0f;
 
-        public VehicleLean(TankController controller) => this.controller = controller;
-        private TankMobility data => controller.data;
+        public VehicleLeanController(VehicleController controller) => this.controller = controller;
+        private VehicleMobility data => controller.data;
         private Transform hullTransform => controller.hullBoneTransform;
         
         internal float tiltSign => controller.localZVelocity > data.minForwardVelocity ? -1F : controller.localZVelocity < -data.minForwardVelocity ? 1F : 0F;
@@ -79,7 +79,7 @@ public class TankController : NetworkBehaviour
     
     [Header("Tank Parameters")]
     [SerializeField] public VehicleType type;
-    [SerializeField] private TankMobility data;
+    [SerializeField] private VehicleMobility data;
 
     [SerializeField] private Material trackMaterial;
     private float gravitationalForce;
@@ -115,7 +115,7 @@ public class TankController : NetworkBehaviour
     [Header("Tracks Offset and Hull lean")]
     private float trackOffset = 0.0f;
     
-    [field: HideInInspector] public VehicleLean leanManager { get; private set; }
+    [field: HideInInspector] public VehicleLeanController LeanController { get; private set; }
     
     [Header("Team Colour")]
     private Renderer[] paintMaterials;
@@ -137,13 +137,14 @@ public class TankController : NetworkBehaviour
     [SerializeField] private ArcDrawer arcDrawer;
     
     [Header("VFX")]
-    [SerializeField] private TankVFXController vfxController;
+    [SerializeField] private VehicleVFXController vfxController;
     private class ValueTracker
     {
         private readonly MonoBehaviour host;
         private readonly Func<bool> activatePredicate;
         private readonly Func<bool> resetPredicate;
         private readonly UnityAction onValueReached = null;
+        
         public ValueTracker(MonoBehaviour host, Func<bool> activatePredicate, Func<bool> resetPredicate, UnityAction onValueReached)
         {
             this.host = host;
@@ -198,7 +199,7 @@ public class TankController : NetworkBehaviour
             renderer.material.SetFloat("_ColorOffset", (teamColor - 1));
         }
 
-        leanManager = new VehicleLean(this);
+        LeanController = new VehicleLeanController(this);
 
         ValueTracker exhaustPoof = new(this,
             () => localClampedVelocity.z >= 10,
@@ -254,7 +255,7 @@ public class TankController : NetworkBehaviour
         UpdateTankMovementState();
         MoveTank();
         ApplyTrackScroll();
-        leanManager.Lean();
+        LeanController.Lean();
         
         RotateTankTurret();
 

@@ -4,10 +4,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
 
-public class TankDefence : MonoBehaviour
+public class VehicleDefence : MonoBehaviour
 {
     [SerializeField] private float health = 100;
-    [SerializeField] private TankArmour tankArmour;
+    [FormerlySerializedAs("tankArmour")] [SerializeField] private VehicleArmour vehicleArmour;
     [FormerlySerializedAs("hitMask")] [SerializeField]
     public LayerMask shellMask;
     private int instanceID;
