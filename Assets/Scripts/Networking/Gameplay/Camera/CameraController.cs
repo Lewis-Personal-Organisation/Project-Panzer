@@ -3,14 +3,13 @@ using UnityEngine;
 [RequireComponent(typeof(Camera))]
 public class CameraController : MonoBehaviour
 {
-    [field: SerializeField] public Camera camera {private set; get; }
+    [field: SerializeField] public new Camera camera {private set; get; }
     public Transform trToLookAt;
     public Vector3 cachedPositionOffset;
     public Vector3 offset;
     private float interpolator = 0;
     public float lerpSpeed = 1;
     private float inputValue = 0;
-    // public Vector3 positionOffset;
 
     
     private void Awake()
@@ -19,7 +18,6 @@ public class CameraController : MonoBehaviour
             camera = GetComponent<Camera>();
         
         cachedPositionOffset = this.transform.position - trToLookAt.position;
-        // this.positionOffset = trToLookAt.position - this.transform.position;
     }
 
     private void FixedUpdate()

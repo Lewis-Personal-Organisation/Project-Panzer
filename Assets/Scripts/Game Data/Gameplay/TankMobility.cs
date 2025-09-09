@@ -17,7 +17,6 @@ public class TankMobility : ScriptableObject
     [field: SerializeField] public float brakeDelta { get; private set; }
     [field: SerializeField] public float maxDrag { get; private set; }
     [field: SerializeField] public float steerDrag { get; private set; }
-    // [field: SerializeField] public float steerForce{ get; private set; }  
     [field: SerializeField] public float steerVelocity{ get; private set; }  
     
     [Header("Turret")]
@@ -29,10 +28,7 @@ public class TankMobility : ScriptableObject
     [field: SerializeField] public float globalGravity { get; private set; } = -9.81F;
 
 
-    // [Header("Lean Settings")]
-
-    // [MinMaxSlider(0F, 6F)]
-    // public Vector2 leanDescriptor; 
+    [Header("Lean Settings")]
     public float minForwardVelocity = 0.3F;
     public float horizontalLeanSpeed = 8.0f;
     public float horizontalMaxLean = 15.0f;

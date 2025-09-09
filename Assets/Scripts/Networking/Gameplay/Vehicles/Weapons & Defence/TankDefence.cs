@@ -10,6 +10,13 @@ public class TankDefence : MonoBehaviour
     [SerializeField] private TankArmour tankArmour;
     [FormerlySerializedAs("hitMask")] [SerializeField]
     public LayerMask shellMask;
+    private int instanceID;
+    
+    
+    private void Awake()
+    {
+        instanceID = this.gameObject.GetInstanceID();
+    }
 
 
     private void OnTriggerEnter(Collider other)
@@ -18,7 +25,7 @@ public class TankDefence : MonoBehaviour
         {
             if (other.transform.root.TryGetComponent(out TankShellAdv shell))
             {
-                if (this.gameObject.GetInstanceID() == shell.controller.gameObject.GetInstanceID())
+                if (instanceID == shell.controller.gameObject.GetInstanceID())
                     return;
 
                 Debug.Log($"Shell intercepted by other gameobject! {gameObject.name}. Is owner: {shell.IsOwner}");
