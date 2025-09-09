@@ -1,7 +1,5 @@
-using System.IO.Compression;
 using UnityEngine;
 using UnityEngine.Pool;
-
 
 public class TankSingleShotWeapon : TankWeaponController
 {
@@ -18,7 +16,7 @@ public class TankSingleShotWeapon : TankWeaponController
             shell => Destroy(shell.gameObject),
             false,
             initPoolSize,
-            20);
+            tankWeapon.ammoCount);
 
         ResetWeapon();
     }
@@ -42,6 +40,4 @@ public class TankSingleShotWeapon : TankWeaponController
     {
         reloadTimer = tankWeapon.reloadTime;
     }
-
-    
 }

@@ -4,7 +4,7 @@ using UnityEngine;
 public class TankWeapon : ScriptableObject
 {
     [field: SerializeField] public TankShell shellPrefab { get; private set; }
-    [SerializeField] private int ammoCount;
+    [field: SerializeField] public int ammoCount { get; private set; }
     [field: SerializeField] public float reloadTime { get; private set; }
     
     // Shot Lean Data

@@ -1,4 +1,3 @@
-using MiniTanks;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -23,7 +22,7 @@ public class TankClipWeapon : TankWeaponController
             shell => Destroy(shell.gameObject),
             false,
             initPoolSize,
-            20);
+            tankWeapon.ammoCount);
         
         ResetWeapon();
     }

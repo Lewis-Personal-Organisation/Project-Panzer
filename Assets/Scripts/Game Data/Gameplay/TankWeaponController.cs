@@ -10,19 +10,19 @@ public abstract class TankWeaponController : MonoBehaviour
 {
     [SerializeField] protected TankWeapon tankWeapon;
     [SerializeField] protected int initPoolSize;
-    [field: HideInInspector] public TankController tankController { get; protected set; }
+    private TankController tankController;
     [field: SerializeField] public ObjectPool<TankShell> shellPool { get; protected set; }
     [field: SerializeField] public Transform shellSpawnPoint {get; private set;}
     protected float reloadTimer = 0;
 
     [Header("Lean")]
-    public float xLean;         // The lean on the X and Z axis
-    internal float xStep;
-    public float zLean;
-    internal float zStep;
-    public float currentLeanTime;
-    internal bool reverse = false;
-    public Vector3 turretCross;
+    private float xLean;         // The lean on the X and Z axis
+    private float xStep;
+    private float zLean;
+    private float zStep;
+    private float currentLeanTime;
+    private bool reverse = false;
+    private Vector3 turretCross;
     
     
     private void Awake()
@@ -79,7 +79,4 @@ public abstract class TankWeaponController : MonoBehaviour
         zLean = Mathf.MoveTowards(zLean, reverse ? 0 : tankWeapon.zLeanMax * turretCross.z, Time.deltaTime * zStep);
         tankController.leanManager.UpdateWeaponLean(xLean, zLean);
     }
-    
-    // protected abstract void PrepareLean();
-    // protected abstract void ApplyLean();
 }

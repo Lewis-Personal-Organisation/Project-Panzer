@@ -1,11 +1,8 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
-using GD.MinMaxSlider;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.Serialization;
 
 [RequireComponent(typeof(Rigidbody))]
 public class TankController : NetworkBehaviour
@@ -14,13 +11,16 @@ public class TankController : NetworkBehaviour
     public class VehicleLean
     {
         private readonly TankController controller;
+        
         private float xWeaponLean;
         private float zWeaponLean;
-        [SerializeField] private float xLean = 0.0f;
-        private float zLean = 0.0f;
+        
+        private float xLean = 0.0f;
         private float xLeanTimer = 0F;
         private float xTargetLean = 0;
         private const float XLeanTimerMax = 0.5F;
+        
+        private float zLean = 0.0f;
 
         public VehicleLean(TankController controller) => this.controller = controller;
         private TankMobility data => controller.data;
@@ -33,7 +33,6 @@ public class TankController : NetworkBehaviour
         /// </summary>
         internal void Lean()
         {
-            // data.leanDescriptor.
             // Hull Lean X
             float leanMode = xLeanTimer < XLeanTimerMax ? data.verticalMaxLean : data.verticalRestingLean;  // Vertical or resting lean value
             xTargetLean = leanMode * tiltSign;                                                              // Should the value be pos or neg? (Moving forwards should lean backward etc.)
@@ -116,7 +115,7 @@ public class TankController : NetworkBehaviour
     [Header("Tracks Offset and Hull lean")]
     private float trackOffset = 0.0f;
     
-    [field: SerializeField] public VehicleLean leanManager { get; private set; }
+    [field: HideInInspector] public VehicleLean leanManager { get; private set; }
     
     [Header("Team Colour")]
     private Renderer[] paintMaterials;
