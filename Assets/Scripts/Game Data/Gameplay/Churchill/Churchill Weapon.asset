@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Churchill Weapon
   m_EditorClassIdentifier: 
   <shellPrefab>k__BackingField: {fileID: 7719807985243599631, guid: 256ec43d3a5d13547806c95164372d75, type: 3}
-  ammoCount: 50
+  <ammoCount>k__BackingField: 50
   <reloadTime>k__BackingField: 1.35
   <xLeanMax>k__BackingField: 20
   <zLeanMax>k__BackingField: 18

@@ -5,10 +5,9 @@ using UnityEngine;
 
 public static class Extensions
 {
-    // public static bool IsNearZero(this float value) => Mathf.Abs(value) < Mathf.Epsilon;
-    
     public static  bool IsNearZero(this float value) => Mathf.Abs(value) < Mathf.Epsilon && Mathf.Abs(value) > -Mathf.Epsilon;
-    public static bool IsNearValue(this float value, float target) => Mathf.Abs(value) + Mathf.Epsilon > Mathf.Abs(target) || Mathf.Abs(value) - Mathf.Epsilon < Mathf.Abs(target);
+    public static bool IsNearValue(this float value, float target, float range) => Mathf.Abs(value) >= Mathf.Abs(target) - Mathf.Abs(range) && 
+                                                                                   Mathf.Abs(value) <= Mathf.Abs(target) + Mathf.Abs(range);
 
     public static Vector3 Clamp(Vector3 original, float maxX, float maxY, float maxZ)
     {

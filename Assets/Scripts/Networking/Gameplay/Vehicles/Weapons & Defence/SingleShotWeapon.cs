@@ -5,8 +5,8 @@ public class SingleShotWeapon : VehicleWeaponController
 {
     private void Start()
     {
-        shellPool = new ObjectPool<TankShell>(
-            () => Instantiate(vehicleWeapon.shellPrefab).Setup(this),
+        shellPool = new ObjectPool<WeaponShell>(
+            () => Instantiate(weapon.shellPrefab).Setup(this),
             shell =>
             {
                 shell.Respawn();
@@ -16,7 +16,7 @@ public class SingleShotWeapon : VehicleWeaponController
             shell => Destroy(shell.gameObject),
             false,
             initPoolSize,
-            vehicleWeapon.ammoCount);
+            weapon.ammoCount);
 
         ResetWeapon();
     }
@@ -27,7 +27,8 @@ public class SingleShotWeapon : VehicleWeaponController
             return;
 
         shellPool.Get();
-        PrepareLean();
+        vehicle.cameraController.Shake();
+        weaponLeanController.PrepareLean();
     }
 
     protected override void Reload()
@@ -38,6 +39,6 @@ public class SingleShotWeapon : VehicleWeaponController
 
     protected override void ResetWeapon()
     {
-        reloadTimer = vehicleWeapon.reloadTime;
+        reloadTimer = weapon.reloadTime;
     }
 }

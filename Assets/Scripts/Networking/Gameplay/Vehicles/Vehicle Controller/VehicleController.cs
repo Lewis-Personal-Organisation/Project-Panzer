@@ -3,141 +3,12 @@ using System.Collections;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
+using Debug = UnityEngine.Debug;
 
 [RequireComponent(typeof(Rigidbody))]
 public class VehicleController : NetworkBehaviour
 {
-    [Serializable]
-    public class VehicleLeanController
-    {
-        private readonly VehicleController controller;
-        
-        private float xWeaponLean;
-        private float zWeaponLean;
-        
-        private float xLean = 0.0f;
-        private float xLeanTimer = 0F;
-        private float xTargetLean = 0;
-        private const float XLeanTimerMax = 0.5F;
-        
-        private float zLean = 0.0f;
-
-        public VehicleLeanController(VehicleController controller) => this.controller = controller;
-        private VehicleMobility data => controller.data;
-        private Transform hullTransform => controller.hullBoneTransform;
-        
-        internal float tiltSign => controller.localZVelocity > data.minForwardVelocity ? -1F : controller.localZVelocity < -data.minForwardVelocity ? 1F : 0F;
-
-        /// <summary>
-        /// Applies the Horizontal and Vertical lean based on velocity, direction and gun fire
-        /// </summary>
-        internal void Lean()
-        {
-            // Hull Lean X
-            float leanMode = xLeanTimer < XLeanTimerMax ? data.verticalMaxLean : data.verticalRestingLean;  // Vertical or resting lean value
-            xTargetLean = leanMode * tiltSign;                                                              // Should the value be pos or neg? (Moving forwards should lean backward etc.)
-            xLean = Mathf.Lerp(xLean, xTargetLean, Time.deltaTime * data.verticalLeanSpeed);                // Move value used for the lean rotation
-            
-            //If current lean is above target (minus a subtracted value), increment timer. Else, reset timer
-            if (Mathf.Abs(xLean) > Mathf.Abs(xTargetLean) - data.verticalToRestingLeanValue)
-            {
-                xLeanTimer = Mathf.Clamp(xLeanTimer + Time.deltaTime, 0, XLeanTimerMax);
-            }
-            else
-            {
-                xLeanTimer = 0;
-            }
-
-            // Hull lean Z
-            zLean = Mathf.Lerp(zLean, controller.turnInputValue * data.horizontalMaxLean, Time.deltaTime * data.horizontalLeanSpeed);
-            
-            // Apply Lean
-            hullTransform.localRotation = Quaternion.Euler(xLean + xWeaponLean, 0, zLean + zWeaponLean);
-        }
-
-        /// <summary>
-        /// Called externally. Provides the lean from firing weapon
-        /// </summary>
-        public void UpdateWeaponLean(float leanX, float leanZ)
-        {
-            xWeaponLean = leanX;
-            zWeaponLean = leanZ;
-        }
-    }
-    
-    [SerializeField] private CameraController cameraController;
-
-    [field: SerializeField] public Transform hullBoneTransform {get; private set;}
-    [SerializeField] private Rigidbody hullRigidbody;
-    [SerializeField] private Transform turretTransform;
-    [SerializeField] private Transform trackTransform;
-    [SerializeField] private Transform targetTransform;
-
-    [Header("Color offset")]
-    [Range(1, 12)]
-    private int teamColor = 1;
-    
-    [Header("Tank Parameters")]
-    [SerializeField] public VehicleType type;
-    [SerializeField] private VehicleMobility data;
-
-    [SerializeField] private Material trackMaterial;
-    private float gravitationalForce;
-
-    private enum InputState
-    {
-        None,
-        Moving,
-        Rotating,
-        MovingAndRotating
-    };
-    private InputState inputState => (yRotationDelta.IsNearZero(), targetSpeed.IsNearZero()) switch
-    {
-        (true, true) => InputState.None,
-        (true, false) => InputState.Moving,
-        (false, false) => InputState.MovingAndRotating,
-        (false, true) => InputState.Rotating
-    };
-    
-    [Header("Forward Input and Speed")]
-    private float inputSpeed;
-    private float moveInput = 0F;
-    private float targetSpeed => moveInput switch
-    {
-        1 => data.forwardSpeed,
-        -1 => -data.backwardSpeed,
-        _ => 0
-    };
-    private float turnInputValue = 0.0f;
-    private Vector3 targetPosition;
-    private float yRotationDelta;
-
-    [Header("Tracks Offset and Hull lean")]
-    private float trackOffset = 0.0f;
-    
-    [field: HideInInspector] public VehicleLeanController LeanController { get; private set; }
-    
-    [Header("Team Colour")]
-    private Renderer[] paintMaterials;
-
-    [Header("Force and Velocity")]
-    private Vector3 localClampedVelocity;
-    private float localZVelocity;
-    
-    [Header("Casting and Movement Delta")]
-    [SerializeField] private Transform leftCastPoint;
-    [SerializeField] private Transform rightCastPoint;
-    [SerializeField] private float castDistance = 0.03F;
-    private bool isGrounded => isLeftGrounded && isRightGrounded;
-    private bool isPartiallyGrounded => isLeftGrounded || isRightGrounded;
-    private bool isLeftGrounded = false;
-    private bool isRightGrounded = false;
-    private Vector3 lastFramePos;
-    [SerializeField] private PhysicMaterial physicsMaterial;
-    [SerializeField] private ArcDrawer arcDrawer;
-    
-    [Header("VFX")]
-    [SerializeField] private VehicleVFXController vfxController;
     private class ValueTracker
     {
         private readonly MonoBehaviour host;
@@ -168,6 +39,78 @@ public class VehicleController : NetworkBehaviour
         }
     }
     
+    [Header("Core Parameters")]
+    public VehicleMobility mobility;
+    [field: SerializeField] public CameraController cameraController {get; private set;}
+    public VehicleInputManager inputManager;
+    
+    [Header("Transforms")]
+    [SerializeField] private Rigidbody hullRigidbody;
+    [field: SerializeField] public Transform hullBoneTransform {get; private set;}
+    [SerializeField] private Transform trackTransform;
+
+    [Header("Color offset")]
+    [Range(1, 12)]
+    private int teamColor = 1;
+    
+    private float gravitationalForce;
+
+    private enum InputState
+    {
+        None,
+        Moving,
+        Rotating,
+        MovingAndRotating
+    };
+    private InputState inputState => (inputManager.rotationInput == 0, targetSpeed.IsNearZero()) switch
+    {
+        (true, true) => InputState.None,
+        (true, false) => InputState.Moving,
+        (false, false) => InputState.MovingAndRotating,
+        (false, true) => InputState.Rotating
+    };
+    
+    // Speed
+    private float inputSpeed;
+    private float targetSpeed => inputManager.moveInput switch
+    {
+        1 => mobility.forwardSpeed,
+        -1 => -mobility.backwardSpeed,
+        _ => 0
+    };
+
+    [Header("Tracks")]
+    [SerializeField] private Material trackMaterial;
+    [SerializeField] private float trackOffset = 0.0f;
+
+    [Header("Lean Controllers")]
+    public VehicleBodyLeanController bodyLean;
+    public VehicleWeaponLeanController weaponLean;
+    
+    [Header("Team Colour")]
+    private Renderer[] paintMaterials;
+
+    [Header("Force and Velocity")]
+    private Vector3 localClampedVelocity;
+    // private float preframeVelocityZ = 0;
+    // [SerializeField] private float velocityZDelta = 0;
+    // [SerializeField] int frameInterval = 5;
+    public float localZVelocity { get; private set; }
+    
+    [Header("Ground Detection")]
+    [SerializeField] private Transform leftCastPoint;
+    [SerializeField] private Transform rightCastPoint;
+    [SerializeField] private float castDistance = 0.03F;
+    private bool isLeftGrounded = false;
+    private bool isRightGrounded = false;
+    private Vector3 lastFramePos;
+    [SerializeField] private PhysicMaterial physicsMaterial;
+    [SerializeField] private ArcDrawer arcDrawer;
+    
+    [Header("VFX")]
+    [SerializeField] private VehicleVFXController vfxController;
+    
+    
     private void Awake()
     {
         Setup();
@@ -175,21 +118,44 @@ public class VehicleController : NetworkBehaviour
 
     public void Setup()
     {
-        Debug.Log($"TankController :: Setup :: Are we host? {base.IsHost}");
+        Debug.Log($"VehicleController :: Setup :: Are we host? {base.IsHost}");
         // viewCamera = Camera.main;
 
         if (!hullRigidbody)
-            hullRigidbody = GetComponent<Rigidbody>();
+        {
+            if (TryGetComponent(out Rigidbody rb))
+            {
+                hullRigidbody = rb;
+            }
+            else
+            {
+                Debug.LogError("VehicleController :: Setup :: hullRigidbody not set", this.gameObject);
+            }
+        }
+
+        if (!mobility)
+        {
+            Debug.LogError("VehicleController :: Setup :: Mobility field not set", this.gameObject);
+        }
         
-        gravitationalForce = data.localGravity;
+        gravitationalForce = mobility.localGravity;
         
         // RE-ENABLE FOR NETWORKING
         // if (IsOwner)
         // {
             // this.gameObject.layer = LayerMask.NameToLayer("PlayerSelf");
         // }
-
-        trackMaterial = trackTransform.GetComponent<Renderer>().material;
+        if (!trackMaterial)
+        {
+            if (trackTransform.TryGetComponent(out Renderer renderer))
+            {
+                trackMaterial = renderer.material;
+            }
+            else
+            {
+                Debug.LogError("VehicleController :: Setup :: Track Material not set or found!", this.gameObject); 
+            }
+        }
 
         // Get and Set the materials ColorOffset
         paintMaterials = transform.GetComponentsInChildren<Renderer>();
@@ -199,9 +165,31 @@ public class VehicleController : NetworkBehaviour
             renderer.material.SetFloat("_ColorOffset", (teamColor - 1));
         }
 
-        LeanController = new VehicleLeanController(this);
+        if (!bodyLean)
+        {
+            if (TryGetComponent(out VehicleBodyLeanController leanController))
+            {
+                bodyLean = leanController;
+            }
+            else
+            {
+                Debug.LogError("VehicleController :: Setup :: BodyLeanController not set or found!", this.gameObject);
+            }
+        }
+        
+        if (!weaponLean)
+        {
+            if (TryGetComponent(out VehicleWeaponLeanController leanController))
+            {
+                weaponLean = leanController;
+            }
+            else
+            {
+                Debug.LogError("VehicleController :: Setup :: VehicleWeaponLeanController not set or found!", this.gameObject);
+            }
+        }
 
-        ValueTracker exhaustPoof = new(this,
+        ValueTracker exhaustSmoke = new(this,
             () => localClampedVelocity.z >= 10,
             () => localClampedVelocity.z < 10,
             () =>
@@ -209,12 +197,6 @@ public class VehicleController : NetworkBehaviour
                 vfxController.LerpLifetimeOptions(2, 0.2f);
                 vfxController.EmitImmediate(50);
             });
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        AdjustMouseAimPosition();
     }
 
     // [Rpc(SendTo.Server)]
@@ -232,7 +214,10 @@ public class VehicleController : NetworkBehaviour
     //     hullRigidbody.MovePosition(spawnPosition + randomPosition);
     //     Position.Value = hullRigidbody.position;
     // }
-
+    
+    
+    
+    // [BurstCompile]
     private void FixedUpdate()
     {
         if (NetworkManager != null)
@@ -246,41 +231,43 @@ public class VehicleController : NetworkBehaviour
             hullRigidbody.isKinematic = false;
         }
         
-        // Get input values for movement
-        moveInput = Input.GetAxisRaw("Vertical");
-        turnInputValue = Input.GetAxis("Horizontal");
-        
         RotateTank();
 
         UpdateTankMovementState();
         MoveTank();
-        ApplyTrackScroll();
-        LeanController.Lean();
-        
-        RotateTankTurret();
-
-        cameraController.UpdateInputValue(moveInput);
-
-        float speedAsT = Mathf.InverseLerp(data.forwardSpeed, 0, localZVelocity);
-        vfxController.LerpLifetimeOptions(speedAsT, 0.2f);
-    }
-
-    private void AdjustMouseAimPosition()
-    {
-        if (!Physics.Raycast(cameraController.camera.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Mathf.Infinity, LayerMask.GetMask("Ground"))) return;
-        
-        targetPosition = hit.point;
             
-        // move the target object to the hit position
-        targetTransform.position = targetPosition;
+        ApplyTrackScroll();
+        
+        bodyLean.UpdateLeanValues();
+        hullBoneTransform.localRotation = Quaternion.Euler(bodyLean.LeanX + weaponLean.LeanX, 0, bodyLean.LeanZ + weaponLean.LeanZ);
+
+        // cameraController.UpdateInputValue(moveInput);
+
+        float speedAsT = Mathf.InverseLerp(mobility.forwardSpeed, 0, localZVelocity);
+        vfxController.LerpLifetimeOptions(speedAsT, 0.2f);
     }
     
     private void RotateTank()
     {
-        // REPLACE WITH TORQUE
-        yRotationDelta = turnInputValue * data.turnSpeed * Time.deltaTime;
-        Quaternion turnRotation = Quaternion.Euler(0f, yRotationDelta, 0f);
-        hullRigidbody.MoveRotation(hullRigidbody.rotation * turnRotation);
+        // If Grounded, allow rotation
+        if (isLeftGrounded && isRightGrounded)
+        {
+            hullRigidbody.angularDrag = inputManager.rotationInput == 0 ? mobility.straightSteerDrag : mobility.steeringDrag;
+            hullRigidbody.maxAngularVelocity = mobility.maxAngularVelocity;
+            // Torque
+            hullRigidbody.AddTorque(Vector3.up * inputManager.rotationInput * mobility.turnSpeed * Time.deltaTime * mobility.torqueMultipler, ForceMode.Force);
+        }
+        else
+        {
+            // else, apply an auto rotation
+            // If rotation is higher than value, force rotation back
+            float zAngle = this.transform.rotation.eulerAngles.z;
+            if (Mathf.Abs(zAngle) > mobility.minAngleForCorrection)
+            {
+                Debug.Log($"Rotating with {(zAngle > 0 ? 1 : -1)}: {this.transform.rotation.eulerAngles.z}");
+                hullRigidbody.AddTorque(hullBoneTransform.forward * mobility.correctionTorqueForce * (zAngle > 0 ? -1 : 1), ForceMode.Force);
+            }
+        }
     }
 
     private void UpdateTankMovementState()
@@ -297,12 +284,17 @@ public class VehicleController : NetworkBehaviour
         isRightGrounded = isRightGroundedThisFrame;
         
         // If neither track has valid cast
-        if (!isGrounded)
+        if (isLeftGrounded && isRightGrounded)
+        {
+            gravitationalForce = mobility.globalGravity;
+            physicsMaterial.bounciness = mobility.physicsBounciness;
+        }
+        else if (!isLeftGrounded && !isRightGrounded)
         {
             // If we are still moving at or above a set distance, we are probably falling from some object
             if ((this.transform.position - lastFramePos).sqrMagnitude >= 0.5F)
             {
-                gravitationalForce = data.localGravity;
+                gravitationalForce = mobility.localGravity;
             }
             else
             {
@@ -313,71 +305,100 @@ public class VehicleController : NetworkBehaviour
             physicsMaterial.bounciness = 0;
             lastFramePos = hullRigidbody.position; // Cache for position comparison
         }
-        else
-        {
-            gravitationalForce = data.globalGravity;
-            physicsMaterial.bounciness = 0.375F;
-        }
     }
 
+    private void MeasureVelocityZDifference()
+    {
+        // float vel = transform.InverseTransformDirection(hullRigidbody.velocity).z;
+        //
+        // velocityFrames[1] = velocityFrames[0];
+        // velocityFrames[0] = vel;
+        //
+        // if (Time.frameCount % 2 == 0)
+        // {
+        //     float total = 0;
+        //     
+        //     total = velocityFrames[0] + velocityFrames[1];
+        //     total /= velocityFrames.Length;
+        //
+        //     velocityZDelta = total;
+        // }
+        
+        // Debug.Log($"{transform.InverseTransformDirection(hullRigidbody.velocity).z * frameInterval}");
+        // if (Time.frameCount % frameInterval == 0)
+        // {
+        //     float thisFrameVelocity = transform.InverseTransformDirection(hullRigidbody.velocity).z;
+        //     
+        //     velocityZDelta = thisFrameVelocity > preframeVelocityZ ? 1F : thisFrameVelocity < preframeVelocityZ ? -1F : 0F;
+        //     preframeVelocityZ = thisFrameVelocity;
+        // }
+    }
+    
     /// <summary>
     /// Moves the tank based on its grounded state, input values and gravity
     /// </summary>
     private void MoveTank()
     {
-        if (isPartiallyGrounded)
+        // preframeVelocityZ = transform.InverseTransformDirection(hullRigidbody.velocity).z;
+        
+        if (isLeftGrounded || isRightGrounded)
         {
-            hullRigidbody.drag = inputState == InputState.Rotating ? data.steerDrag : data.maxDrag;
-            inputSpeed = Mathf.MoveTowards(inputSpeed, inputState != InputState.Rotating ? targetSpeed : data.steerVelocity, data.speedDelta * Time.deltaTime);
+            hullRigidbody.drag = 1F;
+            inputSpeed = Mathf.MoveTowards(inputSpeed, inputState != InputState.Rotating ? targetSpeed : mobility.steerVelocity, mobility.speedDelta * Time.deltaTime);
+        }
+        else
+        {
+            inputSpeed = Mathf.MoveTowards(inputSpeed, 0, mobility.speedDelta * Time.deltaTime);
         }
         
-        OnGUISceneViewData.forwardInputValue = moveInput;
-        OnGUISceneViewData.inputSpeed = inputSpeed;
-        OnGUISceneViewData.speedTarget = isPartiallyGrounded ? targetSpeed : 0;
+        // OnGUISceneViewData.forwardInputValue = inputManager.moveInput;
+        // OnGUISceneViewData.inputSpeed = inputSpeed;
+        // OnGUISceneViewData.speedTarget = isLeftGrounded || isRightGrounded ? targetSpeed : 0;
 
-        arcDrawer.startAngle = -Vector3.SignedAngle(Vector3.ProjectOnPlane(transform.forward, Vector3.up), transform.forward, transform.right);
+        if (arcDrawer)
+            arcDrawer.startAngle = -Vector3.SignedAngle(Vector3.ProjectOnPlane(transform.forward, Vector3.up), transform.forward, transform.right);
 
         float velocityDot = Vector3.Dot(hullRigidbody.velocity, hullRigidbody.transform.forward);
         
         // If Rotating, target speed more than allowed and velocity is higher than allowed
-        if (inputState == InputState.Rotating && targetSpeed < data.steerVelocity && velocityDot > data.steerVelocity)
+        if (inputState == InputState.Rotating && targetSpeed < mobility.steerVelocity && velocityDot > mobility.steerVelocity)
         {
             // FIX, DOESNT SEEM TO SCALE
-            float velocityExcess = velocityDot - data.steerVelocity;
-            float proportionalBrake = velocityExcess * data.brakeDelta;
+            float velocityExcess = velocityDot - mobility.steerVelocity;
+            float proportionalBrake = velocityExcess * mobility.brakeDelta;
             OnGUISceneViewData.brakeForce = proportionalBrake;
             hullRigidbody.AddRelativeForce(Vector3.back * proportionalBrake * Time.deltaTime, ForceMode.Acceleration);
         }
         else
         {
-            hullRigidbody.AddRelativeForce(Vector3.forward * inputSpeed * data.forceMultiplier * Time.deltaTime, ForceMode.Force);
+            hullRigidbody.AddRelativeForce(Vector3.forward * inputSpeed * mobility.forceMultiplier * Time.deltaTime, ForceMode.Force);
         }
         
-        localClampedVelocity = transform.InverseTransformDirection(hullRigidbody.velocity);
-        localClampedVelocity.x = 0;
-        localZVelocity = localClampedVelocity.z;
-        localClampedVelocity.z = Mathf.Clamp(localClampedVelocity.z, -data.backwardSpeed, data.forwardSpeed);
-        hullRigidbody.velocity = transform.TransformDirection(localClampedVelocity);
-
         // Add Gravity
         hullRigidbody.AddForce(gravitationalForce * hullRigidbody.mass * Vector3.up);
         
-        OnGUISceneViewData.tankVelocity = hullRigidbody.velocity;
-        OnGUISceneViewData.tankLocalVelocity = localClampedVelocity;
-        OnGUISceneViewData.rotationDelta = yRotationDelta;
+        // Cache Velocity
+        localClampedVelocity = transform.InverseTransformDirection(hullRigidbody.velocity);
+        localClampedVelocity.x = 0;
+        localZVelocity = localClampedVelocity.z;
+        localClampedVelocity.z = Mathf.Clamp(localClampedVelocity.z, -mobility.backwardSpeed, mobility.forwardSpeed);
+        hullRigidbody.velocity = transform.TransformDirection(localClampedVelocity);
+        
+        // OnGUISceneViewData.tankVelocity = hullRigidbody.velocity;
+        // OnGUISceneViewData.tankLocalVelocity = localClampedVelocity;
     }
 
     /// <summary>
     /// Rotates the tank turret based on mouse position
     /// </summary>
-    private void RotateTankTurret()
-    {
-        // Rotate turret
-        targetPosition = hullBoneTransform.worldToLocalMatrix.MultiplyPoint(targetPosition);
-        targetPosition.y = 0f;
-        Quaternion targetRotation = Quaternion.LookRotation(targetPosition);
-        turretTransform.localRotation = Quaternion.RotateTowards(turretTransform.localRotation, targetRotation, Time.deltaTime * data.turretSpeed);
-    }
+    // private void RotateTankTurret()
+    // {
+    //     // Rotate turret
+    //     targetPosition = hullBoneTransform.worldToLocalMatrix.MultiplyPoint(targetPosition);
+    //     targetPosition.y = 0f;
+    //     Quaternion targetRotation = Quaternion.LookRotation(targetPosition);
+    //     turretTransform.localRotation = Quaternion.RotateTowards(turretTransform.localRotation, targetRotation, Time.deltaTime * mobility.turretRotationSpeed);
+    // }
 
     /// <summary>
     /// Sets the track material offset using velocity to mimi rotating tracks
@@ -385,37 +406,10 @@ public class VehicleController : NetworkBehaviour
     private void ApplyTrackScroll()
     {
         // Set track offset to match the lowest of velocity and track rotation.
-        trackOffset += Mathf.Max(localClampedVelocity.z, turnInputValue) * Time.deltaTime;
+        trackOffset += Mathf.Max(localClampedVelocity.z, inputManager.turnInputValue) * Time.deltaTime;
         trackOffset %= 1.0f;                                                            // track offset is always a remainder of 1.
         trackMaterial.SetFloat("_TrackOffset", trackOffset);
     }
-    
-    
-        
-        // // Lean the hull based on movement inputs
-        // if (Input.GetButtonDown("Vertical"))
-        // {
-        //     isForward = Input.GetAxisRaw("Vertical");
-        //     targetHullForwardLean = -data.verticalMaxLean * isForward;
-        // }
-        //
-        // if (Input.GetButtonUp("Vertical"))
-        // {
-        //     targetHullForwardLean = data.verticalMaxLean * isForward;
-        // }
-        //
-        // // Hull lean
-        // // targetHullLean = -turnInputValue * data.horizontalMaxLean;
-        // // actHullLean = Mathf.Lerp(actHullLean, targetHullLean, Time.deltaTime * data.horizontalLeanSpeed);
-        // zCurrentLean = Mathf.Lerp(zCurrentLean, targetHullForwardLean, Time.deltaTime * data.verticalLeanSpeed);
-        //
-        // if (Mathf.Abs(zCurrentLean) >= Mathf.Abs(targetHullForwardLean) - 1.0f)
-        // {
-        //     targetHullForwardLean = moveInput > 0 ? restingHullVertLean * -1 : 0;
-        // }
-        //
-        // hullBoneTransform.localRotation = Quaternion.Euler(xLean * moveInput, 0, zCurrentLean);
-    
 
     private void OnDrawGizmos()
     {

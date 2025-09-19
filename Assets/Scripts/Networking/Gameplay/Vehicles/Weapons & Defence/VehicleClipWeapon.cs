@@ -10,8 +10,8 @@ public class VehicleClipWeapon : VehicleWeaponController
 
     private void Start()
     {
-        shellPool = new ObjectPool<TankShell>(
-            () => Instantiate(vehicleWeapon.shellPrefab).Setup(this),
+        shellPool = new ObjectPool<WeaponShell>(
+            () => Instantiate(weapon.shellPrefab).Setup(this),
             shell =>
             {
                 shell.Respawn();
@@ -22,7 +22,7 @@ public class VehicleClipWeapon : VehicleWeaponController
             shell => Destroy(shell.gameObject),
             false,
             initPoolSize,
-            vehicleWeapon.ammoCount);
+            weapon.ammoCount);
         
         ResetWeapon();
     }
@@ -35,9 +35,8 @@ public class VehicleClipWeapon : VehicleWeaponController
         if (shotDelayTimer > 0)
             return;
 
-        // Fire
         shellPool.Get();
-        PrepareLean();
+        weaponLeanController.PrepareLean();
     }
 
     protected override void Reload()
@@ -49,7 +48,7 @@ public class VehicleClipWeapon : VehicleWeaponController
             if (reloadTimer <= 0)
             {
                 shellsInClip++;
-                reloadTimer = vehicleWeapon.reloadTime;
+                reloadTimer = weapon.reloadTime;
             }
             else
             {
@@ -66,7 +65,7 @@ public class VehicleClipWeapon : VehicleWeaponController
 
     protected override void ResetWeapon()
     {
-        reloadTimer = vehicleWeapon.reloadTime;        // Reset this for balance purposes
+        reloadTimer = weapon.reloadTime;        // Reset this for balance purposes
         shotDelayTimer = shotDelayTime;
     }
 }

@@ -18,18 +18,23 @@ MonoBehaviour:
   <backwardSpeed>k__BackingField: 9
   <speedDelta>k__BackingField: 15
   <brakeDelta>k__BackingField: -0.6
-  <maxDrag>k__BackingField: 1
-  <steerDrag>k__BackingField: 1
   <steerVelocity>k__BackingField: 3
-  turretSpeed: 151.1
+  <physicsBounciness>k__BackingField: 0.375
+  torqueMultipler: 30
+  maxAngularVelocity: 1.35
+  straightSteerDrag: 130
+  steeringDrag: 0
+  minAngleForCorrection: 5
+  correctionTorqueForce: 10
+  turretRotationSpeed: 151.1
   trackMultiplier: 0.75
   <localGravity>k__BackingField: -32
   <globalGravity>k__BackingField: -9.81
-  leanDescriptor: {x: 0, y: 4}
-  minForwardVelocity: 0.3
+  minForwardVelocity: 0.1
+  cruiseForwardVelocity: 16
   horizontalLeanSpeed: 4.61
-  horizontalMaxLean: 4
+  horizontalMaxLean: 7
   verticalLeanSpeed: 4.53
-  verticalRestingLean: 4
+  verticalRestingLean: -2
   verticalMaxLean: 6
   verticalToRestingLeanValue: 1

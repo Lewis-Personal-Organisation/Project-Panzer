@@ -27,7 +27,7 @@ namespace MiniTanks
         public float TurnSpeed = 180.0f;
         public float turretSpeed = 240.0f;
         public float trackMultiplier = 0.75f;
-        [Header("Lean Settings")]
+        [Header("UpdateLeanValues Settings")]
         public float HleanSpeed = 8.0f;
         public float VleanSpeed = 6.0f;
         public float HMaxLean = 15.0f;
@@ -92,7 +92,7 @@ namespace MiniTanks
             trackOffset %= 1.0f;
             trackMaterial.SetFloat("_TrackOffset", trackOffset);
 
-            // Lean the hull based on movement inputs
+            // UpdateLeanValues the hull based on movement inputs
             if (Input.GetButtonDown("Vertical"))
             {
                 targetHullForwardLean = -VMaxLean * Input.GetAxisRaw("Vertical");

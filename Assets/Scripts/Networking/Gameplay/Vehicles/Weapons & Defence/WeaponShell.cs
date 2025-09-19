@@ -1,7 +1,7 @@
 using Unity.Netcode;
 using UnityEngine;
 
-public class TankShell : MonoBehaviour
+public class WeaponShell : MonoBehaviour
 {
     internal VehicleWeaponController controller;
     [SerializeField] private NetworkObject networkObject;
@@ -16,7 +16,7 @@ public class TankShell : MonoBehaviour
     [SerializeField] private float velocity;
 
 
-	public TankShell Setup(VehicleWeaponController controller)
+	public WeaponShell Setup(VehicleWeaponController controller)
     {
         this.controller = controller;
         return this;

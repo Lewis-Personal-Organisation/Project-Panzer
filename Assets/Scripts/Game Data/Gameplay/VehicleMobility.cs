@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [CreateAssetMenu(fileName = "Mobility", menuName = "Vehicles/Mobility Data")]
 public class VehicleMobility : ScriptableObject
@@ -10,21 +11,35 @@ public class VehicleMobility : ScriptableObject
     [field: SerializeField] public float backwardSpeed { get; private set; }
     [field: SerializeField] public float speedDelta { get; private set; }
     [field: SerializeField] public float brakeDelta { get; private set; }
-    [field: SerializeField] public float maxDrag { get; private set; }
-    [field: SerializeField] public float steerDrag { get; private set; }
-    [field: SerializeField] public float steerVelocity{ get; private set; }  
+    [field: SerializeField] public float steerVelocity{ get; private set; }
+    [field: SerializeField] public float physicsBounciness{ get; private set; }
+
+    [Header("Rotation")]
+    public float torqueMultipler = 30F;
+    public float maxAngularVelocity = 1.35F;
+    public float straightSteerDrag = 130;
+    public float steeringDrag = 0F;
+    
+    [FormerlySerializedAs("angleLimit")]
+    [Header("Stabilisation/Correction Variables")]
+    public float minAngleForCorrection = 5F;
+    [Tooltip("The force used to correct the vehicle rotation")]
+    [FormerlySerializedAs("rotationAngleForce")] public float correctionTorqueForce = 10F;
     
     [Header("Turret")]
-    public float turretSpeed = 240.0f;
+    public float turretRotationSpeed = 240.0f;
     
     [Header("Other")]
     public float trackMultiplier = 0.75f;
+    [Tooltip("The gravity when falling or stuck")]
     [field: SerializeField] public float localGravity { get; private set; } = -32F;
+    [Tooltip("The gravity when grounded")]
     [field: SerializeField] public float globalGravity { get; private set; } = -9.81F;
 
 
     [Header("Lean Settings")]
     public float minForwardVelocity = 0.3F;
+    public float cruiseForwardVelocity;
     public float horizontalLeanSpeed = 8.0f;
     public float horizontalMaxLean = 15.0f;
     public float verticalLeanSpeed = 6.0f;

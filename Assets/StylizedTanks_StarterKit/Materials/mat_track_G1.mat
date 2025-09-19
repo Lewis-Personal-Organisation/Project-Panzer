@@ -121,7 +121,7 @@ Material:
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 0
-    - _TrackOffset: 0
+    - _TrackOffset: 0.5052443
     - _UVSec: 0
     - _WorkflowMode: 1
     - _ZTest: 4

@@ -28,23 +28,23 @@ public class SceneGUI : EditorWindow
  
     private static void OnScene(SceneView sceneView)
     {
-        multi = 0;
-        Handles.BeginGUI();
-        // if (GUILayout.Button("Press Me"))
-        //     Debug.Log("Got it to work.");
-        GUI.color = Color.blue;
-        DrawLabel($"Vert Axis: {OnGUISceneViewData.forwardInputValue}");
-        DrawLabel($"Input Speed: {OnGUISceneViewData.inputSpeed}");
-        DrawLabel($"Speed Target: {OnGUISceneViewData.speedTarget}");
-        DrawLabel($"Rot Delta: {OnGUISceneViewData.rotationDelta}");
-        DrawLabel($"Brake Force: {OnGUISceneViewData.brakeForce}");
-        GUI.color = Color.red;
-        multi++;
-        DrawLabel($"Velocity: {OnGUISceneViewData.tankVelocity}");
-        DrawLabel($"Local Velocity: {OnGUISceneViewData.tankLocalVelocity}");
-        DrawLabel($"Velocity Dot: {OnGUISceneViewData.velocityDot}");
-        
-        Handles.EndGUI();
+        // multi = 0;
+        // Handles.BeginGUI();
+        // // if (GUILayout.Button("Press Me"))
+        // //     Debug.Log("Got it to work.");
+        // GUI.color = Color.blue;
+        // DrawLabel($"Vert Axis: {OnGUISceneViewData.forwardInputValue}");
+        // DrawLabel($"Input Speed: {OnGUISceneViewData.inputSpeed}");
+        // DrawLabel($"Speed Target: {OnGUISceneViewData.speedTarget}");
+        // DrawLabel($"Rot Delta: {OnGUISceneViewData.rotationDelta}");
+        // DrawLabel($"Brake Force: {OnGUISceneViewData.brakeForce}");
+        // GUI.color = Color.red;
+        // multi++;
+        // DrawLabel($"Velocity: {OnGUISceneViewData.tankVelocity}");
+        // DrawLabel($"Local Velocity: {OnGUISceneViewData.tankLocalVelocity}");
+        // DrawLabel($"Velocity Dot: {OnGUISceneViewData.velocityDot}");
+        //
+        // Handles.EndGUI();
     }
 
     private static void DrawLabel(string text, float x = 10f, float width = 550f, float height = 25F)
