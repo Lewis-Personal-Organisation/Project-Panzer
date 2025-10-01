@@ -27,11 +27,12 @@ public class SingleShotWeapon : VehicleWeaponController
             return;
 
         shellPool.Get();
-        vehicle.cameraController.Shake();
+        vehicle.cameraController.Shake(weapon.OnFireShakeParams);
         weaponLeanController.PrepareLean();
     }
 
     protected override void Reload()
+    
     {
         if (reloadTimer > 0)
             reloadTimer -= Time.deltaTime;

@@ -1,99 +1,87 @@
 using System.Collections;
+using MilkShake;
 using UnityEngine;
+using UnityEngine.Serialization;
 
-[RequireComponent(typeof(Camera))]
-public class CameraController : MonoBehaviourExt
+public class CameraController : VehicleComponent
 {
-    private new Camera camera;
-    public Transform trToLookAt;
+    [SerializeField] private new Camera camera;
+    public Shaker shaker;
+    private ShakeInstance shakeInstance;
+    [SerializeField] private IShakeParameters shakeData;
+    public Transform targetTransform;
     public Vector3 cachedPositionOffset;
     public Vector3 offset;
     public Vector3 shakeOffset;
     private float interpolator = 0;
     public float lerpSpeed = 1;
     private float inputValue = 0;
-
+    public float debugInputValue = 0;
     
-    private void Awake()
+    
+    private new void Awake()
     {
-        TryGetLocalComponent(ref camera);
+        if (!camera && !this.transform.GetChild(0).TryGetComponent(out camera))
+            Debug.LogError("CameraController :: Awake :: Camera Component not set or found!", this.gameObject);
+            
+        if (!vehicle && !targetTransform.root.TryGetComponent(out vehicle))
+            Debug.LogError("CameraController :: Setup :: Vehicle Component not set or found!", this.gameObject);
         
-        cachedPositionOffset = this.transform.position - trToLookAt.position;
+        cachedPositionOffset = this.transform.position - targetTransform.position;
     }
 
     private void FixedUpdate()
     {
         // Set Position relative to target
-        this.transform.position = trToLookAt.position + cachedPositionOffset;
-        
+        this.transform.position = targetTransform.position + cachedPositionOffset;
+
         // Adjust offsetT towards value
-        interpolator = Mathf.MoveTowards(interpolator, inputValue, Time.deltaTime * lerpSpeed);
+        interpolator = Mathf.MoveTowards(interpolator, Mathf.Max(vehicle.inputManager.moveInput, debugInputValue), Time.deltaTime * lerpSpeed);
         
         // Position is equal to the forward axis * offset (pos or neg)
-        Vector3 lookAtPos = trToLookAt.position + Vector3.Slerp(Vector3.zero, trToLookAt.forward * (interpolator < 0 ? -offset.z : offset.z), Mathf.Abs(interpolator));
+        Vector3 lookAtPos = targetTransform.position + targetTransform.forward * Mathf.Max(interpolator, debugInputValue) * offset.z;
         lookAtPos += shakeOffset;
         
         this.transform.LookAt(lookAtPos);
         
         // Position our transform a distance away from the target on local Z
-        this.transform.position = trToLookAt.position - this.transform.forward * offset.y;
+        this.transform.position = targetTransform.position - this.transform.forward * offset.y;
     }
 
-    public void Shake()
+    public void Shake(ShakeParameters shakeParams)
     {
-        if (shakeCoroutine == null)
-        {
-            shakeCoroutine = StartCoroutine(Shake(1, 1));
-        }
-    }
-    
-    private Coroutine shakeCoroutine = null;
-    
-    private IEnumerator Shake(float duration, float magnitude)
-    {
-        Debug.Log($"Starting shake");
+        if (shakeInstance != null && !shakeInstance.IsFinished)
+            return;
         
-        float elapsed = 0F;
-        float step = 1F / duration;
-
-        while (elapsed < duration)
-        {
-            elapsed += step * Time.deltaTime;
-            float x = Random.Range(-1F, 1F) * magnitude;
-            float y = Random.Range(-1F, 1F) * magnitude;
-            shakeOffset = new Vector3(x, y, 0);
-            Debug.Log($"Shaking {x}, {y}");
-            yield return null;
-        }
-        
-        shakeOffset =  Vector3.zero;
-        shakeCoroutine = null;
+        shakeInstance = shaker.Shake(shakeParams, UnityEngine.Random.Range(-10000, 10000));
     }
-    
 
     private void OnDrawGizmosSelected()
     {
+        Gizmos.color = Color.red;
+        Gizmos.DrawLine(this.transform.position, this.transform.position + this.transform.forward * 100F);
+        
         if (offset.x is > 0 or < 0)
         {
             Gizmos.color = Color.red;
-            Gizmos.DrawLine(trToLookAt.position, trToLookAt.position + trToLookAt.right * offset.x);
+            Gizmos.DrawLine(targetTransform.position, targetTransform.position + targetTransform.right * offset.x);
         }
 
         if (offset.y is > 0 or < 0)
         {
             Gizmos.color = Color.green;
-            Gizmos.DrawLine(trToLookAt.position, trToLookAt.position + trToLookAt.up * offset.y);
+            Gizmos.DrawLine(targetTransform.position, targetTransform.position + targetTransform.up * offset.y);
         }
 
         if (offset.z is > 0 or < 0)
         {
             Gizmos.color = Color.blue;
-            Gizmos.DrawLine(trToLookAt.position, trToLookAt.position + trToLookAt.forward * offset.z);
+            Gizmos.DrawLine(targetTransform.position, targetTransform.position + targetTransform.forward * offset.z);
         }
     }
 
-    public void UpdateInputValue(float value)
-    {
-        this.inputValue = value;
-    }
+    // public void UpdateInputValue(float value)
+    // {
+    //     this.inputValue = value;
+    // }
 }

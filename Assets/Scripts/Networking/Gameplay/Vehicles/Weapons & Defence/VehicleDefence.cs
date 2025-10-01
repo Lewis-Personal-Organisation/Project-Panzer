@@ -18,13 +18,14 @@ public class VehicleDefence : MonoBehaviour
     {
         if ((shellMask.value & 1 << other.gameObject.layer) != 0)
         {
-            if (other.transform.root.TryGetComponent(out TankShellAdv shell))
-            {
-                if (instanceID == shell.controller.gameObject.GetInstanceID())
-                    return;
+            if (!other.transform.root.TryGetComponent(out WeaponShell shell))
+                return;
+            
+            // If shell controller ID matches ours, this must be our shell, return;
+            if (instanceID == shell.controller.gameObject.GetInstanceID())
+                return;
 
-                Debug.Log($"Shell intercepted by other gameobject! {gameObject.name}. Is owner: {shell.IsOwner}");
-            }
+            Debug.Log($"Shell intercepted by other gameobject! {gameObject.name}. Is owner: {shell.IsOwner}");
         }
     }
 }

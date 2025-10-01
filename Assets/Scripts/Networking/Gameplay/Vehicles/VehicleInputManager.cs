@@ -2,11 +2,31 @@ using UnityEngine;
 
 public class VehicleInputManager : MonoBehaviour
 {
+    public enum InputState
+    {
+        None,
+        MovingForward,
+        MovingBackward,
+        MovingBackwardAndRotating,
+        MovingForwardAndRotating,
+        Rotating,
+    };
+    
     public float moveInput { get; private set; } = 0F;
     public float turnInputValue { get; private set; } = 0.0f;
     public int rotationInput => turnInputValue > 0 ? 1 : turnInputValue < 0 ? -1 : 0;
-    [field: SerializeField] public int intMoveInput => (int)moveInput;
-
+    public InputState inputState => (rotationInput, moveInput) switch
+    {
+        (0, 0) => InputState.None,
+        (0, -1) => InputState.MovingBackward,
+        (-1 or 1, -1) => InputState.MovingBackwardAndRotating,
+        (0, 1) => InputState.MovingForward,
+        (-1 or 1, 1) => InputState.MovingForwardAndRotating,
+        (-1 or 1, 0) => InputState.Rotating,
+        _ => InputState.None
+    };
+    public void SetLastInputState() => lastInputState =  inputState;
+    public InputState lastInputState;
     
     private void FixedUpdate()
     {

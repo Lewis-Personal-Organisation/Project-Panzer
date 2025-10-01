@@ -18,3 +18,19 @@ MonoBehaviour:
   <xLeanMax>k__BackingField: 20
   <zLeanMax>k__BackingField: 18
   <leanTime>k__BackingField: 0.7
+  <OnFireShakeParams>k__BackingField:
+    shakeType: 0
+    strength: 0.5
+    roughness: 3
+    fadeIn: 0.15
+    fadeOut: 0.15
+    positionInfluence: {x: 1.5, y: 1.5, z: 0}
+    rotationInfluence: {x: 1.5, y: 1.5, z: 0}
+  <OnHitEnemyShakeParams>k__BackingField:
+    shakeType: 0
+    strength: 1
+    roughness: 8
+    fadeIn: 0.1
+    fadeOut: 0.1
+    positionInfluence: {x: 1.2, y: 1.2, z: 0}
+    rotationInfluence: {x: 1.2, y: 1.2, z: 0}
