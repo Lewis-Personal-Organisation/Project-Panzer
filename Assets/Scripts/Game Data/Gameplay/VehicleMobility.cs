@@ -11,12 +11,13 @@ public class VehicleMobility : ScriptableObject
     [field: SerializeField] public float backwardSpeed { get; private set; }
     [field: SerializeField] public float speedDelta { get; private set; }
     [field: SerializeField] public float brakeDelta { get; private set; }
-    [field: SerializeField] public float steerVelocity{ get; private set; }
+    [field: SerializeField] public float steerVelocity { get; private set; }
     [field: SerializeField] public float physicsBounciness{ get; private set; }
 
     [Header("Rotation")]
     public float torqueMultipler = 30F;
     public float maxAngularVelocity = 1.35F;
+    [Tooltip("How sharp the steering feels")]
     public float straightSteerDrag = 130;
     public float steeringDrag = 0F;
     

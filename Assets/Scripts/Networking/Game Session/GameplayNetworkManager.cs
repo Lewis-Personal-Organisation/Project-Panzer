@@ -55,6 +55,7 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
     void Start()
     {
         cachedLobby = LobbyManager.Instance.activeLobby;
+        Extensions.Debug.ClearConsole();
         
         if (IsHost)
         {
@@ -174,7 +175,7 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
     [ClientRpc]
     void UpdateCountdownClientRpc(int seconds)
     {
-        Debug.Log($"GameplayNetworkManager :: UpdateCountdownClientRpc [ClientRpc] :: Countdown Timer {seconds}");
+        // Debug.Log($"GameplayNetworkManager :: UpdateCountdownClientRpc [ClientRpc] :: Countdown Timer {seconds}");
         GameplaySceneManager.Instance?.SetCountdown(seconds);
 
         if (seconds <= 0)
@@ -199,6 +200,7 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
         if (localPlayerAvatar != null)
         {
             Debug.Log($"GameplayNetworkManager :: StartPlayingGame() :: Timer complete, enabling player control");
+            Extensions.Debug.ClearConsole();
             localPlayerAvatar.vehicleController.enabled = true;
         }
     }
@@ -228,14 +230,14 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
     {
         IReadOnlyDictionary<ulong, NetworkClient> connectedClients = NetworkManager.Singleton.ConnectedClients;
         var numPlayers = connectedClients.Count;
-        Debug.Log($"Gameplay Network Manager :: SpawnAllPlayers :: Player Count = {numPlayers}");
+        // Debug.Log($"Gameplay Network Manager :: SpawnAllPlayers :: Player Count = {numPlayers}");
         
         var playerIndex = 0;
         
         foreach (var relayClientId in connectedClients.Keys)
         {
             int vehicleIndex = int.Parse(cachedLobby.Players[playerIndex].Data[LobbyManager.PlayerDictionaryData.vehicleIndexKey].Value);
-            Debug.Log($"Player {playerIndex} should spawn with vehicle {VehicleData.GetLobbyItem(vehicleIndex).name} using {vehicleIndex}");
+            // Debug.Log($"Player {playerIndex} should spawn with vehicle {VehicleData.GetLobbyItem(vehicleIndex).name} using {vehicleIndex}");
             
             SpawnPlayer(playerIndex, relayClientId);
             playerIndex++;
@@ -247,15 +249,13 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
         Vector3 pos = GameplaySceneManager.Instance.spawnPoints[playerIndex].position;
         quaternion rot = GameplaySceneManager.Instance.spawnPoints[playerIndex].rotation;
         
-        Debug.Log($"GameplayNetworkManager :: SpawnPlayer => Spawning Player with ID {playerIndex}");
         PlayerAvatar playerAvatar = GameObject.Instantiate(playerAvatarPrefabs[playerIndex], pos, rot);
         playerAvatar.gameObject.name = playerAvatarPrefabs[playerIndex].name;           // Remove clone from name field
-
         playerAvatar.networkObject.SpawnWithOwnership(relayClientId);
-
         playerAvatar.SetPlayerAvatarClientRpc(playerIndex, GetPlayerID(playerIndex), GetPlayerName(playerIndex), relayClientId);
+        Debug.Log($"GameplayNetworkManager :: SpawnPlayer :: Spawned Player with ID {playerIndex}", playerAvatar.gameObject);
         
-        playerAvatar.vehicleController.Setup();
+        // playerAvatar.vehicleController.Setup();
     }
 
     public void SpawnPlayerCamera()

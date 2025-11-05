@@ -137,6 +137,12 @@ public class TextInputUI : Panel
 			}
 		}
 	}
+	
+	public void SetInputTextAndSubmit(string text)
+	{ 
+		inputText.text = text;
+		submitButton.onClick.Invoke();
+	}
 
 	/// <summary>
 	/// Set the input text using the Windows Clipboard buffer
@@ -166,6 +172,7 @@ public class TextInputUI : Panel
 				inputText.text = string.Empty;
 				
 				UIManager.PopUntil(UIManager.MainMenu);
+				OnGUISceneViewData.AddOrUpdateLabel("UI View: ", UIManager.CurrentPanel.GetPanel().name);
 
 				if (LobbyManager.previouslyRefusedUsername)
 				{

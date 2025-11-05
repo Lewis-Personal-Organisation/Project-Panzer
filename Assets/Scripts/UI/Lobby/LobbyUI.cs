@@ -1,14 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 using TMPro;
 using Unity.Netcode;
-using Unity.Services.Lobbies;
 using Unity.Services.Lobbies.Models;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 using static LobbyManager;
 
@@ -35,13 +32,11 @@ public class LobbyUI : Panel
 
 	[Header("Player Slots")]
 	public float playerSlotResizeTime;
-	public Vector2 playerSlotEndSize;
 	public AnimationCurve sizeCurve;
 	[SerializeField] private PlayerSlot[] playerSlots = new PlayerSlot[4];
 	
 	[Header("Vehicle Slots")]
 	[SerializeField] private VehicleSlot[] vehicleSlots = new VehicleSlot[5];
-
 	
 
 	private void Awake()
@@ -55,6 +50,8 @@ public class LobbyUI : Panel
 		leaveButton.onClick.AddListener(OnLeaveClicked);
 		readyButton.onClick.AddListener(OnReadyClicked);
 		joinCodeCopyButton.onClick.AddListener(CopyJoinCode);
+
+		
 	}
 
 	private void Start()
@@ -128,12 +125,13 @@ public class LobbyUI : Panel
 
 	public Panel Prepare(string lobbyCode, string lobbyTittle)
 	{
-		//readyButton.interactable = true;
 		leaveButton.interactable = true;
-
+		
 		joinCodeText.text = lobbyCode;
 		joinCodeGroup.SetActive(true);
+		
 		title.text = lobbyTittle;
+		
 		AdjustPlayerSlots();
 		return this;
 	}

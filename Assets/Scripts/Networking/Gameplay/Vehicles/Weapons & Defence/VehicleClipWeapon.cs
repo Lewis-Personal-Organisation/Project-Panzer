@@ -1,3 +1,4 @@
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -8,21 +9,23 @@ public class VehicleClipWeapon : VehicleWeaponController
     [SerializeField] private float shotDelayTime;
     [SerializeField] private float shotDelayTimer;
 
-    private void Start()
+    public override void Setup(VehicleController vehicleController)
     {
-        shellPool = new ObjectPool<WeaponShell>(
-            () => Instantiate(weapon.shellPrefab).Setup(this),
-            shell =>
-            {
-                shell.Respawn();
-                ResetWeapon();
-                shellsInClip--;
-            },
-            shell => shell.Despawn(),
-            shell => Destroy(shell.gameObject),
-            false,
-            initPoolSize,
-            weapon.ammoCount);
+        base.Setup(vehicleController);
+        
+        // shellPool = new ObjectPool<WeaponShell>(
+        //     () => Instantiate(weapon.shellPrefab).Setup(this),
+        //     shell =>
+        //     {
+        //         shell.Respawn();
+        //         ResetWeapon();
+        //         shellsInClip--;
+        //     },
+        //     shell => shell.Despawn(),
+        //     shell => Destroy(shell.gameObject),
+        //     false,
+        //     initPoolSize,
+        //     weapon.ammoCount);
         
         ResetWeapon();
     }
@@ -35,7 +38,7 @@ public class VehicleClipWeapon : VehicleWeaponController
         if (shotDelayTimer > 0)
             return;
 
-        shellPool.Get();
+        // shellPool.Get();
         weaponLeanController.PrepareLean();
     }
 
@@ -67,5 +70,12 @@ public class VehicleClipWeapon : VehicleWeaponController
     {
         reloadTimer = weapon.reloadTime;        // Reset this for balance purposes
         shotDelayTimer = shotDelayTime;
+    }
+    
+    [ServerRpc]
+    private void ShootServerRpc(Vector3 pos, Quaternion rot)
+    {
+        // IMPLEMENT
+        throw new System.NotImplementedException();
     }
 }

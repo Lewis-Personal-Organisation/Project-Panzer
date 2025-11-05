@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class VehicleLeanController : VehicleComponent
+public abstract class VehicleLeanController : LocalVehicleComponent
 {
     public bool enabled;
     

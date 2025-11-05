@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class MonoBehaviourExt : MonoBehaviour
 {
-    public void TryGetLocalComponent<T>(ref T component) where T : Component
+    internal void TryGetLocalComponent<T>(ref T component) where T : Component
     {
         if (component != null) 
             return;

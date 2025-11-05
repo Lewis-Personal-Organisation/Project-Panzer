@@ -14,22 +14,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   turnSpeed: 65
   <forwardSpeed>k__BackingField: 16.8
-  <forceMultiplier>k__BackingField: 150
+  <forceMultiplier>k__BackingField: 1500
   <backwardSpeed>k__BackingField: 5
   <speedDelta>k__BackingField: 0.8
   <brakeDelta>k__BackingField: 5
   <steerVelocity>k__BackingField: 3
   <physicsBounciness>k__BackingField: 0.375
-  torqueMultipler: 15
-  maxAngularVelocity: 1.35
-  straightSteerDrag: 130
+  torqueMultipler: 30
+  maxAngularVelocity: 1.25
+  straightSteerDrag: 50
   steeringDrag: 0
   minAngleForCorrection: 5
   correctionTorqueForce: 5
   turretRotationSpeed: 151.1
   trackMultiplier: 0.75
-  <localGravity>k__BackingField: -32
-  <globalGravity>k__BackingField: -9.81
+  <localGravity>k__BackingField: 32
+  <globalGravity>k__BackingField: 9.81
   minForwardVelocity: 0.1
   cruiseForwardVelocity: 16
   horizontalLeanSpeed: 4.61

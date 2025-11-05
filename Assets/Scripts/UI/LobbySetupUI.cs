@@ -22,7 +22,7 @@ public class LobbySetupUI : Panel
 	[SerializeField] private Color offColour;
 	[SerializeField] private Color onColour;
 	[SerializeField] private Button publicButton;
-	[SerializeField] private Button confirmButton;
+	public Button confirmButton;
 
 	[SerializeField] private bool isLobbyPrivate;
 	public int maxPlayers = 4;
@@ -99,6 +99,9 @@ public class LobbySetupUI : Panel
 
 		closeButton.image.color = closeButtonEnabledColour;
 		closeButton.enabled = true;
+
+		// Copy code to buffer
+		GUIUtility.systemCopyBuffer = lobby.LobbyCode;
 		
 		UIManager.PopAndPush(2, UIManager.LobbyUI.Prepare(lobby.LobbyCode, lobby.Name));
 	}

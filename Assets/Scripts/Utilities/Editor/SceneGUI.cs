@@ -32,7 +32,6 @@ public class SceneGUI : EditorWindow
         Handles.BeginGUI();
         for (int i = 0; i < OnGUISceneViewData.labelEntries.Count; i++)
         {
-            
             DrawLabel(i);
         }
         Handles.EndGUI();

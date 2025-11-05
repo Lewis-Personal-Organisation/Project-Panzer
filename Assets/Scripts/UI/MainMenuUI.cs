@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
@@ -16,9 +17,25 @@ public class MainMenuUI : Panel
 	[SerializeField] internal Button nameDisplayButton;
 	public void ToggleNameDisplay(bool state) => nameDisplayText.gameObject.SetActive(state);
 
+	[Header("!DEBUG!")]
+	[SerializeField] private Button hostImmediateDebugButton;
+	[SerializeField] private Button joinImmediateDebugButton;
 
+	
 	private void Awake()
 	{
+		hostImmediateDebugButton.onClick.AddListener(() =>
+		{
+			OnHostButtonPressed();
+			UIManager.LobbySetupMenu.confirmButton.onClick.Invoke();
+		});
+		
+		joinImmediateDebugButton.onClick.AddListener(() =>
+		{
+			joinPrivateGameButton.onClick.Invoke();
+			UIManager.TextInputGroup.SetInputTextAndSubmit(GUIUtility.systemCopyBuffer);
+		});
+		
 		hostGameButton.onClick.AddListener(OnHostButtonPressed);
 		joinPrivateGameButton.onClick.AddListener(OnJoinPrivateGameButtonPressed);
 		//joinPublicGameButton.onClick.AddListener(OnJoinPublicGameButtonPressed);

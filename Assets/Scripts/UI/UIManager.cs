@@ -6,9 +6,10 @@ using UnityEngine.Serialization;
 
 public class UIManager : Singleton<UIManager>
 {
-	[FormerlySerializedAs("initialPanel")] [SerializeField] private Panel _initialPanel;
+	[SerializeField] private Panel _initialPanel;
 	private static Panel initialPanel;
 	private static Stack<Panel> panelStack = new Stack<Panel>();
+	public static Panel CurrentPanel => panelStack.Peek();
 	
 	public static View GameView { private set; get; }
 	[Space(5)]
@@ -38,6 +39,15 @@ public class UIManager : Singleton<UIManager>
 	private new void Awake()
 	{
 		base.Awake();
+		
+		if (!_initialPanel)
+		{
+			Debug.LogError("Initial Panel not set!");
+			return;
+		}
+		
+		initialPanel = _initialPanel;
+		PushPanel(initialPanel);
 	}
 	
 	/// <summary>
@@ -61,21 +71,6 @@ public class UIManager : Singleton<UIManager>
 		
 		GameView = view;
 	}
-
-	/// <summary>
-	/// Initialisation for UI stack system
-	/// </summary>
-	private void Start()
-	{
-		if (!_initialPanel)
-		{
-			Debug.LogError("Initial Panel not set!");
-			return;
-		}
-		
-		initialPanel = _initialPanel;
-		PushPanel(initialPanel);
-	}
 	
 	/// <summary>
 	/// Push a panel to the stack and show it
@@ -85,6 +80,7 @@ public class UIManager : Singleton<UIManager>
 	public static void PushPanel(Panel panel)
 	{
 		panel.Toggle(true);
+		// Debug.Log($"Pushed {panel.GetPanel().name}");
 
 		if (panelStack.Count > 0)
 		{
@@ -118,6 +114,8 @@ public class UIManager : Singleton<UIManager>
 		{
 			Panel panel = panelStack.Pop();
 			panel.Toggle(false);
+			
+			// Debug.Log($"Popped {panel.GetPanel().name}");
 
 			if (panelStack.Count == 0)
 			{

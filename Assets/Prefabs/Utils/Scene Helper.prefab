@@ -50,6 +50,9 @@ MonoBehaviour:
   <mainGameplayScene>k__BackingField:
     asset: {fileID: 102900000, guid: 5fbe87066b4f971408609018adbe0723, type: 3}
     guid: 5fbe87066b4f971408609018adbe0723
+  <prototypeScene>k__BackingField:
+    asset: {fileID: 102900000, guid: e48e07763b075204f9c648ede40fb776, type: 3}
+    guid: e48e07763b075204f9c648ede40fb776
   <projectilePrototyping>k__BackingField:
     asset: {fileID: 102900000, guid: 98d50ce27f5c5774db3cc9dc321d0d52, type: 3}
     guid: 98d50ce27f5c5774db3cc9dc321d0d52

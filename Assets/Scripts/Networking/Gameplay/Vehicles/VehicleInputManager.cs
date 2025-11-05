@@ -15,7 +15,7 @@ public class VehicleInputManager : MonoBehaviour
     public float moveInput { get; private set; } = 0F;
     public float turnInputValue { get; private set; } = 0.0f;
     public int rotationInput => turnInputValue > 0 ? 1 : turnInputValue < 0 ? -1 : 0;
-    public InputState inputState => (rotationInput, moveInput) switch
+    public InputState vehicleState => (rotationInput, moveInput) switch
     {
         (0, 0) => InputState.None,
         (0, -1) => InputState.MovingBackward,
@@ -25,8 +25,11 @@ public class VehicleInputManager : MonoBehaviour
         (-1 or 1, 0) => InputState.Rotating,
         _ => InputState.None
     };
-    public void SetLastInputState() => lastInputState =  inputState;
+    public void SetLastInputState() => lastInputState =  vehicleState;
     public InputState lastInputState;
+    public float MouseXDelta => Input.GetAxis("Mouse X");
+    public float MouseYDelta => Input.GetAxis("Mouse Y");
+    
     
     private void FixedUpdate()
     {

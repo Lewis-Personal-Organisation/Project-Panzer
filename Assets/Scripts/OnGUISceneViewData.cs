@@ -38,6 +38,7 @@ public static class OnGUISceneViewData
     {
         int index = LabelExists(preText);
         
+        // If Index present, change its data. Else, Create with data
         if (index != -1)
         {
             labelEntries[index].dataText = dataText;

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class RigidBodyVelocityTracker : VehicleComponent
+public class RigidBodyVelocityTracker : LocalVehicleComponent
 {
     [System.Serializable]
     public class VelocityAxisData
@@ -37,7 +37,7 @@ public class RigidBodyVelocityTracker : VehicleComponent
     }
     
     [SerializeField] private Rigidbody rb;
-    private Vector3 velocity;
+    public Vector3 Velocity { get; private set; }
 
     public VelocityAxisData x = new VelocityAxisData();
     public VelocityAxisData y = new VelocityAxisData();
@@ -55,21 +55,21 @@ public class RigidBodyVelocityTracker : VehicleComponent
         if (!x.track && !y.track && !z.track) return;
 
         // local velocity
-        velocity = transform.InverseTransformDirection(rb.velocity);
+        Velocity = transform.InverseTransformDirection(rb.velocity);
 
         if (x.track)
         {
-            x.Update(velocity.x);
+            x.Update(Velocity.x);
         }
 
         if (y.track)
         {
-            y.Update(velocity.y);
+            y.Update(Velocity.y);
         }
 
         if (z.track)
         {
-            z.Update(velocity.z);
+            z.Update(Velocity.z);
         }
     }
 }

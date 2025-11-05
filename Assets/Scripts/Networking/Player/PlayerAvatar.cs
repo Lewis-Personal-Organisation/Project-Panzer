@@ -43,10 +43,14 @@ public class PlayerAvatar : NetworkBehaviour
         if (IsOwner)
         {
             GameplayNetworkManager.Instance?.SetLocalAvatar(this);
-            GameplayNetworkManager.Instance?.SpawnPlayerCamera();
+            // GameplayNetworkManager.Instance?.SpawnPlayerCamera();
+        }
+        else
+        {
+            this.gameObject.name += " (Other Player)";
         }
         
-        Debug.Log($"Set player avatar for player #{playerIndex}: id:'{playerId}' name:'{playerName}' relay:{relayClientId}");
+        // Debug.Log($"Set player avatar for player #{playerIndex}: id:'{playerId}' name:'{playerName}' relay:{relayClientId}");
     }
 
     public override void OnNetworkSpawn()

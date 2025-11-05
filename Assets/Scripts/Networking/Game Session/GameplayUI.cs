@@ -21,8 +21,6 @@ public class GameplayUI : Singleton<GameplayUI>
 
         List<PlayerAvatar> playerAvatars = GameplayNetworkManager.Instance.playerAvatars;
 
-        scoresText.text =
-            string.Join("\n",
-                playerAvatars.Select(playerAvatar => $"{playerAvatar.name}: {playerAvatar.score}").ToArray());
+        scoresText.text = string.Join("\n", playerAvatars.Select(playerAvatar => $"{playerAvatar.name}: {playerAvatar.score}").ToArray());
     }
 }

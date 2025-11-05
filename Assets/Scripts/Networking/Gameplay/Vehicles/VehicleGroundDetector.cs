@@ -3,14 +3,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class VehicleGroundDetector : VehicleComponent
+public class VehicleGroundDetector : LocalVehicleComponent
 {
     [SerializeField] private Transform leftCastPoint;
     [SerializeField] private Transform rightCastPoint;
     [SerializeField] private float castDistance = 0.03F;
     public bool leftSideIsGrounded { get; private set; } = false;
     public bool rightSideIsGrounded { get; private set; } = false;
-
+    public bool FullyGrounded => leftSideIsGrounded && rightSideIsGrounded;
+    public bool PartiallyGrounded => leftSideIsGrounded || rightSideIsGrounded;
     private Vector3 lastFramePos;
     [SerializeField] private PhysicMaterial physicsMaterial;
     
