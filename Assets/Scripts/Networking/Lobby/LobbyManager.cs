@@ -83,10 +83,10 @@ public class LobbyManager : Singleton<LobbyManager>
 	}
 
 
-
-	new private void Awake()
+	private new void Awake()
 	{
 		base.Awake();
+		nullOnDestroy = false;
 	}
 
     async void Update()
@@ -234,31 +234,6 @@ public class LobbyManager : Singleton<LobbyManager>
 
 		// Trigger event with value (This starts the game if all players are ready)
 		OnLobbyChanged?.Invoke(activeLobby, isGameReady);
-		
-		// if (DidPlayersChange(activeLobby.Players, updatedLobby.Players))
-		// {
-		// 	//Debug.Log("Update Lobby :: Players Changed - Lobby Updated!");
-		// 	activeLobby = updatedLobby;
-		// 	players = activeLobby?.Players;
-		// 	CacheLocalPlayer();
-		//
-		// 	// Check our lobby Players for our Player. If we exist, set the game ready state
-		// 	if (updatedLobby.Players.Exists(player => player.Id == playerId))
-		// 	{
-		// 		var isGameReady = AllPlayersReady(updatedLobby);
-		//
-		// 		// Trigger event with value (This starts the game if all players are ready)
-		// 		OnLobbyChanged?.Invoke(updatedLobby, isGameReady);
-		// 	}
-		// 	else
-		// 	{
-		// 		Debug.Log("Update Lobby : Player Kicked");
-		// 		ServerlessMultiplayerGameSampleManager.instance.SetReturnToMenuReason(
-		// 			ServerlessMultiplayerGameSampleManager.ReturnToMenuReason.PlayerKicked);
-		//
-		// 		OnPlayerNotInLobby();
-		// 	}
-		// }
 	}
 
 	/// <summary>
@@ -272,10 +247,11 @@ public class LobbyManager : Singleton<LobbyManager>
 		}
 	}
 
-	public void OnPlayerNotInLobby()
+	public async Task OnPlayerNotInLobby()
 	{
-		// activeLobbyEvents.UnsubscribeAsync();
+		await activeLobbyEvents.UnsubscribeAsync();
 		activeLobbyEvents = null;
+		OnLobbyChanged -= OnLobbyChanged;
 
 		if (activeLobby != null)
 		{
@@ -295,40 +271,14 @@ public class LobbyManager : Singleton<LobbyManager>
 		Debug.Log($"Lobby Manager :: ShutdownNetwork :: Network Shutdown successfully");
 	}
 
-	// static bool DidPlayersChange(List<Player> oldPlayers, List<Player> newPlayers)
-	// {
-	// 	if (oldPlayers.Count != newPlayers.Count)
-	// 	{
-	// 		Debug.Log("lobby Manager :: DidPlayersChange :: Updating Lobby > Player Count Changed");
-	// 		return true;
-	// 	}
-	//
-	// 	for (int i = 0; i < newPlayers.Count; i++)
-	// 	{
-	// 		if (oldPlayers[i].Id != newPlayers[i].Id ||
-	// 			oldPlayers[i].Data[PlayerDictionaryData.isReadyKey].Value != newPlayers[i].Data[PlayerDictionaryData.isReadyKey].Value)
-	// 		{
-	// 			Debug.Log("lobby Manager :: DidPlayersChange :: Updating Lobby > Player ID/Ready State Changed");
-	// 			return true;
-	// 		}
-	//
-	// 		if (oldPlayers[i].Data[PlayerDictionaryData.vehicleIndexKey].Value != newPlayers[i].Data[PlayerDictionaryData.vehicleIndexKey].Value)
-	// 		{
-	// 			Debug.Log("lobby Manager :: DidPlayersChange :: Updating Lobby > Vehicle Index Changed");
-	// 			return true;
-	// 		}
-	// 	}
-	//
-	// 	return false;
-	// }
-
 	static bool AllPlayersReady(Lobby lobby)
 	{
+		// Cancel if only 1 player
 		if (lobby.Players.Count <= 1)
 		{
 			return false;
 		}
-
+		
 		foreach (var player in lobby.Players)
 		{
 			var isReady = bool.Parse(player.Data[PlayerDictionaryData.isReadyKey].Value);
@@ -369,10 +319,8 @@ public class LobbyManager : Singleton<LobbyManager>
 			// Callbacks
 			LobbyEventCallbacks callbacks = new LobbyEventCallbacks();
 			callbacks.LobbyEventConnectionStateChanged += OnConnectionStateChanged;
-			//callbacks.PlayerJoined += OnPlayersJoinedLobby;
-			//callbacks.PlayerLeft += OnPlayersLeftLobby;
 			callbacks.LobbyChanged += OnLobbyChangedNotif;
-			// callbacks.LobbyDeleted += OnLobbyDeleted;
+			
 			try
 			{
 				activeLobbyEvents = await LobbyService.Instance.SubscribeToLobbyEventsAsync(activeLobby.Id, callbacks);
@@ -415,7 +363,7 @@ public class LobbyManager : Singleton<LobbyManager>
 			Debug.Log($"Joining lobby with Code {lobbyJoinCode}");
 			activeLobby = await LobbyService.Instance.JoinLobbyByCodeAsync(lobbyJoinCode, options);
 			if (this == null) return null;
-
+			
 			players = activeLobby?.Players;
 		}
 		catch (LobbyServiceException e) when (e.Reason == LobbyExceptionReason.LobbyNotFound)
@@ -462,7 +410,7 @@ public class LobbyManager : Singleton<LobbyManager>
 			await RemovePlayer(playerId);
 			if (this == null) return;
 
-			OnPlayerNotInLobby();
+			await OnPlayerNotInLobby();
 			LobbyToMainMenuTransition();
 		}
 		catch (Exception e)
@@ -486,18 +434,6 @@ public class LobbyManager : Singleton<LobbyManager>
 			Debug.LogException(e);
 		}
 	}
-
-	//public Player[] GetLobbyPlayers()
-	//{
-	//	if (activeLobby != null)
-	//	{
-	//		return activeLobby.Players.ToArray();
-	//	}
-	//	else
-	//	{
-	//		return null;
-	//	}
-	//}
 
 	public void LogLobbyPlayers()
 	{
@@ -530,7 +466,7 @@ public class LobbyManager : Singleton<LobbyManager>
 				await LobbyService.Instance.DeleteLobbyAsync(activeLobby.Id);
 				if (this == null) return;
 
-				OnPlayerNotInLobby();
+				await OnPlayerNotInLobby();
 			}
 		}
 		catch (Exception e)
@@ -656,14 +592,6 @@ public class LobbyManager : Singleton<LobbyManager>
 		}
 	}
 
-	/// <summary>
-	/// Asynchronously await for some amount of time
-	/// </summary>
-	/// <param name="seconds"></param>
-	//private async Task WaitForSecondsAsync(float seconds)
-	//{
-	//	await Task.Delay(TimeSpan.FromSeconds(seconds));
-	//}
 
 	/// <summary>
 	/// Check if players connected already use our name
@@ -695,40 +623,13 @@ public class LobbyManager : Singleton<LobbyManager>
 			Debug.Log($"LobbyManager :: OnConnectionStateChanged :: Lobby Connection State is {newState} (As Host)");
 		}
 	}
-	//public void OnPlayersJoinedLobby(List<LobbyPlayerJoined> newPlayers)
-	//{
-	//	if (isHost)
-	//	{
-	//		for (int i = 0; i < newPlayers.Count; i++)
-	//		{
-	//			Debug.Log($"LobbyManager (Host) :: OnPlayersJoinedLobby :: Player '{newPlayers[i].Player.Data[PlayerDictionaryData.nameKey].Value}' joined!");
-	//		}
-	//	}
-	//}
-	//public void OnPlayersLeftLobby(List<int> leftPlayers)
-	//{
-	//	if (isHost)
-	//	{
-	//		for (int i = 0; i < leftPlayers.Count; i++)
-	//		{
-	//			Debug.Log($"LobbyManager (Host) :: OnPlayersLeftLobby :: Player '{leftPlayers[i]}' Left!");
-	//		}
-	//	}
-	//}
 
-	// public void OnLobbyDeleted()
-	// {
-	// 	Debug.Log($"LobbyManager :: Lobby has been Deleted. Returning to main Menu");
-	// }
-
-	// private IEnumerator OnLobbyDeletedClient()
-	// {
-	// 	
-	// }
-
+	/// <summary>
+	/// Return the Player to the Main menu
+	/// </summary>
 	private void LobbyToMainMenuTransition()
 	{
-		UIManager.PopAndPush(1, UIManager.MainMenu);
+		UIManager.PopUntil(UIManager.MainMenu);
 		UIManager.LobbySetupMenu.ToggleLobbyCreationInteractables(true);
 	}
 	
@@ -736,13 +637,15 @@ public class LobbyManager : Singleton<LobbyManager>
 	{
 		if (changes.LobbyDeleted)
 		{
+			Debug.Log($"Lobby Manager :: Lobby Deleted. Host? {isHost}");
+			
 			if (!isHost)
 			{
-				Debug.Log("Lobby Deleted");
 				OnPlayerNotInLobby();
 			}
 			
 			LobbyToMainMenuTransition();
+			UIManager.Instance.PushErrorScreen("Host has closed the Lobby!");
 		}
 		else
 		{

@@ -89,6 +89,20 @@ public class PlayerSlot : MonoBehaviour
 		readyGameObject.SetActive(bool.Parse(player.Data[PlayerDictionaryData.isReadyKey].Value));
 		parentRectTransform.gameObject.SetActive(true);
 	}
+
+	/// <summary>
+	/// Disable interaction for the vehicle selection
+	/// </summary>
+	/// <param name="player"></param>
+	public void DisableInteraction(Unity.Services.Lobbies.Models.Player player)
+	{
+		bool isOwner = LobbyManager.playerId == player.Id;
+
+		if (isOwner)
+		{
+			openVehicleSelectionButton.onClick.RemoveAllListeners();
+		}
+	}
 	
 	public void Scale(bool upscale)
 	{

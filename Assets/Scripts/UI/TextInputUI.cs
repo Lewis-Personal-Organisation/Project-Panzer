@@ -3,7 +3,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using System;
-using System.Diagnostics.Contracts;
 
 public enum TextSubmissionContext
 {
@@ -159,7 +158,7 @@ public class TextInputUI : Panel
 	{
 		if (inputText.text.Length == 0)
 		{
-			UIManager.PushPanel(UIManager.ErrorUI.Prepare("Text can't be empty"));
+			UIManager.PushPanel(UIManager.NotificationUI.PrepareErrorMsg("Text can't be empty"));
 			return;
 		}
 
@@ -172,7 +171,7 @@ public class TextInputUI : Panel
 				inputText.text = string.Empty;
 				
 				UIManager.PopUntil(UIManager.MainMenu);
-				OnGUISceneViewData.AddOrUpdateLabel("UI View: ", UIManager.CurrentPanel.GetPanel().name);
+				SceneData.Label("UI View: ", UIManager.CurrentPanel.GetPanel().name);
 
 				if (LobbyManager.previouslyRefusedUsername)
 				{
@@ -187,11 +186,11 @@ public class TextInputUI : Panel
 					UIManager.PopPanel();
 					inputText.text = string.Empty;
 
-					UIManager.PopPanel(UIManager.ErrorUI);
+					UIManager.PopPanel(UIManager.NotificationUI);
 				}
 				else
 				{
-					UIManager.PushPanel(UIManager.ErrorUI.Prepare("Entered Relay Code is incorrect. Try again."));
+					UIManager.PushPanel(UIManager.NotificationUI.PrepareErrorMsg("Entered Relay Code is incorrect. Try again."));
 				}
 				break;
 		}

@@ -19,7 +19,6 @@ public class LobbyUI : Panel
 	[SerializeField] private Color unreadyColour;
 	private bool isReady;
 	public Coroutine readyStateCoroutine;
-	public Coroutine vehicleButtonsStateCoroutine;
 
 	[Header("Join Code UI")]
 	[SerializeField] private GameObject joinCodeGroup;
@@ -50,21 +49,23 @@ public class LobbyUI : Panel
 		leaveButton.onClick.AddListener(OnLeaveClicked);
 		readyButton.onClick.AddListener(OnReadyClicked);
 		joinCodeCopyButton.onClick.AddListener(CopyJoinCode);
-
-		
 	}
 
-	private void Start()
+	// private void Start()
+	// {
+	// 	
+	// }
+
+	private void OnDestroy()
 	{
-		LobbyManager.OnLobbyChanged += OnLobbyChanged;
+		LobbyManager.OnLobbyChanged -= OnLobbyChanged;
 	}
-
 	/// <summary>
 	/// Alert Unity Lobby we have quit the active Lobby
 	/// </summary>
 	private void OnApplicationQuit()
 	{
-		LobbyManager.Instance?.LeaveLobbyOnQuit();
+		LobbyManager.Instance.LeaveLobbyOnQuit();
 	}
 
 	public void OnLobbyChanged(Lobby updatedLobby, bool isGameReady)
@@ -72,6 +73,14 @@ public class LobbyUI : Panel
 		AdjustPlayerSlots();
 		AdjustLocalReadyButton();
 
+		// Disallow changes while we prep loading gameplay
+		if (isGameReady)
+		{
+			readyButton.interactable = false;
+			leaveButton.interactable = false;
+			playerSlots[LobbyManager.Instance.localPlayerIndex].DisableInteraction(LobbyManager.Instance.localPlayer);
+		}
+		
 		if (LobbyManager.Instance.isHost)
 		{
 			OnHostLobbyChanged(updatedLobby, isGameReady);
@@ -82,16 +91,18 @@ public class LobbyUI : Panel
 		}
 	}
 
+	/// <summary>
+	/// Adjusts our local player ready button state
+	/// </summary>
 	private void AdjustLocalReadyButton()
 	{
 		for (int i = 0; i < LobbyManager.Instance.activeLobby.Players.Count; i++)
 		{
-			if (LobbyManager.playerId == LobbyManager.Instance.activeLobby.Players[i].Id)
+			if (playerId == LobbyManager.Instance.activeLobby.Players[i].Id)
 			{
 				isReady = bool.Parse(LobbyManager.Instance.activeLobby.Players[i].Data[PlayerDictionaryData.isReadyKey].Value);
 				readyButton.image.color = isReady ? readyColour : unreadyColour;
 				readyButtonText.text = isReady ? "Unready" : "Ready";
-				
 			}
 		}
 	}
@@ -132,6 +143,9 @@ public class LobbyUI : Panel
 		
 		title.text = lobbyTittle;
 		
+		LobbyManager.OnLobbyChanged -= OnLobbyChanged;
+		LobbyManager.OnLobbyChanged += OnLobbyChanged;
+		
 		AdjustPlayerSlots();
 		return this;
 	}
@@ -148,7 +162,6 @@ public class LobbyUI : Panel
 			readyButtonText.text = isReady ? "Unready" : "Ready";
 
 			DisableReadyButtonTemp();
-			//AdjustLocalReadyButton();
 			await LobbyManager.Instance.SetReadyState(isReady);
 		}
 		catch (Exception e)
@@ -167,7 +180,7 @@ public class LobbyUI : Panel
 	{
 		readyButton.interactable = false;
 		leaveButton.interactable = false;
-
+		
 		if (LobbyManager.Instance.isHost)
 		{
 			await LobbyManager.Instance.DeleteAnyActiveLobbyWithNotify();
@@ -184,11 +197,11 @@ public class LobbyUI : Panel
 		{
 			if (i < activeLobbyPlayers.Count)
 			{
-				playerSlots[i].ConfigureAndShow(activeLobbyPlayers[i]);
+				playerSlots[i].ConfigureAndShow(activeLobbyPlayers[i]);		// Configure active slots
 			}
 			else
 			{
-				playerSlots[i].Hide();
+				playerSlots[i].Hide();		// Hide slots which are not occupied by players
 			}
 		}
 	}
@@ -205,7 +218,8 @@ public class LobbyUI : Panel
 	
 	public void AdjustLocalPlayerSlotReadyState()
 	{
-		playerSlots[LobbyManager.Instance.localPlayerIndex].SetReady(bool.Parse(LobbyManager.Instance.localPlayer.Data[PlayerDictionaryData.isReadyKey].Value));
+		bool readyState = bool.Parse(LobbyManager.Instance.localPlayer.Data[PlayerDictionaryData.isReadyKey].Value);
+		playerSlots[LobbyManager.Instance.localPlayerIndex].SetReady(readyState);
 	}
 
 	/// <summary>
@@ -215,12 +229,12 @@ public class LobbyUI : Panel
 	{
 		if (readyStateCoroutine == null)
 		{
-			Debug.Log("LobbyUI -> Disabled Ready Button for 1s");
+			Debug.Log("LobbyUI :: DisableReadyButtonTemp :: Disabled Ready Button for 1s");
 			readyStateCoroutine = StartCoroutine(DisableReadyButton());
 		}
 		else
 		{
-			Debug.Log("LobbyUI -> Ready Button already off!");
+			Debug.Log("LobbyUI :: DisableReadyButtonTemp :: Ready Button already off!");
 		}
 	}
 
@@ -231,15 +245,12 @@ public class LobbyUI : Panel
 	{
 		yield return new WaitForSeconds(RateLimits.Rate(RateLimits.RequestType.UpdatePlayers)); 
 		readyButton.interactable = !readyButton.interactable;
-		Debug.Log("LobbyUI -> Ready button wait complete. Activating");
+		Debug.Log("LobbyUI :: DisableReadyButton :: Ready button wait complete. Enabling");
 		readyStateCoroutine = null;
 	}
 
 	/// <summary>
 	/// Copy's the Relay lobby Join code to the Clipboard
 	/// </summary>
-	private void CopyJoinCode()
-	{
-		GUIUtility.systemCopyBuffer = joinCodeText.text;
-	}
+	private void CopyJoinCode() => GUIUtility.systemCopyBuffer = joinCodeText.text;
 }

@@ -7,6 +7,8 @@ using UnityEngine;
  */
 public class Singleton<T> : MonoBehaviour where T : Singleton<T>
 {
+    public bool nullOnDestroy = false;
+    
     // Our public static instance
     public static T Instance { get; private set; }
 
@@ -15,15 +17,17 @@ public class Singleton<T> : MonoBehaviour where T : Singleton<T>
     {
         if (Instance != null)
         {
-            Debug.LogWarning($"An instance of {this.GetType().Name} exists. Destroying this new instance.");
+            Debug.LogWarning($"An instance of {this.GetType().Name} exists. Destroying.");
             Destroy(this.gameObject);
             return;
         }
         Instance = (T)this;
     }
 
-    protected void OnDestroy()
+    protected virtual void OnDestroy()
     {
-        Instance = null;
+        Debug.Log($"On Destroy called for {this.gameObject.name}");
+        if (nullOnDestroy)
+            Instance = null;
     }
 }

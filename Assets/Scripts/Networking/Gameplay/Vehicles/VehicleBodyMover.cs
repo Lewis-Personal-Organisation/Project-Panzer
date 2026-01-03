@@ -18,7 +18,7 @@ public class VehicleBodyMover : LocalVehicleComponent
     /// </summary>
     public void MoveTank(bool partiallyGrounded)
     {
-        OnGUISceneViewData.AddOrUpdateLabel("Input State", $"{vehicle.inputManager.vehicleState}", Color.black);
+        SceneData.Label("Input State", $"{vehicle.inputManager.vehicleState}", 10, 30, 550, 25, Color.black);
 
         if (partiallyGrounded)
         {
@@ -51,7 +51,7 @@ public class VehicleBodyMover : LocalVehicleComponent
             inputSpeed = Mathf.MoveTowards(inputSpeed, 0, vehicle.mobility.speedDelta * Time.deltaTime);
         }
 
-        OnGUISceneViewData.AddOrUpdateLabel("Input Speed: ", $"{inputSpeed}", Color.black);
+        SceneData.Label("Input Speed: ", $"{inputSpeed}", 10, 40, 550, 25, Color.black);
 
         // If Rotating, target speed more than allowed and velocity is higher than allowed
         if (vehicle.inputManager.vehicleState != InputStates.Rotating || vehicle.velocityTracker.z.velocity <= vehicle.mobility.steerVelocity)
@@ -64,7 +64,7 @@ public class VehicleBodyMover : LocalVehicleComponent
 
         // Set Velocity
         vehicle.hullRigidbody.velocity = transform.TransformDirection(new Vector3(0, vehicle.velocityTracker.y.velocity, vehicle.velocityTracker.z.Clamped(-vehicle.mobility.backwardSpeed, vehicle.mobility.forwardSpeed)));
-        OnGUISceneViewData.AddOrUpdateLabel("Velocity: ", $"{vehicle.velocityTracker.z.Clamped(-vehicle.mobility.backwardSpeed, vehicle.mobility.forwardSpeed)}", Color.black);
+        SceneData.Label("Velocity: ", $"{vehicle.velocityTracker.z.Clamped(-vehicle.mobility.backwardSpeed, vehicle.mobility.forwardSpeed)}", 10, 60, 550, 25, Color.black);
 
         vehicle.inputManager.SetLastInputState();
     }

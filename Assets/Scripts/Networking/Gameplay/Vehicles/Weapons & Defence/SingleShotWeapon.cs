@@ -108,7 +108,17 @@ public class SingleShotWeapon : VehicleWeaponController
             return;
 
         ResetWeapon();
-        ShootServerRpc(OwnerClientId, shellSpawnPoint.position, shellSpawnPoint.rotation);
+
+        if (VehicleController.IsNetworked)
+        {
+            ShootServerRpc(OwnerClientId, shellSpawnPoint.position, shellSpawnPoint.rotation);
+        }
+        else
+        {
+            WeaponShell shell = Instantiate(weapon.shellPrefab);
+            shell.Setup(this, shellSpawnPoint.position, shellSpawnPoint.rotation);
+        }
+        
         vehicle.cameraController.Shake(weapon.OnFireShakeParams);
         weaponLeanController.PrepareLean();
     }

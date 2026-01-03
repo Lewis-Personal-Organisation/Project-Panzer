@@ -1,4 +1,5 @@
 using System.Reflection;
+using Unity.Mathematics;
 using UnityEngine;
 
 public static class Extensions
@@ -43,6 +44,7 @@ public static class Extensions
     {
         public bool didRicochet;
         public Vector3 direction;
+        public TankSide tankSide;
     }
     
     /// <summary>
@@ -100,6 +102,14 @@ public static class Extensions
         }
     }
 
+    public enum TankSide
+    {
+        Front,
+        Right,
+        Back,
+        Left
+    }
+    
     /// <summary>
     /// Returns whether a transform should be reflected and applies the result.
     /// Reflection occurs when the targetTransform angle is at or above the specified angle
@@ -132,10 +142,26 @@ public static class Extensions
 
         bool didReflect = Vector3.Angle(targetTransform.forward, -surfaceNormal) > ricochetAngle;
         
+        float dotForward = Vector3.Dot(surfaceNormal, boxCollider.transform.forward);
+        float dotRight = Vector3.Dot(surfaceNormal, boxCollider.transform.right);
+        float dotBack = Vector3.Dot(surfaceNormal, -boxCollider.transform.forward);
+        float dotLeft = Vector3.Dot(surfaceNormal, -boxCollider.transform.right);
+    
+        float maxDot = Mathf.Max(dotForward, dotRight, dotBack, dotLeft);
+    
+        TankSide tankSide = maxDot switch
+        {
+            var d when d == dotForward => TankSide.Front,
+            var d when d == dotRight => TankSide.Right,
+            var d when d == dotBack => TankSide.Back,
+            _ => TankSide.Left
+        };
+        
         return new ReflectResult
         {
             didRicochet = didReflect,
-            direction = didReflect ? Vector3.Reflect(targetTransform.forward, surfaceNormal) : surfaceNormal
+            direction = didReflect ? Vector3.Reflect(targetTransform.forward, surfaceNormal) : surfaceNormal,
+            tankSide = tankSide
         };
     }
     #endregion

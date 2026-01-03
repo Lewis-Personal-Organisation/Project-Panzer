@@ -301,6 +301,18 @@ PrefabInstance:
       value: Tank_UK_Churchill
       objectReference: {fileID: 0}
     - target: {fileID: 7962432484466373471, guid: f7d24758a89a6bc488a4798627dca150, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.65
+      objectReference: {fileID: 0}
+    - target: {fileID: 7962432484466373471, guid: f7d24758a89a6bc488a4798627dca150, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.65
+      objectReference: {fileID: 0}
+    - target: {fileID: 7962432484466373471, guid: f7d24758a89a6bc488a4798627dca150, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.65
+      objectReference: {fileID: 0}
+    - target: {fileID: 7962432484466373471, guid: f7d24758a89a6bc488a4798627dca150, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}

@@ -12,7 +12,7 @@ public class VehicleData : Singleton<VehicleData>
 	private new void Awake()
 	{
 		base.Awake();
-		DontDestroyOnLoad(this);
+		nullOnDestroy = false;
 	}
 
 	public static VehicleLobbyData GetLobbyItem(int index)

@@ -30,6 +30,19 @@ public class WeaponShell : NetworkBehaviour
 
     private void Update()
     {
+        if (VehicleController.IsNetworked)
+        {
+            OnNetworkedUpdate();
+        }
+        else
+        {
+            OnUpdate();
+        }
+    }
+
+    // The update method called when connected to a network
+    private void OnNetworkedUpdate()
+    {
         if (isPooled) return;
         if (!IsOwner) return;
 
@@ -47,11 +60,41 @@ public class WeaponShell : NetworkBehaviour
         }
     }
 
+    private void OnUpdate()
+    {
+        // Decrement timer to 0, then deactivate and return to pool
+        lifetimeTimer -= Time.deltaTime;
+
+        if (lifetimeTimer <= 0)
+        {
+            if (owner is SingleShotWeapon sWeapon)
+            {
+                Destroy(this.gameObject);
+            }
+            // Implement for clip weapon
+        }
+    }
+
     /// <summary>
     /// Moves the shell guide and visuals.
     /// Visual shell is Rotated towards new rotation 
     /// </summary>
     private void FixedUpdate()
+    {
+        if (VehicleController.IsNetworked)
+        {
+            OnNetworkedFixedUpdate();
+        }
+        else
+        {
+            OnFixedUpdate();
+        }
+    }
+
+    /// <summary>
+    /// Called when the Network is active
+    /// </summary>
+    private void OnNetworkedFixedUpdate()
     {
         if (isPooled) return;
 
@@ -66,6 +109,14 @@ public class WeaponShell : NetworkBehaviour
     }
 
     /// <summary>
+    /// Called when in solo play
+    /// </summary>
+    private void OnFixedUpdate()
+    {
+        rigidBody.MovePosition(rigidBody.position + transform.forward * (velocity * Time.fixedDeltaTime));
+    }
+
+    /// <summary>
     /// 
     /// </summary>
     /// <param name="newDirection"></param>
@@ -75,8 +126,6 @@ public class WeaponShell : NetworkBehaviour
         transform.forward = newDirection;
         shellDirection = newDirection;
         ReflectClientRpc(newDirection);
-
-        Debug.Log($"Server :: Shell reflected - Direction: {newDirection}");
     }
 
     [ClientRpc]

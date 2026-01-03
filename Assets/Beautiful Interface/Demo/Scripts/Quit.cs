@@ -19,12 +19,12 @@ namespace Interface.Demo.Scripts
 
         public void Exit()
         {
-            var title = "Exit Game".ToUpper();
-            var description = "Are you sure you want to exit".ToUpper();
-            exitNotifID = Notification.Show(title, description, null,
-                20, NotifPosition.MidCenter,
-                NotifStyle.Rectangle, false, Color.clear, true,
-                () => ExitResponse(true), () => ExitResponse(false), "EXIT");
+            // var title = "Exit Game".ToUpper();
+            // var description = "Are you sure you want to exit".ToUpper();
+            // exitNotifID = Notification.Show(title, description, null,
+            //     20, NotifPosition.MidCenter,
+            //     NotifStyle.Rectangle, false, Color.clear, true,
+            //     () => ExitResponse(true), () => ExitResponse(false), "EXIT");
         }
         
         /// <summary>

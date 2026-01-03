@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Eflatun.SceneReference;
 using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 
 public class SceneHelper : Singleton<SceneHelper>
 {
@@ -13,18 +14,28 @@ public class SceneHelper : Singleton<SceneHelper>
    
    private HotkeyManager hotkeyManager;
    
-   private void Awake()
+   private new void Awake()
    {
       base.Awake();
-      
-      if (this)
-         DontDestroyOnLoad(this);
+      nullOnDestroy = false;
+
+      SceneManager.sceneLoaded += OnSceneLoaded;
       
       hotkeyManager = new HotkeyManager(
          new HotkeyCombo(Extensions.Debug.ClearConsole, KeyCode.LeftControl, KeyCode.LeftShift, KeyCode.Slash)
          );
    }
-
+   
+   // Handles Loading of scenes using references
+   private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+   {
+      if (scene.name == mainMenuScene.Name)
+      {
+         Cursor.lockState = CursorLockMode.None;
+         Cursor.visible = true;
+      }
+   }
+   
    public class HotkeyManager
    {
       public static List<KeyCode> trackedKeys = new List<KeyCode>();

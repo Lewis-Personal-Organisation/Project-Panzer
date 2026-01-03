@@ -25,9 +25,7 @@ namespace Interface.Elements.Scripts
         /// </summary>
         public Image background;
 
-        [FormerlySerializedAs("notificationPrefab1")] 
         public GameObject notificationRectangle;
-        [FormerlySerializedAs("notificationPrefab2")] 
         public GameObject notificationRounded;
 
         [Tooltip("The starting position for the notification corresponding to NotifPosition enum")]

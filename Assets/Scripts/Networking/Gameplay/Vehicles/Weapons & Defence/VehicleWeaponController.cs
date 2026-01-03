@@ -5,7 +5,7 @@ using UnityEngine.Pool;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(VehicleController))]
-public abstract class VehicleWeaponController : NetworkedVehicleComponent
+public abstract class VehicleWeaponController : NetworkedVehicleComponent, IVehicleComponentToggleable
 {
     [field: SerializeField] public VehicleWeapon weapon { get; protected set; }
     // [field: SerializeField] public ObjectPool<WeaponShell> shellPool { get; protected set; }
@@ -23,6 +23,16 @@ public abstract class VehicleWeaponController : NetworkedVehicleComponent
         weaponLeanController.Setup(this);
         
         // Add shooting loop
+        Enable();
+    }
+
+    private void Update()
+    {
+        OnSimulate?.Invoke();
+    }
+
+    public void Enable()
+    {
         OnSimulate += () =>
         {
             if (Input.GetMouseButtonDown(0))
@@ -34,16 +44,17 @@ public abstract class VehicleWeaponController : NetworkedVehicleComponent
             {
                 Reload();
             }
-        
+
             if (weaponLeanController.shouldLean)
                 weaponLeanController.UpdateLeanValues();
         };
     }
 
-    private void Update()
+    public void Disable()
     {
-        OnSimulate?.Invoke();
+        OnSimulate = null;
     }
+    
     protected abstract void Fire();
     protected abstract void Reload();
     protected abstract void ResetWeapon();

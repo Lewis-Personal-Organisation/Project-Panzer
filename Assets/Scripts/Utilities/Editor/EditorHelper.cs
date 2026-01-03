@@ -5,78 +5,42 @@ using UnityEngine.SceneManagement;
 
 public class EditorHelper : MonoBehaviour
 {
-    private static SceneHelper sceneHelper;
-    
-    [MenuItem("Scenes/Open Menu Scene", false, 0)]
-    private static void OpenMenuScene()
-    {
-        SceneHelper[] sceneHelpers = FindObjectsOfType(typeof(SceneHelper)) as SceneHelper[];
+    private static string prefix = "Assets/Scenes/";
+    private static string postfix = ".unity";
 
-        if (sceneHelpers is { Length: > 0 })
+    // Scene Menu Buttons
+    [MenuItem("Scenes/Main Menu", false, 0)] private static void OpenMenuScene() => OpenScene("Main Menu");
+    [MenuItem("Scenes/Gameplay", false, 1)] private static void OpenGameplayScene() => OpenScene("Gameplay");
+    [MenuItem("Scenes/Test Ground", false, 2)] private static void OpenPrototypeScene() => OpenScene("Test Ground");
+    [MenuItem("Scenes/Projectile Movement", false, 3)] private static void OpenProjectileScene() => OpenScene("Projectile Movement");
+
+    private static void OpenScene(string sceneName)
+    {
+        EditorBuildSettingsScene[] scenes = EditorBuildSettings.scenes;
+
+        foreach (var scene in scenes)
         {
-            if (EditorApplication.isPlaying)
+            if (!scene.enabled) continue;
+
+            string sceneFileName = System.IO.Path.GetFileNameWithoutExtension(scene.path);
+            
+            if (sceneFileName == sceneName)
             {
-                SceneManager.LoadScene(sceneHelpers[0].mainMenuScene.Path);
-            }
-            else
-            {
-                EditorSceneManager.OpenScene(sceneHelpers[0].mainMenuScene.Path);
+                if (EditorApplication.isPlaying)
+                {
+                    SceneManager.LoadScene(sceneName);
+                }
+                else
+                {
+                    if (EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+                    {
+                        EditorSceneManager.OpenScene($"{prefix}{sceneName}{postfix}");
+                    }
+                }
+                return;
             }
         }
-    }
 
-    [MenuItem("Scenes/Open Gameplay Scene", false, 1)]
-    private static void OpenGameplayScene()
-    {
-        SceneHelper[] sceneHelpers = FindObjectsOfType(typeof(SceneHelper)) as SceneHelper[];
-
-        if (sceneHelpers is { Length: > 0 })
-        {
-            if (EditorApplication.isPlaying)
-            {
-                SceneManager.LoadScene(sceneHelpers[0].mainGameplayScene.Path);
-            }
-            else
-            {
-                EditorSceneManager.OpenScene(sceneHelpers[0].mainGameplayScene.Path);
-            }
-        }
-    }
-    
-    [MenuItem("Scenes/Open Prototype Scene", false, 1)]
-    private static void OpenProtoScene()
-    {
-        SceneHelper[] sceneHelpers = FindObjectsOfType(typeof(SceneHelper)) as SceneHelper[];
-
-        if (sceneHelpers is { Length: > 0 })
-        {
-            if (EditorApplication.isPlaying)
-            {
-                SceneManager.LoadScene(sceneHelpers[0].prototypeScene.Path);
-            }
-            else
-            {
-                EditorSceneManager.OpenScene(sceneHelpers[0].prototypeScene.Path);
-            }
-        }
-    }
-    
-    
-    [MenuItem("Scenes/Open Projectile Scene", false, 1)]
-    private static void OpenProjectileProtoScene()
-    {
-        SceneHelper[] sceneHelpers = FindObjectsOfType(typeof(SceneHelper)) as SceneHelper[];
-
-        if (sceneHelpers is { Length: > 0 })
-        {
-            if (EditorApplication.isPlaying)
-            {
-                SceneManager.LoadScene(sceneHelpers[0].projectilePrototyping.Path);
-            }
-            else
-            {
-                EditorSceneManager.OpenScene(sceneHelpers[0].projectilePrototyping.Path);
-            }
-        }
+        Debug.LogError($"Scene '{sceneName}' not found in Build Settings or is disabled.");
     }
 }

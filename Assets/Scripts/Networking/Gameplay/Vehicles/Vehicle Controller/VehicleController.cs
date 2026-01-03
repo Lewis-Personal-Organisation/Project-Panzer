@@ -7,7 +7,7 @@ using UnityEngine.Serialization;
 using Debug = UnityEngine.Debug;
 
 [RequireComponent(typeof(Rigidbody))]
-public class VehicleController : NetworkVehicleComponent
+public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggleable
 {
     private class ValueTracker
     {
@@ -15,6 +15,7 @@ public class VehicleController : NetworkVehicleComponent
         private readonly Func<bool> activatePredicate;
         private readonly Func<bool> resetPredicate;
         private readonly UnityAction onValueReached = null;
+        private Coroutine routine = null;
         
         public ValueTracker(MonoBehaviour host, Func<bool> activatePredicate, Func<bool> resetPredicate, UnityAction onValueReached)
         {
@@ -22,20 +23,27 @@ public class VehicleController : NetworkVehicleComponent
             this.activatePredicate = activatePredicate;
             this.resetPredicate = resetPredicate;
             this.onValueReached = onValueReached;
-            host.StartCoroutine(WaitForActivate());
+            Shutdown();
+            routine = host.StartCoroutine(WaitForActivate());
         }
         
         private IEnumerator WaitForActivate()
         {
             yield return new WaitUntil(activatePredicate);
             onValueReached.Invoke();
-            host.StartCoroutine(Reset());
+            routine = host.StartCoroutine(Reset());
         }
         
         private IEnumerator Reset()
         {
             yield return new WaitUntil(resetPredicate);
-            host.StartCoroutine(WaitForActivate());
+            routine = host.StartCoroutine(WaitForActivate());
+        }
+
+        public void Shutdown()
+        {
+            if (routine != null)
+                host.StopCoroutine(routine);
         }
     }
     
@@ -52,6 +60,7 @@ public class VehicleController : NetworkVehicleComponent
     [SerializeField] private VehicleTrackTextureScroller trackTextureScroller;
     [SerializeField] private VehicleWeaponController weaponController;
     [SerializeField] private VehicleDefence defence;
+    private ValueTracker exhaustSmoke;
     
     [Header("Transforms")]
     public Rigidbody hullRigidbody;
@@ -70,7 +79,11 @@ public class VehicleController : NetworkVehicleComponent
     [Header("Team Colour")]
     private Renderer[] paintMaterials;
 
+    public static bool IsNetworked => NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+    
     public bool testing = false;
+
+    private UnityAction OnFixedUpdate = null;
     
     
     public override void OnNetworkSpawn()
@@ -87,30 +100,36 @@ public class VehicleController : NetworkVehicleComponent
 
     private void Awake()
     {
-        if (testing)
+        if (testing && !IsNetworked)
             Setup();
+    }
+    
+    // [BurstCompile]
+    private void FixedUpdate()
+    {
+        OnFixedUpdate?.Invoke();
     }
 
     private void Setup()
     {
         Debug.Log($"VehicleController :: Setup :: Called! We are the owner", this.gameObject);
-        
+
         TryGetComponent(ref hullRigidbody);
         TryGetComponent(ref bodyRotator);
         TryGetComponent(ref bodyLean);
         TryGetComponent(ref weaponLean);
         TryGetComponent(ref weaponController, false);
         TryGetComponent(ref defence);
-        
+
         cameraController = FindObjectOfType<CameraController>();
         cameraController.Setup(this);
-        
+
         if (weaponController)
             weaponController.Setup(this);
-        
+
         if (turretRotator)
             turretRotator.Setup(this);
-        
+
         if (defence)
             defence.Setup(this);
 
@@ -120,7 +139,7 @@ public class VehicleController : NetworkVehicleComponent
         {
             Debug.LogError("VehicleController :: Setup :: Mobility field not set", this.gameObject);
         }
-        
+
         gravitationalForce = mobility.localGravity;
 
         foreach (Renderer r in paintMaterials)
@@ -128,17 +147,18 @@ public class VehicleController : NetworkVehicleComponent
             r.material.SetFloat("_ColorOffset", teamColor - 1);
         }
 
-        ValueTracker exhaustSmoke = new ValueTracker(this,
-            () => velocityTracker.z.velocity >= 10, 
+        exhaustSmoke = new ValueTracker(this,
+            () => velocityTracker.z.velocity >= 10,
             () => velocityTracker.z.velocity < 10, () =>
             {
                 vfxController.LerpLifetimeOptions(2, 0.2f);
                 vfxController.EmitImmediate(50);
             });
+
+        OnFixedUpdate += ProcessVehicle;
     }
 
-    // [BurstCompile]
-    private void FixedUpdate()
+    private void ProcessVehicle()
     {
         if (NetworkManager == null && !testing)
             Debug.LogError("VehicleController :: NetworkManager not set!");
@@ -150,10 +170,11 @@ public class VehicleController : NetworkVehicleComponent
         // Should be optimized
         hullRigidbody.isKinematic = false;
         
+        // Debug.Log("Running Vehicle");
         
         groundDetector.DetectGroundState();
 
-        OnGUISceneViewData.AddOrUpdateLabel("Can Rotate? ", $"{groundDetector.FullyGrounded}");
+        SceneData.Label("Can Rotate? ", $"{groundDetector.FullyGrounded}");
         if (groundDetector.FullyGrounded)
         {
             bodyRotator.RotateTank();
@@ -168,5 +189,24 @@ public class VehicleController : NetworkVehicleComponent
         
         float speedAsT = Mathf.InverseLerp(mobility.forwardSpeed, 0, velocityTracker.z.velocity);
         vfxController.LerpLifetimeOptions(speedAsT, 0.2f);
+    }
+
+    /// <summary>
+    /// Called when the player dies - stop systems
+    /// </summary>
+    public void Disable()
+    {
+        Debug.Log("PLAYER DESTROYED");
+        OnFixedUpdate = null;
+        weaponController.Disable();
+        turretRotator.Disable();
+        defence.Disable();
+        exhaustSmoke.Shutdown();
+    }
+
+    // Called when the player respawns. Reactivates systems
+    public void Enable()
+    {
+        
     }
 }

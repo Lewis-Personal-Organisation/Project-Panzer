@@ -20,6 +20,7 @@ public class MainMenuUI : Panel
 	[Header("!DEBUG!")]
 	[SerializeField] private Button hostImmediateDebugButton;
 	[SerializeField] private Button joinImmediateDebugButton;
+	[SerializeField] private Button transitionDebugButton;
 
 	
 	private void Awake()
@@ -34,6 +35,11 @@ public class MainMenuUI : Panel
 		{
 			joinPrivateGameButton.onClick.Invoke();
 			UIManager.TextInputGroup.SetInputTextAndSubmit(GUIUtility.systemCopyBuffer);
+		});
+		
+		transitionDebugButton.onClick.AddListener(() =>
+		{
+			UIManager.Instance.PushErrorScreen("Lobby Closed");
 		});
 		
 		hostGameButton.onClick.AddListener(OnHostButtonPressed);

@@ -55,7 +55,7 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
     void Start()
     {
         cachedLobby = LobbyManager.Instance.activeLobby;
-        Extensions.Debug.ClearConsole();
+        // Extensions.Debug.ClearConsole();
         
         if (IsHost)
         {
@@ -70,8 +70,6 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
     static public void Instantiate(GameplayNetworkManager gameplayManagerPrefab)
     {
         var gameManager = GameObject.Instantiate(gameplayManagerPrefab);
-        
-        Debug.Log($"Game Manager null? {gameManager == null} Network Object null? {gameManager.networkObject == null}");
         gameManager.networkObject.SpawnWithOwnership(hostRelayClientId);
     }
     
@@ -200,7 +198,6 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
         if (localPlayerAvatar != null)
         {
             Debug.Log($"GameplayNetworkManager :: StartPlayingGame() :: Timer complete, enabling player control");
-            Extensions.Debug.ClearConsole();
             localPlayerAvatar.vehicleController.enabled = true;
         }
     }

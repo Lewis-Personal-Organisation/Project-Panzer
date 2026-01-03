@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
@@ -16,10 +17,14 @@ public class Panel : MonoBehaviour
 	[SerializeField] private GameObject panel;
 	
 	public bool exitOnNewPagePush;
+	public Panel[] newPagePushExcludedPanels = Array.Empty<Panel>();
 	[FormerlySerializedAs("postPopAction")] public UnityEvent onPopAction;
 	[FormerlySerializedAs("prePushAction")] public UnityEvent onPushAction;
 	
 	
+	/// <summary>
+	/// Toggles the visibility of the panel and activates any actions
+	/// </summary>
 	public void Toggle(bool activeState)
 	{
 		if (panel.activeSelf == activeState)
