@@ -138,7 +138,7 @@ public class LobbySetupUI : Panel
 			SessionManager.Instance.unityTransport.SetRelayServerData(relayServerData);
 
 			NetworkManager.Singleton.StartHost();
-			DebugViewer.Instance.SetAllocationID(allocation);
+			LobbyDebugViewer.Instance.SetAllocationID(allocation);
 			return joinCode;
 		}
 		catch (RelayServiceException e)
