@@ -186,7 +186,7 @@ public class LobbyManager : Singleton<LobbyManager>
 		isHost = false;
 		this.wasGameStarted = false;
 		
-		DebugViewer.Instance.CancelCheck();
+		LobbyDebugViewer.Instance.CancelCheck();
 	}
 
 	/// <summary>
@@ -295,7 +295,7 @@ public class LobbyManager : Singleton<LobbyManager>
 			CacheLocalPlayer();
 			players = activeLobby?.Players;
 			LogLobbyCreation(activeLobby);
-			DebugViewer.Instance.StartCheck(activeLobby.Id);
+			LobbyDebugViewer.Instance.StartCheck(activeLobby.Id, activeLobby.IsPrivate);
 		}
 		catch (Exception e)
 		{
@@ -598,7 +598,7 @@ public class LobbyManager : Singleton<LobbyManager>
 	/// </summary>
 	private void LobbyToMainMenuTransition()
 	{
-		UIManager.PopUntil(UIManager.MainMenu);
+		UIManager.PopAllAndPush(UIManager.MainMenu);
 		UIManager.LobbySetupMenu.ToggleLobbyCreationInteractables(true);
 	}
 	
@@ -713,14 +713,14 @@ public class LobbyManager : Singleton<LobbyManager>
 				Instance.LogLobbyPlayers();
 				await OpenLobby(joinedLobby);
 				
-				DebugViewer.Instance.StartCheck(activeLobby.Id);
+				LobbyDebugViewer.Instance.StartCheck(activeLobby.Id, activeLobby.IsPrivate);
 			}
 			else
 			{
 				previouslyRefusedUsername = true;
 				await Instance.LeaveJoinedLobby();
 				
-				UIManager.PopAndPush(1, UIManager.FadedBackgroundUI, UIManager.TextInputGroup.Prepare(true, true, TextSubmissionContext.PlayerName));
+				UIManager.PopAndPush(1, UIManager.FadedBackgroundUI, UIManager.TextInputGroup.Prepare(true, true));
 				UIManager.TextInputGroup.TogglePasteButton(false);
 			}
 		}

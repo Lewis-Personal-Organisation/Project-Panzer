@@ -19,13 +19,10 @@ public class Singleton<T> : MonoBehaviour where T : Singleton<T>
             return;
         }
         Instance = (T)this;
-        Debug.Log($"Created Singleton -> {this.GetType().Name} ({GetInstanceID()})");
     }
 
     protected virtual void OnDestroy()
     {
         Debug.Log($"On Destroy called for {this.gameObject.name} ({GetInstanceID()})");
-        // if (nullOnDestroy)
-        //     Instance = null;
     }
 }

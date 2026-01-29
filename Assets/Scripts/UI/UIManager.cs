@@ -1,8 +1,6 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public class UIManager : Singleton<UIManager>
 {
@@ -40,8 +38,6 @@ public class UIManager : Singleton<UIManager>
 	{
 		base.Awake();
 		
-		// DontDestroyOnLoad(this);
-		
 		if (!_initialPanel)
 		{
 			Debug.LogError("Initial Panel not set!");
@@ -49,8 +45,8 @@ public class UIManager : Singleton<UIManager>
 		}
 		
 		initialPanel = _initialPanel;
-		PushPanel(initialPanel);
-		
+		PushPanels(initialPanel, mainMenu);		// Initially, show game background and Main Menu
+
 		SceneData.LabelFixed("TEST LABEL", 10, 10);
 		SceneData.Label("Labels Count: ", $"{SceneData.labels.Count}", 10, 20);
 		SceneData.Texture(64,64, Color.cyan);
@@ -91,7 +87,7 @@ public class UIManager : Singleton<UIManager>
 			{
 				FadedBackgroundUI.Fade(.75F, 0F, fadeOutSpeed, () =>
 				{
-					PopUntil(mainMenu);
+					PopAllAndPush(mainMenu);
 				});
 			});
 		});
@@ -105,25 +101,31 @@ public class UIManager : Singleton<UIManager>
 	public static void PushPanel(Panel panel)
 	{
 		panel.Toggle(true);
+		
 		// Debug.Log($"Pushed {panel.GetPanel().name}. Count: {panelStack.Count}");
 		
 		if (panelStack.Count > 0)
 		{
 			Panel currentPanel = panelStack.Peek();
+
+			// If we 
+			if (panel == currentPanel)
+				return;
 			
 			// Decide if the current shown panel can be shown simultaniously with the new panel.
-			bool showAboveCurrent = false;
+			bool hideCurrent = true;
 			
 			for (int i = 0; i < currentPanel.newPagePushExcludedPanels.Length; i++)
 			{
 				if (panel == currentPanel.newPagePushExcludedPanels[i])
 				{
-					showAboveCurrent = true;
+					hideCurrent = false;
 					// Debug.Log($"We can show {panel.GetPanel().name} above {currentPanel.GetPanel().name}!");
 				}
 			}
 			
-			if (currentPanel.exitOnNewPagePush && !showAboveCurrent)
+			// Only hide the panel if we dont want it shown 
+			if (currentPanel.exitOnNewPagePush && hideCurrent)
 			{
 				currentPanel.Toggle(false);
 			}
@@ -178,6 +180,17 @@ public class UIManager : Singleton<UIManager>
 	/// <param name="target"></param>
 	public static void PopUntil(Panel target)
 	{
+		if (target == null)
+		{
+			Debug.LogWarning("Trying to pop to a null panel!");
+			return;
+		}
+		
+		if (!panelStack.Contains(target))
+		{
+			Debug.LogWarning("Trying to pop to a panel which isn't on the stack");
+		}
+		
 		while (panelStack.Peek() != target)
 		{
 			PopPanel();
@@ -222,6 +235,21 @@ public class UIManager : Singleton<UIManager>
 			PushPanel(panels[i]);
 		}
 	}
+
+	/// <summary>
+	/// Pops all panel until initial Panel and pushes panels
+	/// </summary>
+	/// <param name="panels"></param>
+	public static void PopAllAndPush(params Panel[] panels)
+	{
+		PopUntil(initialPanel);
+		Debug.Log($"Popping until {initialPanel.GetPanel().name}");
+		
+		for (int i = 0; i < panels.Length; i++)
+		{
+			PushPanel(panels[i]);
+		}
+	}
 	
 	/// <summary>
 	/// Pops all panels except the initial panel
@@ -231,6 +259,17 @@ public class UIManager : Singleton<UIManager>
 		for (int i = 1; i < panelStack.Count; i++)
 		{
 			PopPanel();
+		}
+	}
+
+	public void LogPanelStack()
+	{
+		Panel[] stack = panelStack.ToArray();
+		Array.Reverse(stack);
+		
+		for (int i = 0; i < stack.Length; i++)
+		{
+			Debug.Log($"Panel {i}: {stack[i]} on stack!");
 		}
 	}
 }

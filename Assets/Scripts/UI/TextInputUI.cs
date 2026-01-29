@@ -36,7 +36,7 @@ public class TextInputUI : Panel
 		pasteButton.onClick.AddListener(OnPaste);
 		closeButton.onClick.AddListener(() =>
 		{
-			UIManager.PopUntil(UIManager.MainMenu);
+			UIManager.PopAllAndPush(UIManager.MainMenu);
 		});
 
 		onPopAction.AddListener(() => Prepare(false));
@@ -170,7 +170,7 @@ public class TextInputUI : Panel
 				GameSave.PlayerName = UIManager.MainMenu.nameDisplayText.text;
 				inputText.text = string.Empty;
 				
-				UIManager.PopUntil(UIManager.MainMenu);
+				UIManager.PopAllAndPush(UIManager.MainMenu);
 				SceneData.Label("UI View: ", UIManager.CurrentPanel.GetPanel().name);
 
 				if (LobbyManager.previouslyRefusedUsername)

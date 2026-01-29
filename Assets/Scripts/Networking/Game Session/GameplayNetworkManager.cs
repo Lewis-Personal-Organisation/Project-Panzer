@@ -55,7 +55,7 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
     void Start()
     {
         cachedLobby = LobbyManager.Instance.activeLobby;
-        DebugViewer.Instance.CancelCheck();
+        LobbyDebugViewer.Instance.CancelCheck();
         // Extensions.Debug.ClearConsole();
         
         if (IsHost)

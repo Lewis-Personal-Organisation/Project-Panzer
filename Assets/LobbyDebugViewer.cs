@@ -9,7 +9,7 @@ using Unity.Services.Relay;
 using Unity.Services.Relay.Models;
 using UnityEngine;
 
-public class DebugViewer : Singleton<DebugViewer>
+public class LobbyDebugViewer : Singleton<LobbyDebugViewer>
 {
     [SerializeField] private string lobbyID = string.Empty;           // The target Lobby's ID
     [SerializeField] private Allocation allocation;
@@ -37,11 +37,11 @@ public class DebugViewer : Singleton<DebugViewer>
             CancelCheck();
     }
 
-    public void StartCheck(string lobbyID)
+    public void StartCheck(string lobbyID, bool isPrivate)
     {
         this.lobbyID = lobbyID;
         cts = new CancellationTokenSource();
-        LobbyLoopAsync(cts.Token);
+        CheckLobbyActiveAsync(cts.Token, isPrivate);
     }
 
     public void SetAllocationID(Allocation allocation)
@@ -61,10 +61,13 @@ public class DebugViewer : Singleton<DebugViewer>
         relayCode = string.Empty;
     }
     
-    async Task LobbyLoopAsync(CancellationToken token)
+    async Task CheckLobbyActiveAsync(CancellationToken token, bool isPrivate)
     {
         while (!token.IsCancellationRequested)
         {
+            if (isPrivate && LobbyManager.Instance.activeLobby == null)
+                return;
+            
             if (!string.IsNullOrEmpty(lobbyID))
             {
                 targetLobbyActive = await IsLobbyStillActive(lobbyID);
@@ -101,7 +104,7 @@ public class DebugViewer : Singleton<DebugViewer>
         catch (LobbyServiceException e)
         {
             // Lobby doesn't exist or you don't have access
-            Debug.LogError($"Lobby check failed: {e.Message}");
+            Debug.LogWarning($"Lobby check failed: {e.Message}");
             return false;
         }
     }

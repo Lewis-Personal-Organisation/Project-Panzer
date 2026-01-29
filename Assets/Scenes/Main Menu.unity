@@ -4272,7 +4272,7 @@ GameObject:
   - component: {fileID: 953878395}
   - component: {fileID: 953878394}
   m_Layer: 5
-  m_Name: Game Background
+  m_Name: Background Panel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9939,6 +9939,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2702937836148157766}
   - component: {fileID: 8335326893841284400}
+  - component: {fileID: 8335326893841284408}
   - component: {fileID: 8335326893841284403}
   - component: {fileID: 8335326893841284402}
   - component: {fileID: 8335326893841284401}
@@ -9965,7 +9966,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 23569e05978eea34e8a9a3515196b185, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _initialPanel: {fileID: 8335326893841284403}
+  _initialPanel: {fileID: 8335326893841284408}
   mainMenu: {fileID: 8335326893841284403}
   lobbySetup: {fileID: 8335326893841284402}
   lobby: {fileID: 8335326893841284401}
@@ -10211,6 +10212,28 @@ MonoBehaviour:
   messageText: {fileID: 1074076310}
   rect: {fileID: 2001054749}
   progressImage: {fileID: 372980101}
+--- !u!114 &8335326893841284408
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8335326893841284398}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bda757f8401d96f48b3292b1fc2bb059, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <view>k__BackingField: 0
+  panel: {fileID: 953878392}
+  exitOnNewPagePush: 0
+  newPagePushExcludedPanels: []
+  onPopAction:
+    m_PersistentCalls:
+      m_Calls: []
+  onPushAction:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!222 &8368211176588908477
 CanvasRenderer:
   m_ObjectHideFlags: 0

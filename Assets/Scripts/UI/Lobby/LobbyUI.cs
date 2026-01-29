@@ -51,15 +51,12 @@ public class LobbyUI : Panel
 		joinCodeCopyButton.onClick.AddListener(CopyJoinCode);
 	}
 
-	// private void Start()
-	// {
-	// 	
-	// }
-
 	private void OnDestroy()
 	{
 		LobbyManager.OnLobbyChanged -= OnLobbyChanged;
 	}
+
+	
 	/// <summary>
 	/// Alert Unity Lobby we have quit the active Lobby
 	/// </summary>
@@ -135,10 +132,9 @@ public class LobbyUI : Panel
 	public Panel Prepare(string lobbyCode, string lobbyTittle)
 	{
 		leaveButton.interactable = true;
-		
 		joinCodeText.text = lobbyCode;
 		joinCodeGroup.SetActive(true);
-		
+		chooseVehicleViewGameObject.SetActive(false);
 		title.text = lobbyTittle;
 		
 		LobbyManager.OnLobbyChanged -= OnLobbyChanged;

@@ -97,7 +97,7 @@ public class MainMenuUI : Panel
 	/// </summary>
 	public void OnHostButtonPressed()
 	{
-		UIManager.PopAndPush(1, UIManager.LobbySetupMenu.Prepare());
+		UIManager.PopAllAndPush(UIManager.LobbySetupMenu.Prepare());
 	}
 
 	/// <summary>
