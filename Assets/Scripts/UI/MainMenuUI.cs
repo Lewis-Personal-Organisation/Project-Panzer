@@ -15,7 +15,6 @@ public class MainMenuUI : Panel
 	[Header("Player Name Input")]
 	[SerializeField] internal TextMeshProUGUI nameDisplayText;
 	[SerializeField] internal Button nameDisplayButton;
-	public void ToggleNameDisplay(bool state) => nameDisplayText.gameObject.SetActive(state);
 
 	[Header("!DEBUG!")]
 	[SerializeField] private Button hostImmediateDebugButton;
@@ -63,11 +62,17 @@ public class MainMenuUI : Panel
 		if (GameSave.PlayerName == string.Empty)
 		{
 			UIManager.PushPanels(UIManager.FadedBackgroundUI, UIManager.TextInputGroup.Prepare(true, true));
-			// UIManager.PopAndPush(1, UIManager.TextInputGroup.Prepare(true, true));
 		}
 		else
 		{
 			SetMainMenuName(GameSave.PlayerName);
+		}
+
+		// Display error popup if we reloaded this script from another scene (e.g, gameplay)
+		if (PersistentDataHost.Instance.crossSceneData.errorMessage != string.Empty)
+		{
+			UIManager.Instance.PushErrorScreen(PersistentDataHost.Instance.crossSceneData.errorMessage, 0.333333F, 5, 5, 1, 1.75F);
+			PersistentDataHost.Instance.crossSceneData.errorMessage = string.Empty;
 		}
 	}
 
@@ -87,11 +92,6 @@ public class MainMenuUI : Panel
 		return this;
 	}
 
-	// public override void Toggle(bool activeState)
-	// {
-	// 	base.Toggle(activeState);
-	// }
-
 	/// <summary>
 	/// Hides Game Connection buttons, shows the Lobby UI
 	/// </summary>
@@ -100,7 +100,6 @@ public class MainMenuUI : Panel
 		UIManager.PopAndPush(1, UIManager.LobbySetupMenu.Prepare());
 	}
 
-
 	/// <summary>
 	/// Hide Game Connection buttons, show Text Input UI in RelayJoinCode context
 	/// </summary>
@@ -108,12 +107,4 @@ public class MainMenuUI : Panel
 	{
 		UIManager.PopAndPush(1, UIManager.FadedBackgroundUI, UIManager.TextInputGroup.Prepare(true, false, TextSubmissionContext.RelayJoinCode));
 	}
-
-	/// <summary>
-	/// UNFINISHED
-	/// </summary>
-	//public void OnJoinPublicGameButtonPressed()
-	//{
-	//	ToggleGameConnectionButtonVisiblity(false);
-	//}
 }

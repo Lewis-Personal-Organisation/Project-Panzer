@@ -1,8 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Runtime.InteropServices.ComTypes;
+using Sirenix.OdinInspector;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public class Rotation : MonoBehaviour
 {
@@ -22,24 +19,18 @@ public class Rotation : MonoBehaviour
 		SlerpTowards,
 		GradualTowards,
 		RotateAround,
-
 	}
 
-	[FormerlySerializedAs("method")]
 	[SerializeField] private RotationType rotationType;
 
-
-	[FormerlySerializedAs("Player")]
 	[SerializeField] private Transform Object;
 	private Quaternion startRotation;
-	[FormerlySerializedAs("Point")]
 	[SerializeField] private Transform Target;
 	[SerializeField] private float speed;
 	[SerializeField] private float Multiplier;
 
-	private string textFieldX = "0";
-	private string textFieldY = "0";
-	private string textFieldZ = "0";
+	[ShowIf("rotationType",  RotationType.GradualVector)]
+	[SerializeField] private Vector3 gradualVector;
 
 	private float timer;
 	private Quaternion cachedRot;
@@ -50,51 +41,16 @@ public class Rotation : MonoBehaviour
 		startRotation = Object.rotation;
 	}
 
-	private void OnGUI()
-	{
-		GUI.skin.label.fontSize = 30;
-		GUI.skin.textField.fontSize = 20;
-
-		GUI.Label(new Rect(25, 25, 1000, 50), $"This scene is demonstrating the {rotationType.ToString()} Rotation Method");
-
-		switch (rotationType)
-		{
-			case RotationType.GradualVector:
-				GUI.Label(new Rect(25, 75, 1000, 50), $"Enter values in the fields below to view");
-				textFieldX = GUI.TextField(new Rect(25, 125, 50, 30), textFieldX);
-				textFieldY = GUI.TextField(new Rect(25, 155, 50, 30), textFieldY);
-				textFieldZ = GUI.TextField(new Rect(25, 185, 50, 30), textFieldZ);
-				break;
-			case RotationType.LookAt:
-				break;
-			case RotationType.LookAtLineOfSiteX:
-				break;
-			case RotationType.LookAtLineOfSiteY:
-				break;
-			case RotationType.LookAtLineOfSiteZ:
-				break;
-			case RotationType.Copy:
-				break;
-			case RotationType.LerpTowards:
-				break;
-			case RotationType.SlerpTowards:
-				break;
-			case RotationType.GradualTowards:
-				break;
-			case RotationType.RotateAround:
-				break;
-			default:
-				break;
-		}
-	}
-
+	/// <summary>
+	/// Apply the type of rotation
+	/// </summary>
 	private void FixedUpdate()
 	{
 		switch (rotationType)
 		{
 			// Rotates Player gradually on each angle
 			case RotationType.GradualVector:
-				Object.Rotate(new Vector3(float.Parse(textFieldX), float.Parse(textFieldY), float.Parse(textFieldZ)) * Time.deltaTime);
+				Object.Rotate(gradualVector * Time.deltaTime);
 				Debug.DrawLine(Object.position, Object.position + Object.forward * 10F, Color.red);
 				break;
 

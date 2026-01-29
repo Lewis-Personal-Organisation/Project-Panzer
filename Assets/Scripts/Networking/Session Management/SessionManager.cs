@@ -12,24 +12,45 @@ using Unity.Networking.Transport;
 using Unity.Services.Lobbies.Models;
 using Unity.Services.Relay;
 using System.Collections;
+using Unity.Networking.Transport.Relay;
 using Unity.Services.Relay.Models;
 using UnityEngine.Events;
 
 public class SessionManager : Singleton<SessionManager>
 {
+	[SerializeField] private NetworkManager networkManagerPrefab;
 	[SerializeField] internal UnityTransport unityTransport;
 	public string uniqueProfileString = string.Empty;
 	private bool IsNetworkReady => UnityServices.State == ServicesInitializationState.Initialized && AuthenticationService.Instance.IsSignedIn;
 	[Space(10)]
 	[SerializeField] public UnityEvent OnAuthenticated;
 
+	
 	private new void Awake()
 	{
 		base.Awake();
+		
+		// If this instance was destroyed by the base class, don't continue
+		if (Instance != this)
+			return;
+
+		NetworkManager netManager = Instantiate(networkManagerPrefab);
+		netManager.gameObject.name = "Network Manager";
+		unityTransport = netManager.GetComponent<UnityTransport>();
+		
+		NetworkManager.Singleton.OnTransportFailure += OnTransportFailure;
+		DontDestroyOnLoad(this.gameObject);
 	}
 
-	private void Start() => DontDestroyOnLoad(this.gameObject);
+	// The callback method for when the Unity Transport system fails
+	private void OnTransportFailure()
+	{
+		Debug.Log("Transport Failure!");
+	}
 
+	/// <summary>
+	/// Initialises and Authenticates the Player and retrieves the cloud-stored player data
+	/// </summary>
 	public async Task InitialiseAndAuthenticatePlayer()
 	{
 		if (IsNetworkReady)
@@ -49,8 +70,7 @@ public class SessionManager : Singleton<SessionManager>
 	}
 
 	/// <summary>
-	/// Initialises Unity Services.
-	/// If in Editor, applies the appropriate profile string.
+	/// Initialises Unity Services. If in Editor, applies the appropriate profile string.
 	/// Else, since we can guarantee we are on separate devices, initialise
 	/// </summary>
 	private async Task SignIntoUnityServices()
@@ -65,6 +85,7 @@ public class SessionManager : Singleton<SessionManager>
 			}
 
 			uniqueProfileString = uniqueProfileString.Replace(" ", "");
+			
 			if (uniqueProfileString.Length > 29)
 				uniqueProfileString = uniqueProfileString.Substring(0, 29);
 
@@ -157,18 +178,34 @@ public class SessionManager : Singleton<SessionManager>
 	{
 		try
 		{
-			string relayJoinCode = lobbyJoined.Data[LobbyManager.relayJoinCodeKey].Value;
-			// await InitializeClient(relayJoinCode);
-
+			// Extract the relay join code from lobby data
+			if (lobbyJoined.Data.TryGetValue(LobbyManager.relayJoinCodeKey, out var relayData))
+			{
+				Debug.Log($"Found Join Code in Data: {relayData.Value}");
+			}
+			else
+			{
+				Debug.LogError("No relay join code found in lobby data!");
+				return;
+			}
+			
+			string relayJoinCode = relayData.Value;
+			
+			Debug.Log($"SessionManager :: RelayService Null?: {RelayService.Instance == null}");
 			JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(relayJoinCode);
-			NetworkEndPoint endPoint = NetworkEndPoint.Parse(joinAllocation.RelayServer.IpV4, (ushort)joinAllocation.RelayServer.Port);
-
-			Instance.unityTransport.SetClientRelayData(endPoint.Address.Split(':')[0], endPoint.Port,
-				joinAllocation.AllocationIdBytes, joinAllocation.Key,
-				joinAllocation.ConnectionData, joinAllocation.HostConnectionData, false);
-
+			
+			Debug.Log($"SessionManager :: Successfully joined relay allocation: {joinAllocation.AllocationId}");
+			RelayServerData relayServerData = new RelayServerData(joinAllocation, "dtls");
+			
+			Instance.unityTransport.SetRelayServerData(relayServerData);
+		
 			NetworkManager.Singleton.StartClient();
-			Debug.Log($"Session Manager Relay Allocation complete. Starting as Client. Scene Sync: {NetworkManager.Singleton.SceneManager.ActiveSceneSynchronizationEnabled}");
+			Debug.Log($"SessionManager :: Relay client started successfully");
+		}
+		catch (RelayServiceException e)
+		{
+			Debug.LogError($"SessionManager :: Relay Service Exception: {e.Message}, Reason: {e.Reason}");
+			throw;
 		}
 		catch (Exception e)
 		{
@@ -177,13 +214,25 @@ public class SessionManager : Singleton<SessionManager>
 	}
 
 	/// <summary>
-	/// Shuts down the NetworkManager and yields when done
+	/// Shuts down the NetworkManager and Unity Transport and yields when done
 	/// </summary>
 	/// <returns></returns>
 	public IEnumerator IEShutdownNetworkClient()
 	{
+		// Dont attempt if already shutting down
+		if (NetworkManager.Singleton.ShutdownInProgress)
+			yield break;
+		
 		NetworkManager.Singleton.Shutdown();
+		while (NetworkManager.Singleton.ShutdownInProgress)
+		{
+			Debug.Log("SessionManager :: IEShutdownNetworkClient :: Shutting Down...");
+			yield return null;
+		}
 		yield return new WaitUntil(() => !NetworkManager.Singleton.ShutdownInProgress);
+		Debug.Log("SessionManager :: IEShutdownNetworkClient :: Shutdown Complete!");
+		
+		unityTransport.Shutdown();
 	}
 
 	/// <summary>

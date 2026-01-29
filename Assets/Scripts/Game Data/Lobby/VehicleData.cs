@@ -4,7 +4,6 @@ using UnityEngine.Serialization;
 
 public class VehicleData : Singleton<VehicleData>
 {
-	// public static int ItemCount() => Instance.data.Count;
 	[SerializeField] private List<VehicleLobbyData> lobby;
 	[SerializeField] private List<VehicleGameplayData> gameplay;
 
@@ -12,7 +11,13 @@ public class VehicleData : Singleton<VehicleData>
 	private new void Awake()
 	{
 		base.Awake();
-		nullOnDestroy = false;
+		
+		// If this instance was destroyed by the base class, don't continue
+		if (Instance != this)
+			return;
+		
+		DontDestroyOnLoad(this);
+		// nullOnDestroy = false;
 	}
 
 	public static VehicleLobbyData GetLobbyItem(int index)

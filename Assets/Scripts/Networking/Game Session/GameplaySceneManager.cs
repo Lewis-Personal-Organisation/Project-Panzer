@@ -5,6 +5,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using TMPro;
 using Unity.Netcode;
+using Unity.Services.Authentication;
+using Unity.Services.Lobbies;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -100,22 +102,32 @@ public class GameplaySceneManager : Singleton<GameplaySceneManager>
     //     UIManager.PopUntil(UIManager.MainMenu);
     // }
 
-    private void OnApplicationQuit()
+    private async void OnApplicationQuit()
     {
-        string sceneName = SceneManager.GetActiveScene().name;
-        Debug.Log($"Quiting...");
-        
         // Properly shutdown network if we are associating with other players
-        if (sceneName == SceneHelper.Instance.mainGameplayScene.Name ||
-            sceneName == SceneHelper.Instance.mainMenuScene.Name && LobbyManager.Instance.activeLobbyEvents != null)
+        await CleanupOnQuit();
+    }
+
+    private async Task CleanupOnQuit()
+    {
+        if (NetworkManager.Singleton != null)
         {
-            Debug.Log($"... Shutting down Net");
             NetworkManager.Singleton.Shutdown();
+        }
+
+        if (LobbyManager.Instance.activeLobby != null && LobbyManager.Instance.activeLobby.HostId == AuthenticationService.Instance.PlayerId)
+        {
+            await LobbyService.Instance.DeleteLobbyAsync(LobbyManager.Instance.activeLobby.Id);
+        }
+        else if (LobbyManager.Instance.activeLobby != null)
+        {
+            await LobbyService.Instance.RemovePlayerAsync(LobbyManager.Instance.activeLobby.Id, AuthenticationService.Instance.PlayerId);
         }
     }
 
     private async void OnClientDisconnect(ulong clientId)
     {
+        Debug.Log("GameplaySceneManager :: OnClientDisconnect...");
         bool ReturnToMenu = false;
 
         string message = ""; ;
@@ -129,28 +141,29 @@ public class GameplaySceneManager : Singleton<GameplaySceneManager>
             }
             else
             {
-                message = $"We have Disconnected and closed the game session!";
+                message = $"We have Disconnected and closed the gameplay session!";
                 ReturnToMenu = true;
             }
         }
         else
         {
-            message = "We have disconnected!";
+            message = "We have disconnected from the gameplay session!";
             ReturnToMenu = true;
         }
         
+        Debug.Log($"GameplaySceneManager :: OnClientDisconnect :: Message  -> {message}");
         if (ReturnToMenu)
         {
             await LobbyManager.Instance.activeLobbyEvents.UnsubscribeAsync();
-            LobbyManager.Instance.activeLobbyEvents = null;
-            StartCoroutine(WaitForSceneLoad(message));
+            StartCoroutine(ResetToMainMenu(message));
         }
     }
     
-    private IEnumerator WaitForSceneLoad(string message)
+    private IEnumerator ResetToMainMenu(string message)
     {
+        PersistentDataHost.Instance.crossSceneData.errorMessage = message;
         AsyncOperation asyncLoadLevel = SceneManager.LoadSceneAsync(SceneHelper.Instance.mainMenuScene.Name, LoadSceneMode.Single);
         yield return new WaitUntil(() => asyncLoadLevel.isDone);
-        UIManager.Instance.PushErrorScreen(message);
+        yield return StartCoroutine(SessionManager.Instance.IEShutdownNetworkClient());
     }
 }

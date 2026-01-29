@@ -17,18 +17,26 @@ public class SceneHelper : Singleton<SceneHelper>
    private new void Awake()
    {
       base.Awake();
-      nullOnDestroy = false;
+      
+      // If this instance was destroyed by the base class, don't continue
+      if (Instance != this)
+         return;
+      
+      DontDestroyOnLoad(this);
+      // nullOnDestroy = false;
 
+      // SceneManager.sceneLoaded -= OnSceneLoaded;
       SceneManager.sceneLoaded += OnSceneLoaded;
       
-      hotkeyManager = new HotkeyManager(
-         new HotkeyCombo(Extensions.Debug.ClearConsole, KeyCode.LeftControl, KeyCode.LeftShift, KeyCode.Slash)
-         );
+      // hotkeyManager = new HotkeyManager(
+      //    new HotkeyCombo(Extensions.Debug.ClearConsole, KeyCode.LeftControl, KeyCode.LeftShift, KeyCode.Slash)
+      //    );
    }
    
    // Handles Loading of scenes using references
    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
    {
+      Debug.Log("Setting state for cursor");
       if (scene.name == mainMenuScene.Name)
       {
          Cursor.lockState = CursorLockMode.None;

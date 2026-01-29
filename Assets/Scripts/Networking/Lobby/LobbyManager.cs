@@ -6,7 +6,6 @@ using Unity.Services.Lobbies;
 using Unity.Services.Lobbies.Models;
 using UnityEngine;
 using System.Linq;
-using System.Collections;
 
 [DisallowMultipleComponent]
 public class LobbyManager : Singleton<LobbyManager>
@@ -16,18 +15,15 @@ public class LobbyManager : Singleton<LobbyManager>
 	public List<Player> players { get; private set; }
 	
 	public Player localPlayer { get; private set; }
-	public string localPlayerVehicleKey => localPlayer.Data[PlayerDictionaryData.vehicleIndexKey].Value;
 	public int localPlayerIndex { get; private set; }
-	public int numPlayers => players.Count;
 	public bool isHost { get; private set; }
 	public const string hostNameKey = "hostName";
 	public const string relayJoinCodeKey = "relayJoinCode";
 	public static event Action<Lobby, bool> OnLobbyChanged;
 	public static bool previouslyRefusedUsername = false;
-	float nextHostHeartbeatTime;
-	const float hostHeartbeatFrequency = 15;
-	float nextUpdatePlayersTime;
-	bool wasGameStarted = false;
+	public float nextHostHeartbeatTime;
+	private const float hostHeartbeatFrequency = 15F;
+	public bool wasGameStarted = false;
 	
 	public ILobbyEvents activeLobbyEvents;
 
@@ -47,7 +43,7 @@ public class LobbyManager : Singleton<LobbyManager>
 		private static Dictionary<RequestType, float> TypeRates = new Dictionary<RequestType, float>
 		{
 			{ RequestType.UpdatePlayers, 1.1F },
-			{ RequestType.UpdateLobbies, 1.1F },
+			{ RequestType.UpdateLobbies, 1.35F },
 			{ RequestType.DeleteLobby, 2.1F },
 			{ RequestType.LeaveOrRemovePlayers, 5.1F},
 		};
@@ -56,6 +52,13 @@ public class LobbyManager : Singleton<LobbyManager>
 		/// Returns the time to wait for lobby request type
 		/// </summary>
 		public static float Rate(RequestType type) => TypeRates[type];
+		
+		/// <summary>
+		/// Returns the time to wait for lobby request type in equivalent seconds
+		/// </summary>
+		/// <param name="type"></param>
+		/// <returns></returns>
+		public static int RateMS(RequestType type) => (int)(TypeRates[type] * 1000F);
 
 		/// <summary>
 		/// Use to override the default limit of a Request Type
@@ -86,10 +89,13 @@ public class LobbyManager : Singleton<LobbyManager>
 	private new void Awake()
 	{
 		base.Awake();
-		nullOnDestroy = false;
+		DontDestroyOnLoad(this);
 	}
 
-    async void Update()
+	/// <summary>
+	/// Heartbeat the active lobby if we are the host to keep it alive
+	/// </summary>
+	async void Update()
     {
 		try
 		{
@@ -107,6 +113,9 @@ public class LobbyManager : Singleton<LobbyManager>
 		}
 	}
 
+	/// <summary>
+	/// Heartbeats the active lobby to keep it active
+	/// </summary>
 	private async Task PeriodicHostHeartbeat()
 	{
 		try
@@ -123,102 +132,9 @@ public class LobbyManager : Singleton<LobbyManager>
 		}
 	}
 
-	// private async Task PeriodicGetUpdatedLobby()
-	// {
-	// 	try
-	// 	{
-	// 		// Set next update time before calling Lobby Service since next update could also trigger an
-	// 		// update which could cause throttling issues.
-	// 		nextUpdatePlayersTime = Time.realtimeSinceStartup + RateLimits.Rate(RateLimits.RequestType.UpdatePlayers);
-	// 		//Debug.Log($"LobbyManager :: Updating Lobby ({Time.realtimeSinceStartup}s). Interval -> {RateLimits.Rate(RateLimits.RequestType.UpdatePlayers)}s");
-	// 		var updatedLobby = await LobbyService.Instance.GetLobbyAsync(activeLobby.Id);
-	//
-	// 		if (this == null)
-	// 		{
-	// 			return;
-	// 		}
-	//
-	// 		UpdateLobby(updatedLobby);
-	// 	}
-	//
-	// 	// Handle lobby no longer exists (host canceled game and returned to main menu).
-	// 	catch (LobbyServiceException e) when (e.Reason == LobbyExceptionReason.LobbyNotFound)
-	// 	{
-	// 		if (this == null) return;
-	//
-	// 		// Lobby has closed
-	// 		//ServerlessMultiplayerGameSampleManager.instance.SetReturnToMenuReason(
-	// 		//	ServerlessMultiplayerGameSampleManager.ReturnToMenuReason.LobbyClosed);
-	// 		Debug.Log("Lobby Not Found or Closed. Returning to Main Menu");
-	// 		OnPlayerNotInLobby();
-	// 	}
-	//
-	// 	// Handle player no longer allowed to view lobby (host booted player so player is no longer in the lobby).
-	// 	catch (LobbyServiceException e) when (e.Reason == LobbyExceptionReason.Forbidden)
-	// 	{
-	// 		if (this == null) return;
-	//
-	// 		//ServerlessMultiplayerGameSampleManager.instance.SetReturnToMenuReason(
-	// 		//	ServerlessMultiplayerGameSampleManager.ReturnToMenuReason.PlayerKicked);
-	//
-	// 		OnPlayerNotInLobby();
-	// 	}
-	// 	catch (Exception e)
-	// 	{
-	// 		Debug.LogException(e);
-	// 	}
-	// }
-	//async Task PeriodicSendUpdatedLobby()
-	//{
-	//	try
-	//	{
-	//		Debug.Log($"Trying to send updated Lobby. Next Update in {updatePlayersFrequency}s");
-	//		// Set next update time before calling Lobby Service since next update could also trigger an
-	//		// update which could cause throttling issues.
-	//		nextSendUpdatePlayersTime = Time.realtimeSinceStartup + updatePlayersFrequency;
-
-	//		var options = new UpdatePlayerOptions();
-	//		options.Data = CreatePlayerDictionary();
-
-	//		var updatedLobby = await LobbyService.Instance.UpdatePlayerAsync(activeLobby.Id, playerId, options);
-
-	//		if (this == null)
-	//		{
-	//			return;
-	//		}
-
-	//		UpdateLobby(updatedLobby);
-	//	}
-	//	// Handle lobby no longer exists (host canceled game and returned to main menu).
-	//	catch (LobbyServiceException e) when (e.Reason == LobbyExceptionReason.LobbyNotFound)
-	//	{
-	//		if (this == null) return;
-
-	//		// Lobby has closed
-	//		//ServerlessMultiplayerGameSampleManager.instance.SetReturnToMenuReason(
-	//		//	ServerlessMultiplayerGameSampleManager.ReturnToMenuReason.LobbyClosed);
-	//		Debug.Log("Lobby Not Found or Closed. Returning to Main Menu");
-	//		OnPlayerNotInLobby();
-	//	}
-
-	//	// Handle player no longer allowed to view lobby (host booted player so player is no longer in the lobby).
-	//	catch (LobbyServiceException e) when (e.Reason == LobbyExceptionReason.Forbidden)
-	//	{
-	//		if (this == null) return;
-
-	//		//ServerlessMultiplayerGameSampleManager.instance.SetReturnToMenuReason(
-	//		//	ServerlessMultiplayerGameSampleManager.ReturnToMenuReason.PlayerKicked);
-
-	//		OnPlayerNotInLobby();
-	//	}
-	//	catch (Exception e)
-	//	{
-	//		Debug.LogException(e);
-	//	}
-
-	//	updatePlayerAsyncPending = false;
-	//}
-
+	/// <summary>
+	/// Update the lobby with our Ready Button state
+	/// </summary>
 	void UpdateLobby(Lobby updatedLobby)
 	{
 		// Since this is called after an await, ensure that the Lobby wasn't closed while waiting.
@@ -247,10 +163,13 @@ public class LobbyManager : Singleton<LobbyManager>
 		}
 	}
 
+	/// <summary>
+	/// Called when the Player is no longer part of a Lobby.
+	/// Unsubscribe from events and shutdown the network to clear stale data
+	/// </summary>
 	public async Task OnPlayerNotInLobby()
 	{
 		await activeLobbyEvents.UnsubscribeAsync();
-		activeLobbyEvents = null;
 		OnLobbyChanged -= OnLobbyChanged;
 
 		if (activeLobby != null)
@@ -258,19 +177,21 @@ public class LobbyManager : Singleton<LobbyManager>
 			activeLobby = null;
 		}
 
+		// Shutdown network if not in Gameplay Scene
 		if (UIManager.GameView != View.Gameplay)
 		{
-			StartCoroutine(ShutdownNetwork());
+			StartCoroutine(SessionManager.Instance.IEShutdownNetworkClient());
 		}
-	}
-	
-	private IEnumerator ShutdownNetwork()
-	{
-		Debug.Log("Lobby Manager :: ShutdownNetwork :: Shutting Down");
-		yield return StartCoroutine(SessionManager.Instance.IEShutdownNetworkClient());
-		Debug.Log($"Lobby Manager :: ShutdownNetwork :: Network Shutdown successfully");
+		
+		isHost = false;
+		this.wasGameStarted = false;
+		
+		DebugViewer.Instance.CancelCheck();
 	}
 
+	/// <summary>
+	/// Returns whether all Players in a lobby are ready using cached player data
+	/// </summary>
 	static bool AllPlayersReady(Lobby lobby)
 	{
 		// Cancel if only 1 player
@@ -291,17 +212,28 @@ public class LobbyManager : Singleton<LobbyManager>
 		return true;
 	}
 
+	/// <summary>
+	/// Creates and returns a Unity Lobby given a Lobby Name, player count, host name, privacy and relay allocation code
+	/// </summary>
+	/// <returns></returns>
 	public async Task<Lobby> CreateLobby(string lobbyName, int maxPlayers, string hostName, bool isPrivate, string relayJoinCode)
 	{
 		try
 		{
+			Debug.Log($"LobbyManager :: CreateLobby called with relay join code: {relayJoinCode}");
 			playerDictionaryData = new(hostName, false, -1);
 			isHost = true;
 			wasGameStarted = false;
 
+			// Delete any existing lobby we own
 			await DeleteAnyActiveLobbyWithNotify();
-			if (this == null) return default;
+			
+			if (this == null)
+			{
+				Debug.LogError("LobbyManager :: CreateLobby Null Ref");
+			}
 
+			// Create Lobby Options
 			var options = new CreateLobbyOptions
 			{
 				IsPrivate = isPrivate,
@@ -314,9 +246,12 @@ public class LobbyManager : Singleton<LobbyManager>
 				Player = CreatePlayerData()
 			};
 
+			// Create and cache the new lobby
 			activeLobby = await LobbyService.Instance.CreateLobbyAsync(lobbyName, maxPlayers, options);
 
-			// Callbacks
+			Debug.Log($"LobbyManager :: Lobby created. Stored relay join code: {activeLobby.Data[relayJoinCodeKey].Value}");
+			
+			// Register lobby event callbacks
 			LobbyEventCallbacks callbacks = new LobbyEventCallbacks();
 			callbacks.LobbyEventConnectionStateChanged += OnConnectionStateChanged;
 			callbacks.LobbyChanged += OnLobbyChangedNotif;
@@ -329,26 +264,57 @@ public class LobbyManager : Singleton<LobbyManager>
 			{
 				switch (ex.Reason)
 				{
-					case LobbyExceptionReason.AlreadySubscribedToLobby: Debug.LogWarning($"Already subscribed to lobby[{activeLobby.Id}]. We did not need to try and subscribe again. Exception Message: {ex.Message}"); break;
-					case LobbyExceptionReason.SubscriptionToLobbyLostWhileBusy: Debug.LogError($"Subscription to lobby events was lost while it was busy trying to subscribe. Exception Message: {ex.Message}"); throw;
-					case LobbyExceptionReason.LobbyEventServiceConnectionError: Debug.LogError($"Failed to connect to lobby events. Exception Message: {ex.Message}"); throw;
+					case LobbyExceptionReason.AlreadySubscribedToLobby: 
+						Debug.LogWarning($"Already subscribed to lobby[{activeLobby.Id}]. We did not need to try and subscribe again. Exception Message: {ex.Message}"); 
+						break;
+					case LobbyExceptionReason.SubscriptionToLobbyLostWhileBusy: 
+						Debug.LogWarning($"Subscription to lobby events was lost while it was busy trying to subscribe. Exception Message: {ex.Message}"); 
+						await LeaveJoinedLobby();
+						break;
+					case LobbyExceptionReason.LobbyEventServiceConnectionError: 
+						Debug.LogWarning($"Failed to connect to lobby events. Exception Message: {ex.Message}");
+						await LeaveJoinedLobby();
+						break;
 					default: throw;
 				}
 			}
 
-			if (this == null) return default;
+			if (this == null)
+			{
+				Debug.LogError("LobbyManager :: CreateLobby Null Ref");
+			}
+			
+			// Create a heartbeat for the lobby to keep it active
+			// await LobbyService.Instance.SendHeartbeatPingAsync(activeLobby.Id);
+			// if (lobbyHeartbeatRoutine != null)
+			// {
+			// 	StopCoroutine(lobbyHeartbeatRoutine);
+			// }
+			// lobbyHeartbeatRoutine = StartCoroutine(HeartbeatLobbyCoroutine(activeLobby.Id, 15));
 
 			CacheLocalPlayer();
 			players = activeLobby?.Players;
 			LogLobbyCreation(activeLobby);
+			DebugViewer.Instance.StartCheck(activeLobby.Id);
 		}
 		catch (Exception e)
 		{
 			Debug.LogError($"LobbyManager :: CreateLobby :: Failed to Create Lobby - {e.Message}");
 		}
-
+		
 		return activeLobby;
 	}
+	
+	// IEnumerator HeartbeatLobbyCoroutine(string lobbyId, float waitTimeSeconds)
+	// {
+	// 	var delay = new WaitForSecondsRealtime(waitTimeSeconds);
+	//
+	// 	while (true)
+	// 	{
+	// 		LobbyService.Instance.SendHeartbeatPingAsync(lobbyId);
+	// 		yield return delay;
+	// 	}
+	// }
 
 	public async Task<Lobby> JoinPrivateLobby(string lobbyJoinCode, string playerName)
 	{
@@ -393,8 +359,8 @@ public class LobbyManager : Singleton<LobbyManager>
 	async Task PrepareToJoinLobby(string playerName)
 	{
 		isHost = false;
-		this.wasGameStarted = false;
-		this.playerDictionaryData = new(playerName, false, -1);
+		wasGameStarted = false;
+		playerDictionaryData = new(playerName, false, -1);
 
 		if (activeLobby != null)
 		{
@@ -457,6 +423,9 @@ public class LobbyManager : Singleton<LobbyManager>
 		Debug.Log($"LobbyManager :: {lobbyPlayerNames}");
 	}
 
+	/// <summary>
+	/// Attempt to delete any active lobby owned by us as Host
+	/// </summary>
 	public async Task DeleteAnyActiveLobbyWithNotify()
 	{
 		try
@@ -464,9 +433,6 @@ public class LobbyManager : Singleton<LobbyManager>
 			if (activeLobby != null && isHost)
 			{
 				await LobbyService.Instance.DeleteLobbyAsync(activeLobby.Id);
-				if (this == null) return;
-
-				await OnPlayerNotInLobby();
 			}
 		}
 		catch (Exception e)
@@ -511,11 +477,11 @@ public class LobbyManager : Singleton<LobbyManager>
 			$"Visibility: {(lobby.IsPrivate ? "Private" : "Public")}, " +
 			$"Access: {(lobby.IsLocked ? "Locked" : "Unlocked")}, " +
 			$"Lobby Code: {lobby.LobbyCode}, " +
-			$"Id: {lobby.Id}, " +
-			$"Created at: {lobby.Created}, " +
-			$"HostId: {lobby.HostId}, " +
-			$"EnvironmentId: {lobby.EnvironmentId}, " +
-			$"Upid: {lobby.Upid}, " +
+			// $"Id: {lobby.Id}, " +
+			// $"Created at: {lobby.Created}, " +
+			// $"HostId: {lobby.HostId}, " +
+			// $"EnvironmentId: {lobby.EnvironmentId}, " +
+			// $"Upid: {lobby.Upid}, " +
 			$"Data: {lobbyDataStr}");
 
 		Instance.LogLobbyPlayers();
@@ -603,16 +569,19 @@ public class LobbyManager : Singleton<LobbyManager>
 		
 		for (int i = 0; i < activeLobby.Players.Count; i++)
 		{
-			//Debug.Log($"Name Check: Found player '{players[i].Data[PlayerDictionaryData.playerNameKey].Value}'");
 			if (ownerName == players[i].Data[PlayerDictionaryData.nameKey].Value)
 			{
 				matches++;
-				//Debug.Log($"Name Check: Name Matched! {players[i].Data[PlayerDictionaryData.playerNameKey].Value} + {ownerName}, Count {matches}");
 
+				// If two players are found with same name, fail this check
 				if (matches == 2)
+				{
+					Debug.Log($"Name Check failed!");
 					return false;
+				}
 			}
 		}
+		Debug.Log($"Name Check passed!");
 		return true;
 	}
 	
@@ -638,12 +607,9 @@ public class LobbyManager : Singleton<LobbyManager>
 		if (changes.LobbyDeleted)
 		{
 			Debug.Log($"Lobby Manager :: Lobby Deleted. Host? {isHost}");
-			
-			if (!isHost)
-			{
-				OnPlayerNotInLobby();
-			}
-			
+
+			OnPlayerNotInLobby();
+
 			LobbyToMainMenuTransition();
 			UIManager.Instance.PushErrorScreen("Host has closed the Lobby!");
 		}
@@ -693,18 +659,15 @@ public class LobbyManager : Singleton<LobbyManager>
 	/// Attempts to join a private lobby using the specified Join Code and player name.
 	/// Ensures Player names are unique. If not, requires user to re-enter name.
 	/// </summary>
-	public async void JoinPrivateLobbyAsClient(string joinCode, string playerName)
+	public async void JoinPrivateLobbyAsClient(string playerJoinCode, string playerName)
 	{
 		try
 		{
 			UIManager.PushPanel(UIManager.LoadingIcon.Prepare("Joining Lobby..."));
 			await SessionManager.Instance.InitialiseAndAuthenticatePlayer();
-			Lobby joinedLobby = await Instance.JoinPrivateLobby(joinCode, playerName);
+			Lobby joinedLobby = await Instance.JoinPrivateLobby(playerJoinCode, playerName);
 
-			if (this == null)
-				return;
-			
-			if (joinedLobby == null)
+			if (this == null || joinedLobby == null)
 			{
 				Debug.Log("Failed to Join Private Lobby");
 				// HANDLE WHEN A LOBBY DOESN'T EXIST
@@ -725,10 +688,19 @@ public class LobbyManager : Singleton<LobbyManager>
 				FilterLobbyError(ex);
 				throw;
 			}
-
+			
+			// Fetch fresh lobby data to get the current relay join code
+			// The initial join response may have stale data
+			joinedLobby = await LobbyService.Instance.GetLobbyAsync(joinedLobby.Id);
+			
+			if (this == null )
+				return;
+			
+			Debug.Log($"Fresh lobby data relay code: {joinedLobby.Data[relayJoinCodeKey].Value}");
+			
+			activeLobby = joinedLobby;
+			
 			UIManager.PopPanel();
-			Debug.Log($"Checking Name {playerName}");
-			Instance.LogLobbyPlayers();
 
 			if (Instance.activeLobby == null)
 				return;
@@ -737,14 +709,14 @@ public class LobbyManager : Singleton<LobbyManager>
 
 			if (nameCheckPassed)
 			{
-				Debug.Log("Name Check: Passed");
 				previouslyRefusedUsername = false;
 				Instance.LogLobbyPlayers();
 				await OpenLobby(joinedLobby);
+				
+				DebugViewer.Instance.StartCheck(activeLobby.Id);
 			}
 			else
 			{
-				Debug.Log("Name Check: Failed. Leaving Lobby... Set a unique name and rejoin!");
 				previouslyRefusedUsername = true;
 				await Instance.LeaveJoinedLobby();
 				

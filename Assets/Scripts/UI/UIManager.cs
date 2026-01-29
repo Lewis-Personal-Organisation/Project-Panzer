@@ -78,12 +78,15 @@ public class UIManager : Singleton<UIManager>
 		GameView = view;
 	}
 
-	public void PushErrorScreen(string errMsg, float progressSpeed = 0.333333F, float fadeInSpeed = 5F, float fadeOutSpeed = 5F)
+	/// <summary>
+	/// Shows the error screen with a message, timeout speed, fade speeds and size and then returns to the main menu
+	/// </summary>
+	public void PushErrorScreen(string errMsg, float progressSpeed = 0.333333F, float fadeInSpeed = 5F, float fadeOutSpeed = 5F, float widthMulti = 0, float heightMulti = 0)
 	{
 		// Show and Fade in
 		FadedBackgroundUI.Fade(0, .75F, fadeInSpeed, () =>
 		{
-			NotificationUI.PrepareStyleAndMessage(NotifStyle.Info, errMsg);
+			NotificationUI.PrepareStyleAndMessage(NotifStyle.Info, errMsg, widthMulti, heightMulti);
 			NotificationUI.StartProgressBar(0, progressSpeed, true, true, () =>
 			{
 				FadedBackgroundUI.Fade(.75F, 0F, fadeOutSpeed, () =>
@@ -92,24 +95,6 @@ public class UIManager : Singleton<UIManager>
 				});
 			});
 		});
-		
-		// FadedBackgroundUI.onComplete += () =>
-		// {
-		// 	FadedBackgroundUI.onComplete = null;
-		// 	NotificationUI.PrepareStyleAndMessage(NotifStyle.Info, errMsg);
-		// 	NotificationUI.StartProgressBar(0, progressSpeed, true, true, () =>
-		// 	{
-		// 		FadedBackgroundUI.Fade(.75F, 0F, fadeInSpeed);
-		// 	});
-		// };
-		//
-		// // Fade out
-		// FadedBackgroundUI.onComplete += () =>
-		// {
-		// 	FadedBackgroundUI.onComplete = null;
-		// 	FadedBackgroundUI.Toggle(false);
-		// };
-		// FadedBackgroundUI.Fade(0F, .75F, fadeOutSpeed);
 	}
 	
 	/// <summary>

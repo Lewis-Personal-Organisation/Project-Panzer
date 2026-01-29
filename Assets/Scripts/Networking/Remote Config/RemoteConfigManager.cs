@@ -15,13 +15,18 @@ public class RemoteConfigManager : Singleton<RemoteConfigManager>
     
     private new void Awake() { }
 
+    /// <summary>
+    /// Sets up the games multiplayer configuration using Unity Config Service
+    /// </summary>
     public async void Setup()
     {
-        if (!Instance)
-        {
-            base.Awake();
-            DontDestroyOnLoad(this);
-        }
+        base.Awake();
+        
+        // If this instance was destroyed by the base class, don't continue
+        if (Instance != this)
+            return;
+        
+        DontDestroyOnLoad(this);
         
         try
         {
@@ -38,6 +43,9 @@ public class RemoteConfigManager : Singleton<RemoteConfigManager>
         }
     }
 
+    /// <summary>
+    /// Requests the Remote Config setup from Unity
+    /// </summary>
     public async Task FetchConfigs()
     {
         try
@@ -69,20 +77,16 @@ public class RemoteConfigManager : Singleton<RemoteConfigManager>
             $"Specified number of players ({numPlayers}) not found in Remote Config player options.");
     }
 
-    void GetConfigValues()
+    /// <summary>
+    /// Sets the local config data from the retrieved config
+    /// </summary>
+    private void GetConfigValues()
     {
         var configJson = RemoteConfigService.Instance.appConfig.GetJson("MULTIPLAYER_GAME_SETTINGS");
-        Debug.Log(configJson);
         settings = JsonUtility.FromJson<SettingsConfig>(configJson);
         vSettings = settings;
-        
-        Debug.Log($"Read Remote Config settings: {settings}");
+        Debug.Log($"Downloaded Remote Config settings: {settings}");
     }
-
-    // void OnDestroy()
-    // {
-    //     Instance?.OnDestroy();
-    // }
 
     struct UserAttributes
     {
@@ -104,6 +108,9 @@ public class RemoteConfigManager : Singleton<RemoteConfigManager>
         }
     }
 
+    /// <summary>
+    /// The config data
+    /// </summary>
     [Serializable]
     public struct PlayerOptionsConfig
     {

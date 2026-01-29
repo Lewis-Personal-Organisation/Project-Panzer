@@ -1,3 +1,4 @@
+using System;
 using ElRaccoone.Tweens;
 using ElRaccoone.Tweens.Core;
 using System.Threading.Tasks;
@@ -5,6 +6,7 @@ using TMPro;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 using Unity.Networking.Transport;
+using Unity.Networking.Transport.Relay;
 using Unity.Services.Lobbies.Models;
 using Unity.Services.Relay;
 using Unity.Services.Relay.Models;
@@ -28,7 +30,6 @@ public class LobbySetupUI : Panel
 	public int maxPlayers = 4;
 	public string relayJoinCode = string.Empty;
 	[SerializeField] UnityTransport unityTransport;
-	private bool networkManagerInitialised = false;
 
 
 	private void Awake()
@@ -58,14 +59,6 @@ public class LobbySetupUI : Panel
 	}
 
 	/// <summary>
-	/// Returns the Player to the Main Menu
-	/// </summary>
-	// private void OnLobbyCreationCancelled()
-	// {
-	// 	UIManager.Instance.PopPanel();
-	// }
-
-	/// <summary>
 	/// Toggles interactable buttons for Lobby creation UI
 	/// </summary>
 	public void ToggleLobbyCreationInteractables(bool state)
@@ -87,15 +80,34 @@ public class LobbySetupUI : Panel
 		ToggleLobbyCreationInteractables(false);
 		UIManager.PushPanel(UIManager.LoadingIcon.SetText("Creating Lobby..."));
 
-		await SessionManager.Instance.InitialiseAndAuthenticatePlayer();
-
+		// Shut down the Net Manager to clean up its state
+		if (NetworkManager.Singleton.IsClient || NetworkManager.Singleton.IsHost)
+		{
+			NetworkManager.Singleton.Shutdown();
+			
+			// Wait until the Net Manager is shut down, to clear the transport data fully.
+			// Not doing this means residual old data could exist, resulting in errors
+			while (NetworkManager.Singleton.ShutdownInProgress)
+			{
+				await Task.Yield();
+			}
+        
+			Debug.Log("Network shutdown complete, proceeding to create new host");
+		}
+		
 		// Get a relayJoinCode for our server allocation
-		relayJoinCode = await InitialiseHostWithRelay(maxPlayers);
-		if (this == null) return;
+		relayJoinCode = await InitializeHostWithRelay(maxPlayers);
+		if (this == null)
+		{
+			Debug.LogError("OnHostConfirmLobbyPressed :: We are null - A");
+		}
 		
 		// Create lobby with Relay
 		Lobby lobby = await LobbyManager.Instance.CreateLobby(lobbyNameText.text, maxPlayers, GameSave.PlayerName, isLobbyPrivate, relayJoinCode);
-		if (this == null) return;
+		if (this == null)
+		{
+			Debug.LogError("OnHostConfirmLobbyPressed :: We are null - B");
+		}
 
 		closeButton.image.color = closeButtonEnabledColour;
 		closeButton.enabled = true;
@@ -110,26 +122,31 @@ public class LobbySetupUI : Panel
 	/// Returns a Join Code after requesting Unity Relay to allocate/reserve space on a server
 	/// Also starts the Player as Host
 	/// </summary>
-	private async Task<string> InitialiseHostWithRelay(int maxPlayerCount)
+	private async Task<string> InitializeHostWithRelay(int maxPlayerCount)
 	{
-		Allocation allocation = await RelayService.Instance.CreateAllocationAsync(maxPlayerCount);
-		string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+		try
+		{
+			await SessionManager.Instance.InitialiseAndAuthenticatePlayer();
 		
-		NetworkEndPoint endPoint = NetworkEndPoint.Parse(allocation.RelayServer.IpV4, (ushort)allocation.RelayServer.Port);
+			Allocation allocation = await RelayService.Instance.CreateAllocationAsync(maxPlayerCount);
+			string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+			Debug.Log($"LobbySetupUI :: InitialiseHostWithRelay :: LOBBY JOIN CODE: '{joinCode}'");
 		
-		string ipAddress = endPoint.Address.Split(':')[0];
-		unityTransport.SetHostRelayData(ipAddress, endPoint.Port, allocation.AllocationIdBytes, allocation.Key, allocation.ConnectionData, false);
+			// Use RelayServerData to properly package all relay information
+			RelayServerData relayServerData = new RelayServerData(allocation, "dtls");
+		
+			SessionManager.Instance.unityTransport.SetRelayServerData(relayServerData);
 
-		NetworkManager.Singleton.StartHost();
-		networkManagerInitialised = true;
-		return joinCode;
+			NetworkManager.Singleton.StartHost();
+			DebugViewer.Instance.SetAllocationID(allocation);
+			return joinCode;
+		}
+		catch (RelayServiceException e)
+		{
+			Debug.Log(e);
+			throw;
+		}
 	}
-
-	// public override void Toggle(bool activeState)
-	// {
-	// 	base.Toggle(activeState);
-	// 	privateButton.onClick.Invoke();
-	// }
 
 	public Panel Prepare()
 	{
@@ -137,6 +154,9 @@ public class LobbySetupUI : Panel
 		return this;
 	}
 	
+	/// <summary>
+	/// Sets the lobby name
+	/// </summary>
 	public void SetLobbyNameText()
 	{
 		lobbyNameText.text = $"{UIManager.MainMenu.nameDisplayText.text}'s {(isLobbyPrivate ? "Private" : "Public")} Lobby";

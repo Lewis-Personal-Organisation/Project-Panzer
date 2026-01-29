@@ -179,6 +179,8 @@ public class TextInputUI : Panel
 				}
 				break;
 			case TextSubmissionContext.RelayJoinCode:
+				
+				Debug.Log($"Trying to Submit Text for lobby: '{inputText.text}'");
 				if (JoinCode.IsValid(inputText.text.ToUpper()))
 				{
 					enteredJoinCode = inputText.text;

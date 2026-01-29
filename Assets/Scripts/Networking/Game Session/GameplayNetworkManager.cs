@@ -55,6 +55,7 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
     void Start()
     {
         cachedLobby = LobbyManager.Instance.activeLobby;
+        DebugViewer.Instance.CancelCheck();
         // Extensions.Debug.ClearConsole();
         
         if (IsHost)
@@ -283,7 +284,7 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
         
         LobbyManager.Instance.OnGameStarted();
         
-        // Debug.Log($"Remove Config null? {RemoteConfigManager.Instance == null}");
+        Debug.Log($"Remove Config null? {RemoteConfigManager.Instance == null}");
         m_PlayerOptions = RemoteConfigManager.Instance.GetConfigForPlayers(cachedLobby.Players.Count);
 
         // Inform host that this player has started the game. Once all players have started (and thus

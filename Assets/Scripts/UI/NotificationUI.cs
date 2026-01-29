@@ -1,9 +1,7 @@
-using System;
 using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public enum NotifStyle
@@ -19,26 +17,42 @@ public class NotificationUI : Panel
 	[SerializeField] private Color errorColor = Color.red;
 	[SerializeField] private Color infoColor = Color.white;
 	[SerializeField] private TextMeshProUGUI messageText;
+	[SerializeField] private RectTransform rect;
 
-	// Progress Bar
-	[SerializeField] private Image progressImage;
+	private float defaultWidth, defaultHeight;
+	
+	
+	[SerializeField] private Image progressImage; // Progress Bar
 	private float fillValue;
+
+	private void Awake()
+	{
+		defaultWidth = rect.sizeDelta.x;
+		defaultHeight = rect.sizeDelta.y;
+	}
 
 	/// <summary>
 	/// Prepares the Error UI with its message
 	/// </summary>
 	public Panel PrepareErrorMsg(string errorText)
 	{
-		this.messageText.text = $"{errorPrefix}{errorText}";
+		messageText.text = $"{errorPrefix}{errorText}";
 		return this;
 	}
 
+	/// <summary>
+	/// Sets the current notification style
+	/// </summary>
+	/// <param name="style"></param>
 	public void SetStyle(NotifStyle style)
 	{
 		activeStyle = style;
 	}
 
-	public NotificationUI PrepareStyleAndMessage(NotifStyle style, string message)
+	/// <summary>
+	/// Prepares the Style and Message of the notification
+	/// </summary>
+	public NotificationUI PrepareStyleAndMessage(NotifStyle style, string message, float widthMulti = 0, float heightMulti = 0)
 	{
 		messageText.color = style switch
 		{
@@ -48,6 +62,9 @@ public class NotificationUI : Panel
 		
 		activeStyle = style;
 		messageText.text = message;
+		
+		rect.sizeDelta = new Vector2(widthMulti != 0 ? defaultWidth * widthMulti : defaultWidth, 
+									heightMulti != 0 ? defaultHeight * heightMulti : defaultHeight);
 		return this;
 	}
 

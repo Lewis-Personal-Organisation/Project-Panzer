@@ -112,7 +112,6 @@ public class LobbyUI : Panel
 		if (isGameReady)
 		{
 			await LobbyManager.Instance.activeLobbyEvents.UnsubscribeAsync();
-			LobbyManager.Instance.activeLobbyEvents = null;
 			
 			UIManager.Instance.UpdateGameView(View.Gameplay);
 			
@@ -126,7 +125,6 @@ public class LobbyUI : Panel
 		if (isGameReady)
 		{
 			await LobbyManager.Instance.activeLobbyEvents.UnsubscribeAsync();
-			LobbyManager.Instance.activeLobbyEvents = null;			
 			
 			UIManager.Instance.UpdateGameView(View.Gameplay);
 
@@ -211,8 +209,6 @@ public class LobbyUI : Panel
 	/// </summary>
 	public void AdjustLocalPlayerSlot()
 	{
-		string vehicleName = VehicleData.GetLobbyItem(int.Parse(LobbyManager.Instance.localPlayerVehicleKey)).name;
-		Debug.Log($"LobbyUI :: AdjustLocalPlayerSlot() :: Showing slot {LobbyManager.Instance.localPlayerIndex} with {vehicleName}");
 		playerSlots[LobbyManager.Instance.localPlayerIndex].ConfigureAndShow(LobbyManager.Instance.localPlayer);
 	}
 	
