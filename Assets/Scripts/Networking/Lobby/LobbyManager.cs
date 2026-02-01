@@ -11,7 +11,7 @@ using System.Linq;
 public class LobbyManager : Singleton<LobbyManager>
 {
 	public Lobby activeLobby { get; private set; }
-	public static string playerId => AuthenticationService.Instance.PlayerId;
+	public static string localPlayerId => AuthenticationService.Instance.PlayerId;
 	public List<Player> players { get; private set; }
 	
 	public Player localPlayer { get; private set; }
@@ -30,9 +30,12 @@ public class LobbyManager : Singleton<LobbyManager>
 	public PlayerDictionaryData playerDictionaryData { get; private set; }
 
 
+	/// <summary>
+	/// The Rate Limits class to comply with the Unity UGS rate limit for various services
+	/// </summary>
 	public static class RateLimits
 	{
-		public enum RequestType
+		public enum RateType
 		{
 			UpdatePlayers,
 			UpdateLobbies,
@@ -40,34 +43,37 @@ public class LobbyManager : Singleton<LobbyManager>
 			LeaveOrRemovePlayers,
 		}
 
-		private static Dictionary<RequestType, float> TypeRates = new Dictionary<RequestType, float>
+		private static Dictionary<RateType, float> TypeRates = new Dictionary<RateType, float>
 		{
-			{ RequestType.UpdatePlayers, 1.1F },
-			{ RequestType.UpdateLobbies, 1.35F },
-			{ RequestType.DeleteLobby, 2.1F },
-			{ RequestType.LeaveOrRemovePlayers, 5.1F},
+			{ RateType.UpdatePlayers, 1.1F },
+			{ RateType.UpdateLobbies, 1.35F },
+			{ RateType.DeleteLobby, 2.1F },
+			{ RateType.LeaveOrRemovePlayers, 5.1F},
 		};
 
 		/// <summary>
 		/// Returns the time to wait for lobby request type
 		/// </summary>
-		public static float Rate(RequestType type) => TypeRates[type];
+		public static float Rate(RateType type) => TypeRates[type];
 		
 		/// <summary>
 		/// Returns the time to wait for lobby request type in equivalent seconds
 		/// </summary>
 		/// <param name="type"></param>
 		/// <returns></returns>
-		public static int RateMS(RequestType type) => (int)(TypeRates[type] * 1000F);
+		public static int RateMS(RateType type) => (int)(TypeRates[type] * 1000F);
 
 		/// <summary>
 		/// Use to override the default limit of a Request Type
 		/// </summary>
 		/// <param name="overrideType"></param>
 		/// <param name="newLimit"></param>
-		public static void OverrideRate(RequestType overrideType, float newLimit) => TypeRates[overrideType] = newLimit;
+		public static void OverrideRate(RateType overrideType, float newLimit) => TypeRates[overrideType] = newLimit;
 	}
 
+	/// <summary>
+	/// The Player Data Dictionary used by Unity Lobby for Player Data tracking
+	/// </summary>
 	public class PlayerDictionaryData
 	{
 		public PlayerDictionaryData(string playerName, bool isPlayerReady, int vehicleIndex)
@@ -89,6 +95,11 @@ public class LobbyManager : Singleton<LobbyManager>
 	private new void Awake()
 	{
 		base.Awake();
+		
+		// If this instance was destroyed by the base class, don't continue
+		// if (Instance != this)
+		// 	return;
+		
 		DontDestroyOnLoad(this);
 	}
 
@@ -159,13 +170,13 @@ public class LobbyManager : Singleton<LobbyManager>
 	{
 		if (activeLobby != null)
 		{
-			LobbyService.Instance.RemovePlayerAsync(activeLobby.Id, playerId);
+			LobbyService.Instance.RemovePlayerAsync(activeLobby.Id, localPlayerId);
 		}
 	}
 
 	/// <summary>
 	/// Called when the Player is no longer part of a Lobby.
-	/// Unsubscribe from events and shutdown the network to clear stale data
+	/// Unsubscribes from events and shuts down the network to clear stale data
 	/// </summary>
 	public async Task OnPlayerNotInLobby()
 	{
@@ -230,7 +241,7 @@ public class LobbyManager : Singleton<LobbyManager>
 			
 			if (this == null)
 			{
-				Debug.LogError("LobbyManager :: CreateLobby Null Ref");
+				Debug.LogError($"LobbyManager :: CreateLobby :: Task Failed!");
 			}
 
 			// Create Lobby Options
@@ -281,16 +292,8 @@ public class LobbyManager : Singleton<LobbyManager>
 
 			if (this == null)
 			{
-				Debug.LogError("LobbyManager :: CreateLobby Null Ref");
+				Debug.LogError($"LobbyManager :: CreateLobby :: Task Failed!");
 			}
-			
-			// Create a heartbeat for the lobby to keep it active
-			// await LobbyService.Instance.SendHeartbeatPingAsync(activeLobby.Id);
-			// if (lobbyHeartbeatRoutine != null)
-			// {
-			// 	StopCoroutine(lobbyHeartbeatRoutine);
-			// }
-			// lobbyHeartbeatRoutine = StartCoroutine(HeartbeatLobbyCoroutine(activeLobby.Id, 15));
 
 			CacheLocalPlayer();
 			players = activeLobby?.Players;
@@ -305,35 +308,38 @@ public class LobbyManager : Singleton<LobbyManager>
 		return activeLobby;
 	}
 	
-	// IEnumerator HeartbeatLobbyCoroutine(string lobbyId, float waitTimeSeconds)
-	// {
-	// 	var delay = new WaitForSecondsRealtime(waitTimeSeconds);
-	//
-	// 	while (true)
-	// 	{
-	// 		LobbyService.Instance.SendHeartbeatPingAsync(lobbyId);
-	// 		yield return delay;
-	// 	}
-	// }
-
+	/// <summary>
+	/// Creates the Player Data Object needed to join a lobby and attempts to join a Lobby using provided lobby code and name
+	/// Caches the players in the lobby
+	/// </summary>
+	/// <param name="lobbyJoinCode"></param>
+	/// <param name="playerName"></param>
+	/// <returns></returns>
 	public async Task<Lobby> JoinPrivateLobby(string lobbyJoinCode, string playerName)
 	{
 		try
 		{
 			await PrepareToJoinLobby(playerName);
-			if (this == null) return null;
+			if (this == null)
+			{
+				Debug.LogError($"LobbyManager :: JoinPrivateLobby :: Task Failed!");
+			}
 
 			var options = new JoinLobbyByCodeOptions();
 			options.Player = CreatePlayerData();
 
 			Debug.Log($"Joining lobby with Code {lobbyJoinCode}");
 			activeLobby = await LobbyService.Instance.JoinLobbyByCodeAsync(lobbyJoinCode, options);
-			if (this == null) return null;
+			if (this == null)
+			{
+				Debug.LogError($"LobbyManager :: JoinPrivateLobby :: Task Failed!");
+			}
 			
 			players = activeLobby?.Players;
 		}
 		catch (LobbyServiceException e) when (e.Reason == LobbyExceptionReason.LobbyNotFound)
 		{
+			Debug.LogException(e);
 			if (this == null) return null;
 
 			activeLobby = null;
@@ -342,6 +348,7 @@ public class LobbyManager : Singleton<LobbyManager>
 		}
 		catch (LobbyServiceException e) when (e.Reason == LobbyExceptionReason.LobbyFull)
 		{
+			Debug.LogException(e);
 			if (this == null) return null;
 
 			activeLobby = null;
@@ -356,6 +363,10 @@ public class LobbyManager : Singleton<LobbyManager>
 		return activeLobby;
 	}
 
+	/// <summary>
+	/// Prepares the Player for Lobby joining. Leaves any pre-existing connection to a lobby.
+	/// </summary>
+	/// <param name="playerName"></param>
 	async Task PrepareToJoinLobby(string playerName)
 	{
 		isHost = false;
@@ -369,12 +380,19 @@ public class LobbyManager : Singleton<LobbyManager>
 		}
 	}
 
+	/// <summary>
+	/// Attempts to remove a Player from the lobby. Used in the context of the local player
+	/// </summary>
 	public async Task LeaveJoinedLobby()
 	{
 		try
 		{
-			await RemovePlayer(playerId);
-			if (this == null) return;
+			await RemovePlayerFromLobby(localPlayerId);
+			
+			if (this == null)
+			{
+				Debug.LogError($"LobbyManager :: LeaveJoinedLobby :: Task Failed.");
+			}
 
 			await OnPlayerNotInLobby();
 			LobbyToMainMenuTransition();
@@ -385,14 +403,18 @@ public class LobbyManager : Singleton<LobbyManager>
 		}
 	}
 
-	public async Task RemovePlayer(string playerId)
+	/// <summary>
+	/// Remove a Player from a Unity Lobby with a given ID
+	/// </summary>
+	/// <param name="playerId"></param>
+	public async Task RemovePlayerFromLobby(string playerId)
 	{
 		try
 		{
 			if (activeLobby != null)
 			{
 				await LobbyService.Instance.RemovePlayerAsync(activeLobby.Id, playerId);
-				Debug.Log("Removed Player");
+				Debug.Log($"LobbyManager :: RemovePlayerFromLobby :: Removed Player with ID {playerId}");
 			}
 		}
 		catch (Exception e)
@@ -401,11 +423,14 @@ public class LobbyManager : Singleton<LobbyManager>
 		}
 	}
 
+	/// <summary>
+	/// Logs all players in the active lobby
+	/// </summary>
 	public void LogLobbyPlayers()
 	{
 		if (activeLobby.Players == null)
 		{
-			Debug.Log("LobbyManager :: Players are null. Returning");
+			Debug.Log("LobbyManager :: LogLobbyPlayers :: Players are null. Returning");
 			return;
 		}
 
@@ -420,7 +445,7 @@ public class LobbyManager : Singleton<LobbyManager>
 				lobbyPlayerNames += ", ";
 		}
 
-		Debug.Log($"LobbyManager :: {lobbyPlayerNames}");
+		Debug.Log($"LobbyManager :: LogLobbyPlayers :: {lobbyPlayerNames}");
 	}
 
 	/// <summary>
@@ -441,14 +466,21 @@ public class LobbyManager : Singleton<LobbyManager>
 		}
 	}
 
+	/// <summary>
+	/// Creates and returns new Player data required for creating or joining a lobby
+	/// </summary>
+	/// <returns></returns>
 	Player CreatePlayerData()
 	{
 		var player = new Player();
 		player.Data = CreatePlayerDictionary();
-
 		return player;
 	}
 
+	/// <summary>
+	/// Creates and returns a Player Data Dictionary using current player game data
+	/// </summary>
+	/// <returns></returns>
 	public Dictionary<string, PlayerDataObject> CreatePlayerDictionary()
 	{
 		var playerDictionary = new Dictionary<string, PlayerDataObject>
@@ -461,11 +493,15 @@ public class LobbyManager : Singleton<LobbyManager>
 		return playerDictionary;
 	}
 
+	/// <summary>
+	/// Logs the active lobby data to the console
+	/// </summary>
+	/// <param name="lobby"></param>
 	public static void LogLobbyCreation(Lobby lobby)
 	{
 		if (lobby is null)
 		{
-			Debug.Log("No active lobby.");
+			Debug.Log($"LobbyManager :: LogLobbyCreation :: No Active Lobby");
 			return;
 		}
 
@@ -487,19 +523,23 @@ public class LobbyManager : Singleton<LobbyManager>
 		Instance.LogLobbyPlayers();
 	}
 	
+	/// <summary>
+	/// Sets the ready state of our Player in the Lobby and synchronises this to other players
+	/// </summary>
+	/// <param name="isReady"></param>
 	public async Task SetReadyState(bool isReady)
 	{
 		try
 		{
 			if (activeLobby == null)
 			{
-				Debug.Log("LobbyManager :: Attempting to toggle ready state when not already in a lobby.");
+				Debug.Log("LobbyManager :: SetReadyState :: Attempting to toggle ready state when not already in a lobby.");
 				return;
 			}
 
 			playerDictionaryData.isReady = isReady;
 
-			var lobbyId = activeLobby.Id;
+			// var lobbyId = activeLobby.Id;
 
 			var options = new UpdatePlayerOptions();
 			options.Data = CreatePlayerDictionary();
@@ -507,7 +547,7 @@ public class LobbyManager : Singleton<LobbyManager>
 
 			UIManager.LobbyUI.AdjustLocalPlayerSlotReadyState();
 
-			var updatedLobby = await LobbyService.Instance.UpdatePlayerAsync(lobbyId, playerId, options);
+			var updatedLobby = await LobbyService.Instance.UpdatePlayerAsync(activeLobby.Id, localPlayerId, options);
 			if (this == null) return;
 
 			UpdateLobby(updatedLobby);
@@ -519,7 +559,8 @@ public class LobbyManager : Singleton<LobbyManager>
 	}
 
 	/// <summary>
-	/// Swaps to a new Lobby vehicle, matching the index. Updates the Lobby with changes.
+	/// Swaps the current Lobby vehicle of the local player and synchronises with other players
+	/// Does not attempt to synchronise if the same vehicle is selected
 	/// </summary>
 	/// <param name="index"></param>
 	public async Task SwapLobbyVehicle(int index)
@@ -528,20 +569,22 @@ public class LobbyManager : Singleton<LobbyManager>
 		{
 			if (playerDictionaryData.lobbyVehicleIndex == index)
 			{
-				Debug.Log($"LobbyManager :: Player selected the same vehicle, no need to update Network");
+				Debug.Log($"LobbyManager :: SwapLobbyVehicle :: Player selected the same vehicle, no need to update Network");
 				return;
 			}
 			
 			if (activeLobby == null)
 			{
-				Debug.Log("LobbyManager :: Attempting to swap vehicle when not already in a lobby.");
+				Debug.Log($"LobbyManager :: SwapLobbyVehicle :: Attempting to swap vehicle when not already in a lobby.");
 				return;
 			}
 			
 			// Re-create player dictionary for Lobby Update
 			playerDictionaryData.lobbyVehicleIndex = index;
-			UpdatePlayerOptions options = new();
-			options.Data = CreatePlayerDictionary();
+			UpdatePlayerOptions options = new UpdatePlayerOptions
+			{
+				Data = CreatePlayerDictionary()
+			};
 			localPlayer.Data = options.Data;
 
 			// Adjust the local player slot, showing the new vehicle
@@ -549,8 +592,8 @@ public class LobbyManager : Singleton<LobbyManager>
 
 			// Update the Lobby with our new data
 			string lobbyId = activeLobby.Id;
-			activeLobby = await LobbyService.Instance.UpdatePlayerAsync(lobbyId, playerId, options);
-			Debug.Log($"LobbyManager :: Updated Lobby Vehicle for Sync");
+			activeLobby = await LobbyService.Instance.UpdatePlayerAsync(lobbyId, localPlayerId, options);
+			Debug.Log($"LobbyManager :: SwapLobbyVehicle :: Updated Player Lobby Vehicle");
 		}
 		catch (Exception e)
 		{
@@ -561,7 +604,7 @@ public class LobbyManager : Singleton<LobbyManager>
 
 	/// <summary>
 	/// Check if players connected already use our name
-	/// Since we are already connected to a lobby, our name will always be found. Avoid that by checking for 2 matches instead of 1
+	/// Since we are already connected to a lobby at this point, our name will always be found so check for 2 matches instead of 1
 	/// </summary>
 	private bool IsPlayerNameValid(string ownerName)
 	{
@@ -585,6 +628,10 @@ public class LobbyManager : Singleton<LobbyManager>
 		return true;
 	}
 	
+	/// <summary>
+	/// Logs the connection state fired by events
+	/// </summary>
+	/// <param name="newState"></param>
 	public void OnConnectionStateChanged(LobbyEventConnectionState newState)
 	{
 		if (isHost)
@@ -602,11 +649,15 @@ public class LobbyManager : Singleton<LobbyManager>
 		UIManager.LobbySetupMenu.ToggleLobbyCreationInteractables(true);
 	}
 	
+	/// <summary>
+	/// The response method for when Lobby changes are detected on the network. Handles the new lobby data
+	/// </summary>
+	/// <param name="changes"></param>
 	public void OnLobbyChangedNotif(ILobbyChanges changes)
 	{
 		if (changes.LobbyDeleted)
 		{
-			Debug.Log($"Lobby Manager :: Lobby Deleted. Host? {isHost}");
+			Debug.Log($"Lobby Manager :: OnLobbyChangedNotif :: Lobby Deleted. Host? {isHost}");
 
 			OnPlayerNotInLobby();
 
@@ -623,7 +674,7 @@ public class LobbyManager : Singleton<LobbyManager>
 
 				CacheLocalPlayer();
 
-				if (activeLobby.Players.Exists(player => player.Id == playerId))
+				if (activeLobby.Players.Exists(player => player.Id == localPlayerId))
 				{
 					Debug.Log($"LobbyManager :: OnLobbyChangedNotif :: Our Player exists. Checking if Game is ready'd up. Also adjusting player slots etc");
 					var isGameReady = AllPlayersReady(activeLobby);
@@ -730,6 +781,10 @@ public class LobbyManager : Singleton<LobbyManager>
 		}
 	}
 
+	/// <summary>
+	/// Filters the Lobby Exception and logs the appropriate message to console
+	/// </summary>
+	/// <param name="ex"></param>
 	private void FilterLobbyError(LobbyServiceException ex)
 	{
 		switch (ex.Reason)
@@ -750,19 +805,19 @@ public class LobbyManager : Singleton<LobbyManager>
 	}
 
 	/// <summary>
-	/// Shows the Lobby UI once a lobby is joined
+	/// Shows the Lobby UI once a lobby is joined using Relay
 	/// </summary>
 	async Task OpenLobby(Lobby lobbyJoined)
 	{
-		Debug.Log("Lobby Data Retrieved. Initializing Client");
-
 		try
 		{
 			await SessionManager.Instance.InitializeRelayClient(lobbyJoined);
 
+			Debug.Log("Lobby Manager :: OpenLobby :: Lobby Data Retrieved. Initializing Relay Client");
+			
 			if (this == null)
 			{
-				Debug.Log("Null. Returning");
+				Debug.Log("Lobby Manager :: OpenLobby :: Null. Returning");
 				return;
 			}
 
@@ -786,16 +841,17 @@ public class LobbyManager : Singleton<LobbyManager>
 
 		for (int i = 0; i < activeLobby.Players.Count; i++)
 		{
-			if (playerId == activeLobby.Players[i].Id)
+			if (localPlayerId == activeLobby.Players[i].Id)
 			{
 				localPlayer = activeLobby.Players[i];
 				localPlayerIndex = i;
 			}
 		}
-
-		return;
 	}
 	
+	/// <summary>
+	/// Caches whether the gameplay session has started
+	/// </summary>
 	public void OnGameStarted()
 	{
 		// When game actually starts, the host stops updating

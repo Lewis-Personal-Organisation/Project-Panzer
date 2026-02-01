@@ -62,7 +62,7 @@ public class VehicleSlot : MonoBehaviour
 
 	public async void OnVehicleClicked()
 	{
-		Debug.Log($"Vehicle Slot :: Clicked on Vehicle for Selection");
+		Debug.Log($"Vehicle Slot :: OnVehicleClicked :: Selected new Vehicle");
 		await LobbyManager.Instance.SwapLobbyVehicle(dataIndex);
 		UIManager.LobbyUI.OnVehicleSelected();
 	}

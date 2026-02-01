@@ -14,7 +14,7 @@ public class Singleton<T> : MonoBehaviour where T : Singleton<T>
     {
         if (Instance != null)
         {
-            Debug.LogWarning($"Instance of {this.GetType().Name} exists ({Instance.GetInstanceID()}). Destroying.");
+            Debug.LogWarning($"Instance of {this.GetType().Name} already exists ({Instance.GetInstanceID()}). Destroying duplicate.");
             Destroy(this.gameObject);
             return;
         }
@@ -23,6 +23,6 @@ public class Singleton<T> : MonoBehaviour where T : Singleton<T>
 
     protected virtual void OnDestroy()
     {
-        Debug.Log($"On Destroy called for {this.gameObject.name} ({GetInstanceID()})");
+        Debug.Log($"On Destroy called for {this.GetType().Name} on GameObject{this.gameObject.name} ({GetInstanceID()})");
     }
 }

@@ -81,7 +81,7 @@ public class LobbyDebugViewer : Singleton<LobbyDebugViewer>
 
             await Task.Delay(
                 LobbyManager.RateLimits.RateMS(
-                    LobbyManager.RateLimits.RequestType.UpdateLobbies
+                    LobbyManager.RateLimits.RateType.UpdateLobbies
                 ),
                 token
             );

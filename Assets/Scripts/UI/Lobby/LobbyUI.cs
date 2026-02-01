@@ -95,7 +95,7 @@ public class LobbyUI : Panel
 	{
 		for (int i = 0; i < LobbyManager.Instance.activeLobby.Players.Count; i++)
 		{
-			if (playerId == LobbyManager.Instance.activeLobby.Players[i].Id)
+			if (localPlayerId == LobbyManager.Instance.activeLobby.Players[i].Id)
 			{
 				isReady = bool.Parse(LobbyManager.Instance.activeLobby.Players[i].Data[PlayerDictionaryData.isReadyKey].Value);
 				readyButton.image.color = isReady ? readyColour : unreadyColour;
@@ -235,7 +235,7 @@ public class LobbyUI : Panel
 	/// </summary>
 	private System.Collections.IEnumerator DisableReadyButton()
 	{
-		yield return new WaitForSeconds(RateLimits.Rate(RateLimits.RequestType.UpdatePlayers)); 
+		yield return new WaitForSeconds(RateLimits.Rate(RateLimits.RateType.UpdatePlayers)); 
 		readyButton.interactable = !readyButton.interactable;
 		Debug.Log("LobbyUI :: DisableReadyButton :: Ready button wait complete. Enabling");
 		readyStateCoroutine = null;
