@@ -2,7 +2,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using static LobbyManager;
-using Interface.Elements.Scripts;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.EventSystems;

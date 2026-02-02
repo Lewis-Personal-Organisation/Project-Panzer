@@ -17,4 +17,9 @@ public class NetworkSingleton<T> : NetworkBehaviour where T : NetworkSingleton<T
         }
         Instance = (T)this;
     }
+    
+    protected virtual new void OnDestroy()
+    {
+        Debug.Log($"On Destroy called for {this.GetType().Name} on GameObject{this.gameObject.name} ({GetInstanceID()})");
+    }
 }

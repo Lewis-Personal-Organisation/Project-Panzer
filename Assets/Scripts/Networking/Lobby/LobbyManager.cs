@@ -539,8 +539,6 @@ public class LobbyManager : Singleton<LobbyManager>
 
 			playerDictionaryData.isReady = isReady;
 
-			// var lobbyId = activeLobby.Id;
-
 			var options = new UpdatePlayerOptions();
 			options.Data = CreatePlayerDictionary();
 			localPlayer.Data = options.Data;

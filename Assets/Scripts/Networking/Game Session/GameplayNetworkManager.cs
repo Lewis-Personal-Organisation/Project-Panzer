@@ -42,7 +42,6 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
     
     public List<PlayerAvatar> playerAvatars { get; private set; } = new List<PlayerAvatar>();
     private PlayerAvatar localPlayerAvatar;
-
     
     
     private new void Awake()
@@ -58,6 +57,17 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
         LobbyDebugViewer.Instance.CancelCheck();
         // Extensions.Debug.ClearConsole();
         
+        if (NetworkManager.Singleton != null)
+        {
+            // Subscribe to the callback when a client disconnects
+            NetworkManager.Singleton.OnConnectionEvent += OnConnectionEvent;
+
+            // You can also listen for when the server stops
+            // NetworkManager.Singleton.OnServerStopped += OnServerStopped;
+        }
+        
+        LogLobbyPlayers();
+        
         if (IsHost)
         {
             InitializeHostGame();
@@ -68,10 +78,10 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
         }
     }
     
-    static public void Instantiate(GameplayNetworkManager gameplayManagerPrefab)
+    protected override void OnDestroy()
     {
-        var gameManager = GameObject.Instantiate(gameplayManagerPrefab);
-        gameManager.networkObject.SpawnWithOwnership(hostRelayClientId);
+        NetworkManager.Singleton.OnConnectionEvent -= OnConnectionEvent;
+        base.OnDestroy();
     }
     
     void Update()
@@ -91,6 +101,115 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
         {
             UpdateHost();
         }
+    }
+    
+    /// <summary>
+    /// The Callback method for processing disconnection events
+    /// </summary>
+    private async void OnConnectionEvent(NetworkManager networkManager, ConnectionEventData data)
+    {
+        switch (data.EventType)
+        {
+            case ConnectionEvent.ClientConnected:
+                break;
+            case ConnectionEvent.PeerConnected:
+                break;
+            case ConnectionEvent.ClientDisconnected:
+                OnClientDisconnect(data.ClientId);
+                break;
+            case ConnectionEvent.PeerDisconnected:
+                break;
+            default:
+                throw new System.ArgumentOutOfRangeException();
+        }
+    }
+    
+    /// <summary>
+    /// The Callback method for when a client disconnects during gameplay
+    /// </summary>
+    private async void OnClientDisconnect(ulong clientId)
+    {
+        Debug.Log("GameplaySceneManager :: OnClientDisconnect...");
+        bool ReturnToMenu = false;
+
+        string message = ""; ;
+        
+        // If Server
+        if (NetworkManager.Singleton.IsServer)
+        {
+            if (clientId != NetworkManager.ServerClientId)
+            {
+                // When a client disconnects, we should show a popup ingame here!
+                message = $"Client {GetPlayerName((int)clientId)} ({clientId}) disconnected! Remaining players: {NetworkManager.Singleton.ConnectedClients.Count}";
+            }
+            else
+            {
+                message = $"We have Disconnected and closed the gameplay session!";
+                ReturnToMenu = true;
+            }
+        }
+        // If Client only
+        else
+        {
+            message = "We have disconnected from the gameplay session!";
+            ReturnToMenu = true;
+        }
+        
+        Debug.Log($"GameplaySceneManager :: OnClientDisconnect :: Message  -> {message}");
+        if (ReturnToMenu)
+        {
+            await LobbyManager.Instance.activeLobbyEvents.UnsubscribeAsync();
+            StartCoroutine(ResetToMainMenu(message));
+        }
+    }
+    
+    /// <summary>
+    /// Loads the Main Menu scene and returns the player to it
+    /// Also shuts down the Network Manager
+    /// </summary>
+    /// <param name="message"></param>
+    /// <returns></returns>
+    private IEnumerator ResetToMainMenu(string message)
+    {
+        PersistentDataHost.Instance.crossSceneData.errorMessage = message;
+        AsyncOperation asyncLoadLevel = SceneManager.LoadSceneAsync(SceneHelper.Instance.mainMenuScene.Name, LoadSceneMode.Single);
+        yield return new WaitUntil(() => asyncLoadLevel.isDone);
+        yield return StartCoroutine(SessionManager.Instance.IEShutdownNetworkClient());
+    }
+    
+    /// <summary>
+    /// Spawns this gameobject as an instance, with host ownership
+    /// </summary>
+    /// <param name="gameplayManagerPrefab"></param>
+    static public void Instantiate(GameplayNetworkManager gameplayManagerPrefab)
+    {
+        var gameManager = GameObject.Instantiate(gameplayManagerPrefab);
+        gameManager.networkObject.SpawnWithOwnership(hostRelayClientId);
+    }
+    
+    /// <summary>
+    /// Logs all players in the cached lobby
+    /// </summary>
+    public void LogLobbyPlayers()
+    {
+        if (cachedLobby.Players == null)
+        {
+            Debug.Log("GameplayNetworkManager :: LogLobbyPlayers :: Players are null. Returning");
+            return;
+        }
+
+        string lobbyPlayerNames = "Player(s) ";
+        for (int i = 0; i < cachedLobby.Players.Count; i++)
+        {
+            lobbyPlayerNames += $"'{cachedLobby.Players[i].Data[LobbyManager.PlayerDictionaryData.nameKey].Value}'";
+
+            if (i == cachedLobby.Players.Count - 1)
+                lobbyPlayerNames += " are present";
+            else
+                lobbyPlayerNames += ", ";
+        }
+
+        Debug.Log($"GameplayNetworkManager :: LogLobbyPlayers :: {lobbyPlayerNames}");
     }
     
     bool DidClientTimeout()

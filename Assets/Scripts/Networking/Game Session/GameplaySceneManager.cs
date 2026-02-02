@@ -29,22 +29,12 @@ public class GameplaySceneManager : Singleton<GameplaySceneManager>
 
     protected override void OnDestroy()
     {
-        NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnect;
         base.OnDestroy();
     }
     
     private void Start()
     {
         spawnPoints.Shuffle();
-        
-        if (NetworkManager.Singleton != null)
-        {
-            // Subscribe to the callback when a client disconnects
-            NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnect;
-            
-            // You can also listen for when the server stops
-            // NetworkManager.Singleton.OnServerStopped += OnServerStopped;
-        }
         
         if (LobbyManager.Instance.isHost)
         {
@@ -89,18 +79,6 @@ public class GameplaySceneManager : Singleton<GameplaySceneManager>
     //         HandleHostDisconnect();
     //     }
     // }
-    
-    // private void HandleHostDisconnect()
-    // {
-    //     // Your logic here: show UI, return to menu, attempt reconnection, etc.
-    //     // Example: Load main menu scene
-    //     NetworkManager.Singleton.Shutdown();
-    //     
-    //     // Subscribe to the callback when a client disconnects
-    //     NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnect;
-    //         
-    //     UIManager.PopUntil(UIManager.MainMenu);
-    // }
 
     private async void OnApplicationQuit()
     {
@@ -123,47 +101,5 @@ public class GameplaySceneManager : Singleton<GameplaySceneManager>
         {
             await LobbyService.Instance.RemovePlayerAsync(LobbyManager.Instance.activeLobby.Id, AuthenticationService.Instance.PlayerId);
         }
-    }
-
-    private async void OnClientDisconnect(ulong clientId)
-    {
-        Debug.Log("GameplaySceneManager :: OnClientDisconnect...");
-        bool ReturnToMenu = false;
-
-        string message = ""; ;
-        
-        if (NetworkManager.Singleton.IsServer)
-        {
-            if (clientId != NetworkManager.ServerClientId)
-            {
-                // When a client disconnects, we should show a popup ingame here!
-                // message = $"Other client ({clientId}) has disconnected! Remaining players: {NetworkManager.Singleton.ConnectedClients.Count}";
-            }
-            else
-            {
-                message = $"We have Disconnected and closed the gameplay session!";
-                ReturnToMenu = true;
-            }
-        }
-        else
-        {
-            message = "We have disconnected from the gameplay session!";
-            ReturnToMenu = true;
-        }
-        
-        Debug.Log($"GameplaySceneManager :: OnClientDisconnect :: Message  -> {message}");
-        if (ReturnToMenu)
-        {
-            await LobbyManager.Instance.activeLobbyEvents.UnsubscribeAsync();
-            StartCoroutine(ResetToMainMenu(message));
-        }
-    }
-    
-    private IEnumerator ResetToMainMenu(string message)
-    {
-        PersistentDataHost.Instance.crossSceneData.errorMessage = message;
-        AsyncOperation asyncLoadLevel = SceneManager.LoadSceneAsync(SceneHelper.Instance.mainMenuScene.Name, LoadSceneMode.Single);
-        yield return new WaitUntil(() => asyncLoadLevel.isDone);
-        yield return StartCoroutine(SessionManager.Instance.IEShutdownNetworkClient());
     }
 }
