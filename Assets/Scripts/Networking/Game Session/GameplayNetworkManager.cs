@@ -32,13 +32,12 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
     [SerializeField] private CameraController playerCameraPrefab;
     [field: SerializeField] public NetworkObject networkObject { get; private set; }
     
-    // The host is always the first connected client in the Network Manager.
-    public static ulong hostRelayClientId => NetworkManager.Singleton.ConnectedClients[0].ClientId;
+    public static ulong hostRelayClientId => NetworkManager.Singleton.ConnectedClients[0].ClientId;     // The host is the first connected client
 
     public Lobby cachedLobby = null;
-    public string GetPlayerID(int playerIndex) => cachedLobby.Players[playerIndex].Id;
-    public string GetPlayerName(int playerIndex) => cachedLobby.Players[playerIndex].Data[LobbyManager.PlayerDictionaryData.nameKey].Value;
-    public string GetPlayerVehicleIndex(int playerIndex) => cachedLobby.Players[playerIndex].Data[LobbyManager.PlayerDictionaryData.vehicleIndexKey].Value;
+    public string GetPlayerID(int playerIndex) => Instance.cachedLobby.Players[playerIndex].Id;
+    public string GetPlayerName(int playerIndex) => Instance.cachedLobby.Players[playerIndex].Data[LobbyManager.PlayerDictionaryData.nameKey].Value;
+    public string GetPlayerVehicleIndex(int playerIndex) => Instance.cachedLobby.Players[playerIndex].Data[LobbyManager.PlayerDictionaryData.vehicleIndexKey].Value;
     
     public List<PlayerAvatar> playerAvatars { get; private set; } = new List<PlayerAvatar>();
     private PlayerAvatar localPlayerAvatar;
@@ -129,9 +128,7 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
     /// </summary>
     private async void OnClientDisconnect(ulong clientId)
     {
-        Debug.Log("GameplaySceneManager :: OnClientDisconnect...");
         bool ReturnToMenu = false;
-
         string message = ""; ;
         
         // If Server

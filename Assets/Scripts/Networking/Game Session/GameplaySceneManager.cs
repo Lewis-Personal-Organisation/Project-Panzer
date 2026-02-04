@@ -36,7 +36,8 @@ public class GameplaySceneManager : Singleton<GameplaySceneManager>
     {
         spawnPoints.Shuffle();
         
-        if (LobbyManager.Instance.isHost)
+        // Null check for non-network testing
+        if (LobbyManager.Instance && LobbyManager.Instance.isHost)
         {
             GameplayNetworkManager.Instantiate(gameplayNetworkManagerPrefab);
         }
