@@ -1,9 +1,6 @@
+using System.Linq;
 using Unity.Netcode;
-using UnityEditor;
 using UnityEngine;
-using UnityEngine.Events;
-using UnityEngine.Serialization;
-using Utilities;
 
 public class VehicleDefence : VehicleComponent, IVehicleComponentToggleable
 {
@@ -13,6 +10,7 @@ public class VehicleDefence : VehicleComponent, IVehicleComponentToggleable
     [SerializeField] private LayerMask shellMask;
     public float minAngleForRicochet = 0;
     private int hitsTaken = 0;
+    
 
     public void Enable()
     {
@@ -48,10 +46,10 @@ public class VehicleDefence : VehicleComponent, IVehicleComponentToggleable
         
         if ((shellMask.value & 1 << triggerEvent.Other.gameObject.layer) != 0)
         {
-            triggerEvent.Other.transform.root.TryGetComponent(out WeaponShell shell);
+            triggerEvent.Other.transform.root.TryGetComponent(out WeaponAmmoBehaviour ammunition);
             
             // Return if this is our shell!
-            if (shell.networkObject.IsOwner == true)
+            if (ammunition.networkObject.IsOwner == true)
                 return;
             
             SceneData.Label("Hits Received: ", $"{++hitsTaken}");
@@ -66,14 +64,16 @@ public class VehicleDefence : VehicleComponent, IVehicleComponentToggleable
                 // Check if not near 0
                 if (reflectResult.direction.sqrMagnitude > 0.001f)
                 {
-                    shell.RotateWithReflectionServerRPC(reflectResult.direction.normalized);
+                    ammunition.RotateWithReflectionServerRPC(reflectResult.direction.normalized);
                     vehicle.cameraController.Shake(vehicleArmour.OnRicochetEnemyShakeParams);
                     Debug.Log($"Server :: Shell reflected - Direction: {reflectResult.direction.normalized}");
                 }
             }
             else
             {
-                TakeDamage(reflectResult.tankSide);
+                string builtName = ammunition.ownerName.Value.Value;
+                Debug.Log($"VehicleDefence :: We took a hit from {builtName}");
+                TakeDamage(reflectResult.tankSide, ammunition.baseDamage);
                 vehicle.cameraController.Shake(vehicleArmour.OnHitEnemyShakeParams);
             }
         }
@@ -82,9 +82,32 @@ public class VehicleDefence : VehicleComponent, IVehicleComponentToggleable
     /// <summary>
     /// SHOULD IMPLEMENT DAMAGE TAKEN
     /// </summary>
-    private void TakeDamage(Extensions.TankSide side)
+    private void TakeDamage(Extensions.TankSide side, float baseDamage)
     {
-        SceneData.Label("Last Hit Normal: ", $"{side}");
-        vehicle.Disable();
+        // Get the thickness for the side of tank that was hit
+        float thickness = vehicleArmour.GetThickness(side);
+        float damage = baseDamage - thickness * 0.075F;         // base 25 dmg subtract (80 * 0.075) => 6 = 19
+        health = Mathf.Clamp(health - damage, 0F, 100);
+        
+        // Activate FX
+        // switch (side)
+        // {
+        //     case Extensions.TankSide.Front:
+        //         break;
+        //     case Extensions.TankSide.Right:
+        //         break;
+        //     case Extensions.TankSide.Back:
+        //         break;
+        //     case Extensions.TankSide.Left:
+        //         break;
+        // }
+        
+        Debug.Log($"Hit taken! => Side hit: {side} | Damage: {damage} | New Health: {health}");
+
+        if (health <= 0F)
+        {
+            vehicle.Disable();
+            GameplayNotifications.Instance.SendNetworkMessage($"Player {GameplayNetworkManager.Instance.localPlayerName} was destroyed!");
+        }
     }
 }

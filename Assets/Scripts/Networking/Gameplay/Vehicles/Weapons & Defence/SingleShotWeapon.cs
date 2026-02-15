@@ -32,7 +32,7 @@ public class SingleShotWeapon : VehicleWeaponController
     {
         for (int i = 0; i < initPoolSize; i++)
         {
-            WeaponShell shell = Instantiate(weapon.shellPrefab);
+            WeaponAmmoBehaviour shell = Instantiate(weapon.shellPrefab);
             
             // We can't disable NetworkBehaviours, so hide objects
             shell.transform.position = new Vector3(0, -5F, 0);
@@ -49,12 +49,12 @@ public class SingleShotWeapon : VehicleWeaponController
     private NetworkObject GetFromPool(Vector3 position, Quaternion rotation, ulong ownerID)
     {
         NetworkObject shellNetObj;
-        WeaponShell shell = null;
+        WeaponAmmoBehaviour shell = null;
         
         if (availableShells.Count > 0)
         {
             shellNetObj = availableShells.Dequeue();
-            shell = shellNetObj.GetComponent<WeaponShell>();
+            shell = shellNetObj.GetComponent<WeaponAmmoBehaviour>();
             Debug.Log($"Server: Retrieved Shell from Pool! Active shells: {activeShells.Count}");
         }
         else
@@ -115,7 +115,7 @@ public class SingleShotWeapon : VehicleWeaponController
         }
         else
         {
-            WeaponShell shell = Instantiate(weapon.shellPrefab);
+            WeaponAmmoBehaviour shell = Instantiate(weapon.shellPrefab);
             shell.Setup(this, shellSpawnPoint.position, shellSpawnPoint.rotation);
         }
         

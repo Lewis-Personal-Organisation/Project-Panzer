@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
+using Unity.Netcode;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -12,7 +13,7 @@ using UnityEngine.UI;
 #endif
 
 [DisallowMultipleComponent]
-public class GameplayNotifications : MonoBehaviour
+public class GameplayNotifications : NetworkSingleton<GameplayNotifications>
 {
     [System.Serializable]
     public class TextElementController
@@ -23,33 +24,34 @@ public class GameplayNotifications : MonoBehaviour
             FadeOut
         }
 
-        public TextElementController(TextMeshProUGUI textMeshElement, string text, float alpha, float fadeOutTime, Vector2 spawnPos, Vector2 rectSize)
+        public TextElementController(TextMeshProUGUI textElementMeshElement, string text, float alpha, float fadeOutTime, Vector2 spawnPos)
         {
-            this.text = textMeshElement;
-            textMeshElement.rectTransform.sizeDelta = rectSize;
-            textMeshElement.text = text;
-            textMeshElement.alpha = alpha;
-            textMeshElement.rectTransform.anchoredPosition = spawnPos;
+            this.textElement = textElementMeshElement;
+            Set(text, alpha, fadeOutTime, spawnPos);
+        }
+
+        public void Set(string text, float alpha, float fadeOutTime, Vector2 spawnPos)
+        {
+            textElement.text = text;
+            textElement.alpha = alpha;
+            textElement.rectTransform.anchoredPosition = spawnPos;
             waitTimeForFadeOut = fadeOutTime;
             state = State.FadeIn;
         }
 
         public State state;
-        [SerializeField] private TextMeshProUGUI text;
-        [FormerlySerializedAs("waitTimeForExpiry")]
+        public TextMeshProUGUI textElement;
         public float waitTimeForFadeOut;
-        [SerializeField] private float alphaTarget; // The time before the text fades out
-
-        public TextMeshProUGUI textElement => text;
+        [SerializeField] private float alphaTarget;
     }
 
     [SerializeField] private Canvas canvas;
-    public TextMeshProUGUI textElementPrefab; // The four text elements
+    public TextMeshProUGUI textElementPrefab;
     [SerializeField] public Vector2 spawnPos;
     [SerializeField] public Vector2 spawnSize;
     [SerializeField] private float moveSpeed = 1F;
     [SerializeField] private float messageMargin = 3F;
-    [SerializeField] private float defaultExpiryTime = 1.5F;      // The default time before a text element begins to fade
+    [SerializeField] private float defaultExpiryTime = 1F;      // The default time before a text element begins to fade
    
     [SerializeField] private List<TextElementController> queuedElements = new List<TextElementController>();
     [SerializeField] private List<TextElementController> activeElements = new List<TextElementController>();
@@ -58,12 +60,12 @@ public class GameplayNotifications : MonoBehaviour
     private float lastElementDistance => Vector2.Distance(spawnPos, activeElements[^1].textElement.rectTransform.anchoredPosition);
     private bool clearToSpawn => lastElementDistance > activeElements[^1].textElement.rectTransform.sizeDelta.y + messageMargin;
 
-    
-    [SerializeField] private LineRenderer lineRenderer;
-    [SerializeField] private RectTransform canvasRectTransform;
-    [Range(0F, 1000F)]
-    [SerializeField] private float lineWidth;
-    
+
+    private new void Awake()
+    {
+        base.Awake();
+        Setup();
+    }
 
     public void Setup()
     {
@@ -71,8 +73,15 @@ public class GameplayNotifications : MonoBehaviour
         spawnPos = textItems[0].rectTransform.anchoredPosition;
         for (int i = 0; i < textItems.Length; i++)
         {
-            inactiveElements.Add(new TextElementController(textItems[i], "", 0, defaultExpiryTime, spawnPos, spawnSize));
+            inactiveElements.Add(new TextElementController(textItems[i], "", 0, defaultExpiryTime, spawnPos));
         }
+    }
+
+    private void OnApplicationQuit()
+    {
+#if UNITY_EDITOR
+        inactiveElements.Clear();
+#endif
     }
 
     [ExecuteInEditMode]
@@ -80,6 +89,12 @@ public class GameplayNotifications : MonoBehaviour
     {
         if (Application.isPlaying)
         {
+            // DEBUG
+            if (Input.GetKeyDown(KeyCode.A))
+            {
+                Queue($"Test {(int)Time.time}!");
+            }
+            
             // 1. If we have a queued element, check if the space is clear to spawn a new element
             // If so, we can spawn the queued item
             if (queuedElements.Count > 0)
@@ -142,11 +157,7 @@ public class GameplayNotifications : MonoBehaviour
         // Re-use pooled elements
         if (inactiveElements.Count > 0)
         {
-            inactiveElements[0].textElement.text = text;
-            inactiveElements[0].waitTimeForFadeOut = defaultExpiryTime;
-            inactiveElements[0].textElement.alpha = 0;
-            inactiveElements[0].state = TextElementController.State.FadeIn;
-            inactiveElements[0].textElement.rectTransform.anchoredPosition = spawnPos;
+            inactiveElements[0].Set(text, 0, defaultExpiryTime, spawnPos);
             queuedElements.Add(inactiveElements[0]);
             inactiveElements.RemoveAt(0);
         }
@@ -154,84 +165,39 @@ public class GameplayNotifications : MonoBehaviour
         else
         {
             TextMeshProUGUI textElement = Instantiate(textElementPrefab, canvas.transform);
-            TextElementController controller = new TextElementController(textElement, text, 0, defaultExpiryTime, spawnPos, spawnSize);
+            TextElementController controller = new TextElementController(textElement, text, 0, defaultExpiryTime, spawnPos);
             queuedElements.Add(controller);
         }
     }
 
-#if UNITY_EDITOR
-    private void Reset()
+    /// <summary>
+    /// Send a network notification message to all players
+    /// </summary>
+    /// <param name="message"></param>
+    public void SendNetworkMessage(string message)
     {
-        EnsureLineRenderer();
-    }
-
-    private void OnEnable()
-    {
-        EnsureLineRenderer();
+        SendNetworkNotificationServerRPC(message);
     }
     
-    private void EnsureLineRenderer()
+    /// <summary>
+    /// Queues a Gameplay Notification for the server
+    /// </summary>
+    /// <param name="playerName"></param>
+    [ServerRpc(RequireOwnership = false)]
+    private void SendNetworkNotificationServerRPC(string message)
     {
-        if (canvas == null) return;
-        
-        if (canvasRectTransform == null) 
-            canvasRectTransform =  canvas.GetComponent<RectTransform>();
-        
-        if (lineRenderer != null) return;
-        
-        lineRenderer = GetComponent<LineRenderer>();
-        if (!lineRenderer)
-        {
-            lineRenderer = new GameObject("LineRenderer", typeof(RectTransform), typeof(LineRenderer)).GetComponent<LineRenderer>();
-            lineRenderer.transform.SetParent(canvas.transform, false);
-        }
-
-        lineRenderer.useWorldSpace = false;
-        lineRenderer.alignment = LineAlignment.TransformZ;
-        lineRenderer.textureMode = LineTextureMode.Stretch;
-        lineRenderer.sortingOrder = 1000;
-        lineRenderer.material = new Material(Shader.Find("Sprites/Default"));
-        
-        if (!Application.isPlaying)
-        {
-            EditorUtility.SetDirty(gameObject);
-            EditorUtility.SetDirty(lineRenderer);
-        }
-    }
-    
-    // private void RenderEditorLines()
-    // {
-    //     bool selected = Selection.activeGameObject == gameObject || Selection.activeGameObject == lineRenderer.gameObject;
-    //     lineRenderer.enabled = selected;
-    //
-    //     if (!selected) return;
-    // }
-
-    private void OnValidate()
-    {
-        lineRenderer.widthMultiplier = lineWidth;
-        DrawAtPosition();
+        Instance.Queue(message);
+        SendNetworkNotifClientRPC(message);
     }
 
-    private void DrawAroundScreen()
+    /// <summary>
+    /// Queues a Gameplay Notification for all clients. Excludes the servers client
+    /// </summary>
+    /// <param name="playerName"></param>
+    [ClientRpc]
+    private void SendNetworkNotifClientRPC(string message)
     {
-        Vector2 size = canvasRectTransform.rect.size;
-        lineRenderer.positionCount = 4;
-        lineRenderer.SetPosition(0, new Vector3(lineRenderer.startWidth/2, lineRenderer.startWidth/2));
-        lineRenderer.SetPosition(1, new Vector3(size.x - lineRenderer.startWidth/2, lineRenderer.startWidth/2));
-        lineRenderer.SetPosition(2, new Vector3(size.x - lineRenderer.startWidth/2, size.y - lineRenderer.startWidth/2));
-        lineRenderer.SetPosition(3, new Vector3(lineRenderer.startWidth/2, size.y - lineRenderer.startWidth/2));
+        if (NetworkManager.Singleton.IsServer) return;
+        Instance.Queue(message);
     }
-
-    private void DrawAtPosition()
-    {
-        Debug.Log("Running");
-        Vector2 size = canvasRectTransform.rect.size;
-        lineRenderer.positionCount = 4;
-        lineRenderer.SetPosition(0, new Vector3(spawnPos.x - spawnSize.x/2, spawnPos.y - spawnSize.y/2));
-        lineRenderer.SetPosition(1, new Vector3(spawnPos.x + spawnSize.x/2, spawnPos.y - spawnSize.y/2));
-        lineRenderer.SetPosition(2, new Vector3(spawnPos.x + spawnSize.x/2, spawnPos.y + spawnSize.y/2));
-        lineRenderer.SetPosition(3, new Vector3(spawnPos.x - spawnSize.x/2, spawnPos.y + spawnSize.y/2));
-    }
-#endif
 }

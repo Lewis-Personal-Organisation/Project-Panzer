@@ -41,6 +41,7 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
     
     public List<PlayerAvatar> playerAvatars { get; private set; } = new List<PlayerAvatar>();
     private PlayerAvatar localPlayerAvatar;
+    public string localPlayerName => localPlayerAvatar.playerName;
     
     
     private new void Awake()
@@ -125,6 +126,7 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
     
     /// <summary>
     /// The Callback method for when a client disconnects during gameplay
+    /// Only received on Server and diconnected client!
     /// </summary>
     private async void OnClientDisconnect(ulong clientId)
     {
@@ -137,6 +139,7 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
             if (clientId != NetworkManager.ServerClientId)
             {
                 // When a client disconnects, we should show a popup ingame here!
+                GameplayNotifications.Instance.SendNetworkMessage($"Player {GetPlayerName((int)clientId)} disconnected!");
                 message = $"Client {GetPlayerName((int)clientId)} ({clientId}) disconnected! Remaining players: {NetworkManager.Singleton.ConnectedClients.Count}";
             }
             else
@@ -145,7 +148,7 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
                 ReturnToMenu = true;
             }
         }
-        // If Client only
+        // If Client only (the disconnected client)
         else
         {
             message = "We have disconnected from the gameplay session!";
@@ -283,6 +286,9 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
             if (countdownSeconds <= 0)
             {
                 m_IsCountdownActive = false;
+                
+                // GameplayNotifications class may need to be spawned with object ownership. See Claude
+                GameplayNotifications.Instance.SendNetworkMessage($"Host '{GameplayNetworkManager.Instance.localPlayerName}' sent this message!");
             }
         }
     }

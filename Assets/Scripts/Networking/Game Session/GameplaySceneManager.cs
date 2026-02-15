@@ -83,6 +83,10 @@ public class GameplaySceneManager : Singleton<GameplaySceneManager>
 
     private async void OnApplicationQuit()
     {
+        // No shutdown if not networked
+        if (LobbyManager.Instance == null || NetworkManager.Singleton == null)
+            return;
+        
         // Properly shutdown network if we are associating with other players
         await CleanupOnQuit();
     }
@@ -92,8 +96,11 @@ public class GameplaySceneManager : Singleton<GameplaySceneManager>
         if (NetworkManager.Singleton != null)
         {
             NetworkManager.Singleton.Shutdown();
+            
+            while (NetworkManager.Singleton.ShutdownInProgress)
+                await Task.Yield();
         }
-
+        
         if (LobbyManager.Instance.activeLobby != null && LobbyManager.Instance.activeLobby.HostId == AuthenticationService.Instance.PlayerId)
         {
             await LobbyService.Instance.DeleteLobbyAsync(LobbyManager.Instance.activeLobby.Id);

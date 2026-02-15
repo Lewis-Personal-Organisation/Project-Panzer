@@ -4,7 +4,7 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "Vehicle Weapon", menuName = "Vehicles/Weapon Data")]
 public class VehicleWeapon : ScriptableObject
 {
-    [field: SerializeField] public WeaponShell shellPrefab { get; private set; }
+    [field: SerializeField] public WeaponAmmoBehaviour shellPrefab { get; private set; }
     [field: SerializeField] public int ammoCount { get; private set; }
     [field: SerializeField] public float reloadTime { get; private set; }
     

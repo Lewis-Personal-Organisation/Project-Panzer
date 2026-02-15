@@ -1,12 +1,10 @@
 using Unity.Netcode;
 using UnityEngine;
 
-public class WeaponShell : NetworkBehaviour
+public class WeaponShell : WeaponAmmoBehaviour
 {
     internal VehicleWeaponController owner;
     [SerializeField] private Rigidbody rigidBody;
-    [field: SerializeField] public NetworkObject networkObject { get; private set; }
-    public bool isPooled = true;
     
     [Header("Lifetime")]
     [SerializeField] private float lifetime;
@@ -15,13 +13,18 @@ public class WeaponShell : NetworkBehaviour
 	
     [Header("Movement")]
     [SerializeField] private float velocity;
-    private Vector3 shellDirection;
     private float shellSpeed;
 
 
-	public void Setup(VehicleWeaponController weaponController, Vector3 position, Quaternion rotation)
+	public override void Setup(VehicleWeaponController weaponController, Vector3 position, Quaternion rotation)
     {
         this.owner = weaponController;
+        
+        NetworkString playerName = new NetworkString();
+        playerName.Value = GameplayNetworkManager.Instance.localPlayerName;
+        Debug.Log(ownerName.Value.Value);
+        ownerName.Value = playerName;
+        
         transform.SetPositionAndRotation(position, rotation);
         shellDirection = rotation * Vector3.forward;
         shellSpeed = velocity;
@@ -41,7 +44,7 @@ public class WeaponShell : NetworkBehaviour
     }
 
     // The update method called when connected to a network
-    private void OnNetworkedUpdate()
+    public override void OnNetworkedUpdate()
     {
         if (isPooled) return;
         if (!IsOwner) return;
@@ -60,7 +63,7 @@ public class WeaponShell : NetworkBehaviour
         }
     }
 
-    private void OnUpdate()
+    public override void OnUpdate()
     {
         // Decrement timer to 0, then deactivate and return to pool
         lifetimeTimer -= Time.deltaTime;
@@ -71,7 +74,7 @@ public class WeaponShell : NetworkBehaviour
             {
                 Destroy(this.gameObject);
             }
-            // Implement for clip weapon
+            // TODO: IMPLEMENT CLIP WEAPON
         }
     }
 
@@ -94,7 +97,7 @@ public class WeaponShell : NetworkBehaviour
     /// <summary>
     /// Called when the Network is active
     /// </summary>
-    private void OnNetworkedFixedUpdate()
+    public override void OnNetworkedFixedUpdate()
     {
         if (isPooled) return;
 
@@ -111,35 +114,10 @@ public class WeaponShell : NetworkBehaviour
     /// <summary>
     /// Called when in solo play
     /// </summary>
-    private void OnFixedUpdate()
+    public override void OnFixedUpdate()
     {
         rigidBody.MovePosition(rigidBody.position + transform.forward * (velocity * Time.fixedDeltaTime));
     }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="newDirection"></param>
-    [ServerRpc(RequireOwnership = false)]
-    public void RotateWithReflectionServerRPC(Vector3 newDirection)
-    {
-        transform.forward = newDirection;
-        shellDirection = newDirection;
-        ReflectClientRpc(newDirection);
-    }
-
-    [ClientRpc]
-    private void ReflectClientRpc(Vector3 direction)
-    {
-        if (IsServer) return; // Server already handled it
-    
-        // Update kinematic rigidbody on clients
-        transform.forward = direction;
-        shellDirection = direction;
-        
-        Debug.Log($"Client :: Shell reflection received - Direction: {direction}");
-    }
-
 
     /// <summary>
     /// Called when this gameobject is spawned. Sets initial position and rotation.

@@ -9,22 +9,12 @@ public class GameplayUI : Singleton<GameplayUI>
 {
     [SerializeField] private TextMeshProUGUI scoresText;
 
-    [SerializeField] private GameplayNotifications notifications;
     public float timer;
     public float maxtime;
     
     private new void Awake()
     {
         base.Awake();
-        notifications.Setup();
-    }
-
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.A))
-        {
-            notifications.Queue($"Test {(int)Time.time}!");
-        }
     }
 
     public void UpdateScores()

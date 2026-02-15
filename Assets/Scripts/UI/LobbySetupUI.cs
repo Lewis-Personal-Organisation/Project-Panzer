@@ -37,7 +37,7 @@ public class LobbySetupUI : Panel
 		onPushAction.AddListener(privateButton.onClick.Invoke);
 		onPopAction.AddListener(privateButton.onClick.Invoke);
 		
-		closeButton.onClick.AddListener(() => UIManager.PopPanel());
+		closeButton.onClick.AddListener(() => UIManager.PopAllAndPush(UIManager.MainMenu));
 
 		privateButton.onClick.AddListener(delegate
 		{
