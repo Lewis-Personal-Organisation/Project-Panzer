@@ -226,11 +226,11 @@ public class SessionManager : Singleton<SessionManager>
 		NetworkManager.Singleton.Shutdown();
 		while (NetworkManager.Singleton.ShutdownInProgress)
 		{
-			Debug.Log("SessionManager :: IEShutdownNetworkClient :: Shutting Down...");
+			// Debug.Log("SessionManager :: IEShutdownNetworkClient :: Shutting Down...");
 			yield return null;
 		}
 		yield return new WaitUntil(() => !NetworkManager.Singleton.ShutdownInProgress);
-		Debug.Log("SessionManager :: IEShutdownNetworkClient :: Shutdown Complete!");
+		// Debug.Log("SessionManager :: IEShutdownNetworkClient :: Complete!");
 		
 		unityTransport.Shutdown();
 	}

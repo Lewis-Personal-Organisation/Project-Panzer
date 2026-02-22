@@ -12,13 +12,13 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
 {
     private const float COUNTDOWN_DURATION = 5F;
     
-    private const float CLIENT_TIMEOUT = COUNTDOWN_DURATION + 3;
-    float clientTimeout = float.MaxValue;
+    private const float CLIENT_TIMEOUT = COUNTDOWN_DURATION + 5;
+    public float clientTimeout = float.MaxValue;
     [SerializeField] float m_GameEndsTime = float.MaxValue;
     private bool m_IsCountdownActive = false;
     private float m_GameCountdownEndsTime = float.MaxValue;
     // We count responses for all players to know when all are in game so we can destroy the lobby.
-    int m_NumStartGameAcknowledgments = 0;
+    public int gameplayStartAcknowledgments = 0;
     // Wait for all clients to acknowledge game results before returning to main menu / results Panel
     int m_NumGameOverAcknowledgments = 0;
     // Be sure to stop all processing once local player avatar is removed.
@@ -26,6 +26,9 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
     // Only send updated countdown value when it changes.
     int m_PreviousCountdownSeconds;
     int m_LastGameTimerShown;
+    private bool playerCountdown;
+    private float countdownTimer = 5F;
+    
     [SerializeField] RemoteConfigManager.PlayerOptionsConfig m_PlayerOptions;
     
     [SerializeField] private PlayerAvatar[] playerAvatarPrefabs;
@@ -55,7 +58,7 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
     {
         cachedLobby = LobbyManager.Instance.activeLobby;
         LobbyDebugViewer.Instance.CancelCheck();
-        // Extensions.Debug.ClearConsole();
+        Extensions.Debug.ClearConsole();
         
         if (NetworkManager.Singleton != null)
         {
@@ -89,7 +92,8 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
         // Be sure to stop all processing once local player avatar is removed.
         if (m_IsShuttingDown) return;
 
-        if (DidClientTimeout())
+        // Check if the Player timed out
+        if (Time.realtimeSinceStartup >= clientTimeout && localPlayerAvatar == null)
         {
             Debug.Log("Client timed out so shutting down.");
             Shutdown();
@@ -128,7 +132,7 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
     /// The Callback method for when a client disconnects during gameplay
     /// Only received on Server and diconnected client!
     /// </summary>
-    private async void OnClientDisconnect(ulong clientId)
+    public async void OnClientDisconnect(ulong clientId)
     {
         bool ReturnToMenu = false;
         string message = ""; ;
@@ -212,83 +216,77 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
         Debug.Log($"GameplayNetworkManager :: LogLobbyPlayers :: {lobbyPlayerNames}");
     }
     
-    bool DidClientTimeout()
-    {
-        if (Time.realtimeSinceStartup >= clientTimeout)
-        {
-            if (localPlayerAvatar == null)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-    
+    /// <summary>
+    /// Returns the Player to the Main menu
+    /// </summary>
     void Shutdown()
     {
-        Debug.Log($"Local player's avatar disappeared or didn't appear so returning to lobby.");
+        Debug.LogWarning($"Local Player took to long to load or didn't timed out. Returning to main menu!");
 
         // Be sure to stop all processing once local player avatar is removed.
         m_IsShuttingDown = true;
 
-        GameEndManager.Instance?.ReturnToMainMenu();
+        // TODO: TEST. ID might be incorrect
+        OnClientDisconnect(localPlayerAvatar.OwnerClientId);
     }
     
+    /// <summary>
+    /// Counts down the start of round timer, if all players are connected
+    /// </summary>
     void UpdateHost()
     {
         if (m_IsCountdownActive)
         {
             HostUpdateCountdown();
         }
-        else
-        {
-            if (Time.time >= m_GameEndsTime)
-            {
-                GameEndManager.Instance?.HostGameOver();
-            }
-            else
-            {
-                // GameCoinManager.instance?.HostHandleSpawningCoins();
-
-                HostUpdateGameTime();
-            }
-        }
+        // else
+        // {
+            // if (Time.time >= m_GameEndsTime)
+            // {
+                // GameEndManager.Instance?.HostGameOver();
+            // }
+            // else
+            // {
+                // HostUpdateGameTime();
+            // }
+        // }
     }
     
-    void HostUpdateGameTime()
-    {
-        var timeRemaining = Mathf.CeilToInt(m_GameEndsTime - Time.time);
-        if (timeRemaining != m_LastGameTimerShown)
-        {
-            m_LastGameTimerShown = timeRemaining;
-
-            UpdateGameTimerClientRpc(timeRemaining);
-        }
-    }
+    // void HostUpdateGameTime()
+    // {
+    //     var timeRemaining = Mathf.CeilToInt(m_GameEndsTime - Time.time);
+    //     if (timeRemaining != m_LastGameTimerShown)
+    //     {
+    //         m_LastGameTimerShown = timeRemaining;
+    //
+    //         UpdateGameTimerClientRpc(timeRemaining);
+    //     }
+    // }
     
-    [ClientRpc]
-    void UpdateGameTimerClientRpc(int seconds)
-    {
-        GameplaySceneManager.Instance?.ShowGameTimer(seconds);
-    }
+    // [ClientRpc]
+    // void UpdateGameTimerClientRpc(int seconds)
+    // {
+    //     GameplaySceneManager.Instance?.ShowGameTimer(seconds);
+    // }
     
+    /// <summary>
+    /// Updates the countdown as host. Network updates are only sent every 1 second subtracted from the timer
+    /// </summary>
     void HostUpdateCountdown()
     {
-        var countdownSeconds = (int)Mathf.Ceil(m_GameCountdownEndsTime - Time.time);
-
-        if (countdownSeconds != m_PreviousCountdownSeconds)
+        countdownTimer -= Time.deltaTime;
+        int countdownInSeconds = (int)Mathf.Ceil(countdownTimer);
+        
+        if (countdownInSeconds != m_PreviousCountdownSeconds)
         {
-            m_PreviousCountdownSeconds = countdownSeconds;
+            m_PreviousCountdownSeconds = countdownInSeconds;
 
-            UpdateCountdownClientRpc(countdownSeconds);
+            UpdateCountdownClientRpc(countdownInSeconds);
 
-            if (countdownSeconds <= 0)
+            if (countdownInSeconds <= 0)
             {
                 m_IsCountdownActive = false;
-                
-                // GameplayNotifications class may need to be spawned with object ownership. See Claude
-                GameplayNotifications.Instance.SendNetworkMessage($"Host '{GameplayNetworkManager.Instance.localPlayerName}' sent this message!");
+                GameplayUI.Instance.ToggleWaitAnimation(false);
             }
         }
     }
@@ -296,7 +294,6 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
     [ClientRpc]
     void UpdateCountdownClientRpc(int seconds)
     {
-        // Debug.Log($"GameplayNetworkManager :: UpdateCountdownClientRpc [ClientRpc] :: Countdown Timer {seconds}");
         GameplaySceneManager.Instance?.SetCountdown(seconds);
 
         if (seconds <= 0)
@@ -312,16 +309,11 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
     {
         m_GameEndsTime = Time.time + m_PlayerOptions.gameDuration;
 
-        // GameCoinManager.instance?.Initialize(IsHost, m_PlayerOptions);
-
-        // GameCoinManager.instance?.StartTimerToSpawnCoins();
-
-        // GameSceneManager.instance?.HideCountdown();
-
         if (localPlayerAvatar != null)
         {
             Debug.Log($"GameplayNetworkManager :: StartPlayingGame() :: Timer complete, enabling player control");
-            localPlayerAvatar.vehicleController.enabled = true;
+            localPlayerAvatar.vehicleController.inputManager.enabled = true;
+            GameplayUI.Instance.ToggleCountdownTimer(false);
         }
     }
     
@@ -349,14 +341,14 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
     void SpawnAllPlayers()
     {
         IReadOnlyDictionary<ulong, NetworkClient> connectedClients = NetworkManager.Singleton.ConnectedClients;
-        var numPlayers = connectedClients.Count;
+        // var numPlayers = connectedClients.Count;
         // Debug.Log($"Gameplay Network Manager :: SpawnAllPlayers :: Player Count = {numPlayers}");
         
         var playerIndex = 0;
         
-        foreach (var relayClientId in connectedClients.Keys)
+        foreach (ulong relayClientId in connectedClients.Keys)
         {
-            int vehicleIndex = int.Parse(cachedLobby.Players[playerIndex].Data[LobbyManager.PlayerDictionaryData.vehicleIndexKey].Value);
+            // int vehicleIndex = int.Parse(cachedLobby.Players[playerIndex].Data[LobbyManager.PlayerDictionaryData.vehicleIndexKey].Value);
             // Debug.Log($"Player {playerIndex} should spawn with vehicle {VehicleData.GetLobbyItem(vehicleIndex).name} using {vehicleIndex}");
             
             SpawnPlayer(playerIndex, relayClientId);
@@ -374,14 +366,6 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
         playerAvatar.networkObject.SpawnWithOwnership(relayClientId);
         playerAvatar.SetPlayerAvatarClientRpc(playerIndex, GetPlayerID(playerIndex), GetPlayerName(playerIndex), relayClientId);
         Debug.Log($"GameplayNetworkManager :: SpawnPlayer :: Spawned Player with ID {playerIndex}", playerAvatar.gameObject);
-        
-        // playerAvatar.vehicleController.Setup();
-    }
-
-    public void SpawnPlayerCamera()
-    {
-        CameraController playerCam = GameObject.Instantiate(playerCameraPrefab);
-        playerCam.transform.position = localPlayerAvatar.transform.position;
     }
     
     public void AddPlayerAvatar(PlayerAvatar playerAvatar, bool isLocalPlayer)
@@ -401,12 +385,10 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
         // destroyed by host. Either way, we return to the lobby if the avatar is missing after timeout.
         clientTimeout = localPlayerAvatar == null ? Time.realtimeSinceStartup + CLIENT_TIMEOUT : 0;
 
-        m_IsCountdownActive = true;
         m_GameCountdownEndsTime = Time.time + COUNTDOWN_DURATION;
         
         LobbyManager.Instance.OnGameStarted();
         
-        Debug.Log($"Remove Config null? {RemoteConfigManager.Instance == null}");
         m_PlayerOptions = RemoteConfigManager.Instance.GetConfigForPlayers(cachedLobby.Players.Count);
 
         // Inform host that this player has started the game. Once all players have started (and thus
@@ -417,9 +399,9 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
     [ServerRpc(RequireOwnership = false)]
     void PlayerStartedGameServerRpc()
     {
-        m_NumStartGameAcknowledgments++;
+        gameplayStartAcknowledgments++;
         
-        if (m_NumStartGameAcknowledgments >= playerAvatars.Count)
+        if (gameplayStartAcknowledgments >= playerAvatars.Count)
         {
             // Delete and clear active lobby on this host (i.e. server). Note that we do not await since we are entering starting
             // the game now and do not need to act on deletion or confirm that it's successfully deleted. If it fails for any
@@ -427,6 +409,8 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
 #pragma warning disable CS4014  // Because this call is not awaited, execution of the current method continues before the call is completed
             LobbyManager.Instance.DeleteAnyActiveLobbyWithNotify();
 #pragma warning restore CS4014
+            m_IsCountdownActive = true;
+            GameplayUI.Instance.ToggleWaitAnimation(true);
         }
     }
     

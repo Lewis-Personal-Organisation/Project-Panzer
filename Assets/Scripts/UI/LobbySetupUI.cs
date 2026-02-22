@@ -130,7 +130,7 @@ public class LobbySetupUI : Panel
 		
 			Allocation allocation = await RelayService.Instance.CreateAllocationAsync(maxPlayerCount);
 			string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
-			Debug.Log($"LobbySetupUI :: InitialiseHostWithRelay :: LOBBY JOIN CODE: '{joinCode}'");
+			// Debug.Log($"LobbySetupUI :: InitialiseHostWithRelay :: LOBBY JOIN CODE: '{joinCode}'");
 		
 			// Use RelayServerData to properly package all relay information
 			RelayServerData relayServerData = new RelayServerData(allocation, "dtls");

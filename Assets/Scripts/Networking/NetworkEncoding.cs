@@ -2,8 +2,8 @@ using System.Collections.Generic;
 
 public static class NetworkEncoding
 {
-    public static readonly Dictionary<int, char> intToChar;
-    public static readonly Dictionary<char, int> charToInt;
+    public readonly static Dictionary<int, char> intToChar;
+    public readonly static Dictionary<char, int> charToInt;
 
     static NetworkEncoding()
     {
@@ -44,7 +44,7 @@ public static class NetworkEncoding
             // Space
             {62, ' '},
 
-            // Common Symbols
+            // Symbols
             {63, '!'}, {64, '@'}, {65, '#'}, {66, '$'}, {67, '%'},
             {68, '^'}, {69, '&'}, {70, '*'}, {71, '('}, {72, ')'},
             {73, '-'}, {74, '_'}, {75, '='}, {76, '+'},

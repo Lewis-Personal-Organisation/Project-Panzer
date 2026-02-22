@@ -46,11 +46,15 @@ public class SingleShotWeapon : VehicleWeaponController
         Debug.Log($"Server: Created Pool of {initPoolSize} shells for {this.transform.root.gameObject.name}!");
     }
     
-    private NetworkObject GetFromPool(Vector3 position, Quaternion rotation, ulong ownerID)
+    /// <summary>
+    /// Returns the shell's NetworkObject retrieved or created from the pool system
+    /// </summary>
+    private NetworkObject GetFromOrAddToPool(Vector3 position, Quaternion rotation, ulong ownerID)
     {
         NetworkObject shellNetObj;
         WeaponAmmoBehaviour shell = null;
         
+        // Retrieve a shell from Queue, if any are available. Else, spawn a new one
         if (availableShells.Count > 0)
         {
             shellNetObj = availableShells.Dequeue();
@@ -70,6 +74,7 @@ public class SingleShotWeapon : VehicleWeaponController
         shell.Setup(this, position, rotation);
         shell.isPooled = false;
         
+        // Set it's ownership and register it
         shellNetObj.ChangeOwnership(ownerID);
         activeShells.Add(shellNetObj);
         
@@ -140,7 +145,7 @@ public class SingleShotWeapon : VehicleWeaponController
     [ServerRpc]
     private void ShootServerRpc(ulong ownerID, Vector3 position, Quaternion rotation)
     {
-        NetworkObject shellNetObj = GetFromPool(position, rotation, ownerID);
+        NetworkObject shellNetObj = GetFromOrAddToPool(position, rotation, ownerID);
         Debug.Log($"Server: Asking clients to move new shell");
         ActivateClientRpc(shellNetObj.NetworkObjectId, position, rotation);
     }

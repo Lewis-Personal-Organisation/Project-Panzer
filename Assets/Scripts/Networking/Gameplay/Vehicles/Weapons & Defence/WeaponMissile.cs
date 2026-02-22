@@ -54,7 +54,7 @@ public class WeaponMissile : WeaponAmmoBehaviour
         }
     }
 
-    private WeaponBehaviourStep[] behaviourSteps;
+    // private WeaponBehaviourStep[] behaviourSteps;
     
     [SerializeField] private float movementTimer;
     [SerializeField] private int behaviourStep = 0;
@@ -62,6 +62,9 @@ public class WeaponMissile : WeaponAmmoBehaviour
     public Vector3 targetRotation = new Vector3(-90F, 0, 0);
     public float rotationSpeed = 5f;
     [SerializeField] private float angle = 0;
+    
+    BehaviourSequence missileBehaviourSequence;
+    
     
     public override void Setup(VehicleWeaponController weaponController, Vector3 position, Quaternion rotation)
     {
@@ -72,49 +75,43 @@ public class WeaponMissile : WeaponAmmoBehaviour
         lifetimeTimer = lifetime;
         velocityMax = velocity * 2F;
 
-        behaviourSteps = new[]
-        {
-            // 1. Move forward, apply gravity
-            new WeaponBehaviourStep(() =>
-                {
-                    trailRenderer.emitting = false;
-                    rigidBody.MovePosition(rigidBody.position + transform.forward * (velocity * Time.fixedDeltaTime) + transform.up * stepZeroGravity * Time.fixedDeltaTime);
-                    movementTimer += Time.deltaTime;
-                },
-                () => movementTimer > .35F,
-                () => behaviourStep++,
-                false),
-            
-            // 2. Rotate upwards, show trail, move forwards
-            new WeaponBehaviourStep(() =>
-                {
-                    trailRenderer.emitting = true;
-                    Quaternion currentRotation = transform.rotation;
-                    Quaternion desiredRotation = Quaternion.Euler(targetRotation);
-                    rigidBody.rotation = Quaternion.Lerp(currentRotation, desiredRotation, Time.deltaTime * rotationSpeed);
-                    velocity = Mathf.MoveTowards(velocity, velocityMax, Time.deltaTime * velocityDelta);
-                    rigidBody.MovePosition(rigidBody.position + transform.forward * (velocity * Time.fixedDeltaTime));
-                },
-                () => Quaternion.Angle(transform.rotation, Quaternion.Euler(targetRotation)) < 0.1f,
-                () => behaviourStep++,
-                false),
-            
-            // 3. Move Forwards
-            new WeaponBehaviourStep(() =>
-                {
-                    velocity = Mathf.MoveTowards(velocity, velocityMax, Time.deltaTime * velocityDelta);
-                    rigidBody.MovePosition(rigidBody.position + transform.forward * (velocity * Time.fixedDeltaTime));
-                },
-                () => rigidBody.position.y > 75F,
-                () =>
-                {
-                    angle = UnityEngine.Random.Range(0f, 360f);     // Pick random angle
-                    behaviourStep++;
-                },    
-                false),
-            
-            // 4. Rotate towards ground
-            new WeaponBehaviourStep(() =>
+        BehaviourStep launchStep = new BehaviourStep(() =>
+            {
+                trailRenderer.emitting = false;
+                rigidBody.MovePosition(rigidBody.position + transform.forward * (velocity * Time.fixedDeltaTime) + transform.up * stepZeroGravity * Time.fixedDeltaTime);
+                movementTimer += Time.deltaTime;
+            },
+            () => movementTimer > .35F,
+            null,
+            false);
+
+        BehaviourStep altitudeIncreaseStep = new BehaviourStep(() =>
+            {
+                trailRenderer.emitting = true;
+                Quaternion currentRotation = transform.rotation;
+                Quaternion desiredRotation = Quaternion.Euler(targetRotation);
+                rigidBody.rotation = Quaternion.Lerp(currentRotation, desiredRotation, Time.deltaTime * rotationSpeed);
+                velocity = Mathf.MoveTowards(velocity, velocityMax, Time.deltaTime * velocityDelta);
+                rigidBody.MovePosition(rigidBody.position + transform.forward * (velocity * Time.fixedDeltaTime));
+            },
+            () => Quaternion.Angle(transform.rotation, Quaternion.Euler(targetRotation)) < 0.1f,
+            null,
+            false);
+
+        BehaviourStep forwardVelocity = new BehaviourStep(
+            () =>
+            {
+                velocity = Mathf.MoveTowards(velocity, velocityMax, Time.deltaTime * velocityDelta);
+                rigidBody.MovePosition(rigidBody.position + transform.forward * (velocity * Time.fixedDeltaTime));
+            },
+            () => rigidBody.position.y > 75F,
+            () =>
+            {
+                angle = UnityEngine.Random.Range(0f, 360f); // Pick random angle
+            },
+            false);
+
+        BehaviourStep rotateAndLand = new BehaviourStep(() =>
             {
                 // Rotate towards new angle and move forward
                 rigidBody.rotation = Quaternion.Lerp(transform.rotation, Quaternion.Euler(new Vector3(90F, angle, 0)), Time.deltaTime * rotationSpeed * 0.2F);
@@ -122,8 +119,14 @@ public class WeaponMissile : WeaponAmmoBehaviour
             },
             () => rigidBody.position.y <= 0,
             null,
-            false)
-        };
+            false);
+        
+        
+        missileBehaviourSequence = new BehaviourSequence();
+        missileBehaviourSequence.AddStep(launchStep);
+        missileBehaviourSequence.AddStep(altitudeIncreaseStep);
+        missileBehaviourSequence.AddStep(forwardVelocity);
+        missileBehaviourSequence.AddStep(rotateAndLand);
     }
 
     private void Update()
@@ -197,6 +200,6 @@ public class WeaponMissile : WeaponAmmoBehaviour
     }
     public override void OnFixedUpdate()
     {
-        behaviourSteps[behaviourStep].Process();
+        missileBehaviourSequence.Process();
     }
 }

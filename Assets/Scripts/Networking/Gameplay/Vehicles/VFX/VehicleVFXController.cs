@@ -1,7 +1,10 @@
+using Unity.Netcode;
 using UnityEngine;
 
-public class VehicleVFXController : MonoBehaviour
+public class VehicleVFXController : NetworkedVehicleComponent
 {
+    public NetworkVariable<bool> aliveParticles = new  NetworkVariable<bool>(true, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    
     [System.Serializable]
     private class CachedParticleData
     {
@@ -28,12 +31,47 @@ public class VehicleVFXController : MonoBehaviour
     [Space(10)]
     [SerializeField] private CachedParticleData[] cachedParticleData;
     
+    public ValueTracker exhaustSmoke;
+    
     public ParticleSystem[] exhaustParticles;
+    public ParticleSystem onDeathFireParticles;
     
     
     private void Awake()
     {
         CacheParticles();
+        
+        aliveParticles.OnValueChanged += (bool oldValue, bool newValue) =>
+        {
+            Debug.Log($"VehicleVFXController :: aliveParticles :: {newValue}");
+            ToggleExhausts(newValue);
+            onDeathFireParticles.gameObject.SetActive(!newValue);
+
+            if (newValue)
+            {
+                onDeathFireParticles.Pause();
+            }
+            else
+            {
+                onDeathFireParticles.Play(); 
+            }
+        };
+    }
+
+    public void Setup(VehicleController vehicleController)
+    {
+        this.vehicle = vehicleController;
+        
+        // TODO EXTRA: Could be moved to Awake method so all clients make use of this
+        exhaustSmoke = new ValueTracker(this,
+            () => vehicle.velocityTracker.z.velocity >= 10,
+            () => vehicle.velocityTracker.z.velocity < 10, 
+            () => {
+                LerpLifetimeOptions(2, 0.2f);
+                EmitImmediate(50);
+            },
+            () => ToggleExhausts(false)
+        );
     }
 
     private void CacheParticles()
@@ -99,5 +137,30 @@ public class VehicleVFXController : MonoBehaviour
         {
             exhaustParticles[i].Emit(amount);
         }
+    }
+
+    /// <summary>
+    /// Toggle exhaust particles on/off
+    /// </summary>
+    /// <param name="choice"></param>
+    public void ToggleExhausts(bool choice)
+    {
+        Debug.Log($"EXHAUSTS {choice}");
+        for (int i = 0; i < exhaustParticles.Length; i++)
+        {
+            if (choice)
+            {
+                exhaustParticles[i].Play();
+            }
+            else
+            {
+                exhaustParticles[i].Pause();
+            }
+        }
+    }
+
+    public void CookOffEffect()
+    {
+        
     }
 }

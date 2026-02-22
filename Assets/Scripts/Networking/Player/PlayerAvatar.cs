@@ -43,7 +43,6 @@ public class PlayerAvatar : NetworkBehaviour
         if (IsOwner)
         {
             GameplayNetworkManager.Instance?.SetLocalAvatar(this);
-            // GameplayNetworkManager.Instance?.SpawnPlayerCamera();
         }
         else
         {

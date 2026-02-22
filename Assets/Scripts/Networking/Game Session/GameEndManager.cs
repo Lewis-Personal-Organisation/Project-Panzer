@@ -79,9 +79,4 @@ public class GameEndManager : Singleton<GameEndManager>
 
         return gameResultsData;
     }
-
-    public void ReturnToMainMenu()
-    {
-        SceneManager.LoadScene("ServerlessMultiplayerGameSample");
-    }
 }

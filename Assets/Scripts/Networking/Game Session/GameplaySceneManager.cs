@@ -1,24 +1,16 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 using TMPro;
 using Unity.Netcode;
 using Unity.Services.Authentication;
 using Unity.Services.Lobbies;
-using UnityEditor;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using UnityEngine.Serialization;
 
 public class GameplaySceneManager : Singleton<GameplaySceneManager>
 {
     [SerializeField] private GameplayNetworkManager gameplayNetworkManagerPrefab;
 
     public bool didPlayerPressLeaveButton { get; private set; }
-
-
+    
     [field: SerializeField] public Transform[] spawnPoints { get; private set; } = new Transform[4];
     [SerializeField] public TextMeshProUGUI timer;
     
@@ -47,7 +39,8 @@ public class GameplaySceneManager : Singleton<GameplaySceneManager>
 
     public void SetCountdown(int seconds)
     {
-        GameplaySceneManager.Instance.timer.text = $"{seconds}";
+        // GameplaySceneManager.Instance.timer.text = $"{seconds}";
+        GameplayUI.Instance.SetCountdownTimer($"{seconds}");
     }
     
     public void ShowGameTimer(int seconds)

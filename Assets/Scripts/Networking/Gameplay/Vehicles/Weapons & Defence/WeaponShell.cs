@@ -20,10 +20,8 @@ public class WeaponShell : WeaponAmmoBehaviour
     {
         this.owner = weaponController;
         
-        NetworkString playerName = new NetworkString();
-        playerName.Value = GameplayNetworkManager.Instance.localPlayerName;
+        ownerName.Value = new NetworkString(GameplayNetworkManager.Instance.localPlayerName);
         Debug.Log(ownerName.Value.Value);
-        ownerName.Value = playerName;
         
         transform.SetPositionAndRotation(position, rotation);
         shellDirection = rotation * Vector3.forward;

@@ -9,45 +9,7 @@ using Debug = UnityEngine.Debug;
 [RequireComponent(typeof(Rigidbody))]
 public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggleable
 {
-    private class ValueTracker
-    {
-        private readonly MonoBehaviour host;
-        private readonly Func<bool> activatePredicate;
-        private readonly Func<bool> resetPredicate;
-        private readonly UnityAction onValueReached = null;
-        private Coroutine routine = null;
-        
-        public ValueTracker(MonoBehaviour host, Func<bool> activatePredicate, Func<bool> resetPredicate, UnityAction onValueReached)
-        {
-            this.host = host;
-            this.activatePredicate = activatePredicate;
-            this.resetPredicate = resetPredicate;
-            this.onValueReached = onValueReached;
-            Shutdown();
-            routine = host.StartCoroutine(WaitForActivate());
-        }
-        
-        private IEnumerator WaitForActivate()
-        {
-            yield return new WaitUntil(activatePredicate);
-            onValueReached.Invoke();
-            routine = host.StartCoroutine(Reset());
-        }
-        
-        private IEnumerator Reset()
-        {
-            yield return new WaitUntil(resetPredicate);
-            routine = host.StartCoroutine(WaitForActivate());
-        }
-
-        public void Shutdown()
-        {
-            if (routine != null)
-                host.StopCoroutine(routine);
-        }
-    }
-    
-    [Header("Core Parameters")]
+    [Header("Core Components")]
     public VehicleMobility mobility;
     [field: SerializeField] public CameraController cameraController {get; private set;}
     [field: SerializeField] public VehicleInputManager inputManager {get; private set;}
@@ -60,7 +22,6 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
     [SerializeField] private VehicleTrackTextureScroller trackTextureScroller;
     [SerializeField] private VehicleWeaponController weaponController;
     [SerializeField] private VehicleDefence defence;
-    private ValueTracker exhaustSmoke;
     
     [Header("Transforms")]
     public Rigidbody hullRigidbody;
@@ -84,6 +45,7 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
     public bool testing = false;
 
     private UnityAction OnFixedUpdate = null;
+    
     
     
     public override void OnNetworkSpawn()
@@ -147,13 +109,7 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
             r.material.SetFloat("_ColorOffset", teamColor - 1);
         }
 
-        exhaustSmoke = new ValueTracker(this,
-            () => velocityTracker.z.velocity >= 10,
-            () => velocityTracker.z.velocity < 10, () =>
-            {
-                vfxController.LerpLifetimeOptions(2, 0.2f);
-                vfxController.EmitImmediate(50);
-            });
+        vfxController.Setup(this);
 
         OnFixedUpdate += ProcessVehicle;
     }
@@ -201,12 +157,13 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
         weaponController.Disable();
         turretRotator.Disable();
         defence.Disable();
-        exhaustSmoke.Shutdown();
+        vfxController.aliveParticles.Value = false;
     }
 
     // Called when the player respawns. Reactivates systems
     public void Enable()
     {
-        
+        vfxController.onDeathFireParticles.gameObject.SetActive(false);
+        vfxController.onDeathFireParticles.Pause();
     }
 }

@@ -231,7 +231,7 @@ public class LobbyManager : Singleton<LobbyManager>
 	{
 		try
 		{
-			Debug.Log($"LobbyManager :: CreateLobby called with relay join code: {relayJoinCode}");
+			// Debug.Log($"LobbyManager :: CreateLobby called with relay join code: {relayJoinCode}");
 			playerDictionaryData = new(hostName, false, -1);
 			isHost = true;
 			wasGameStarted = false;
@@ -260,11 +260,11 @@ public class LobbyManager : Singleton<LobbyManager>
 			// Create and cache the new lobby
 			activeLobby = await LobbyService.Instance.CreateLobbyAsync(lobbyName, maxPlayers, options);
 
-			Debug.Log($"LobbyManager :: Lobby created. Stored relay join code: {activeLobby.Data[relayJoinCodeKey].Value}");
+			// Debug.Log($"LobbyManager :: Lobby created. Stored relay join code: {activeLobby.Data[relayJoinCodeKey].Value}");
 			
 			// Register lobby event callbacks
 			LobbyEventCallbacks callbacks = new LobbyEventCallbacks();
-			callbacks.LobbyEventConnectionStateChanged += OnConnectionStateChanged;
+			callbacks.LobbyEventConnectionStateChanged += OnLobbyConnectionStateChanged;
 			callbacks.LobbyChanged += OnLobbyChangedNotif;
 			
 			try
@@ -630,11 +630,15 @@ public class LobbyManager : Singleton<LobbyManager>
 	/// Logs the connection state fired by events
 	/// </summary>
 	/// <param name="newState"></param>
-	public void OnConnectionStateChanged(LobbyEventConnectionState newState)
+	public void OnLobbyConnectionStateChanged(LobbyEventConnectionState newState)
 	{
 		if (isHost)
 		{
-			Debug.Log($"LobbyManager :: OnConnectionStateChanged :: Lobby Connection State is {newState} (As Host)");
+			Debug.Log($"LobbyManager :: OnConnectionStateChanged :: Lobby Connection State is {newState} (Host)");
+		}
+		else
+		{
+			Debug.Log($"LobbyManager :: OnConnectionStateChanged :: Lobby Connection State is {newState} (Client)");
 		}
 	}
 
@@ -655,8 +659,6 @@ public class LobbyManager : Singleton<LobbyManager>
 	{
 		if (changes.LobbyDeleted)
 		{
-			Debug.Log($"Lobby Manager :: OnLobbyChangedNotif :: Lobby Deleted. Host? {isHost}");
-
 			OnPlayerNotInLobby();
 
 			LobbyToMainMenuTransition();
@@ -668,13 +670,13 @@ public class LobbyManager : Singleton<LobbyManager>
 
 			if (changes.PlayerData.Changed || changes.PlayerJoined.Changed || changes.PlayerLeft.Changed)
 			{
-				Debug.Log($"LobbyManager :: OnLobbyChangedNotif :: PlayerData Changed? {changes.PlayerData.Changed}, PlayersJoined? {changes.PlayerJoined.Changed}, PlayerLeft? {changes.PlayerLeft.Changed}");
+				// Debug.Log($"LobbyManager :: OnLobbyChangedNotif :: PlayerData Changed? {changes.PlayerData.Changed}, PlayersJoined? {changes.PlayerJoined.Changed}, PlayerLeft? {changes.PlayerLeft.Changed}");
 
 				CacheLocalPlayer();
 
 				if (activeLobby.Players.Exists(player => player.Id == localPlayerId))
 				{
-					Debug.Log($"LobbyManager :: OnLobbyChangedNotif :: Our Player exists. Checking if Game is ready'd up. Also adjusting player slots etc");
+					// Debug.Log($"LobbyManager :: OnLobbyChangedNotif :: Our Player exists. Checking if Game is ready'd up. Also adjusting player slots etc");
 					var isGameReady = AllPlayersReady(activeLobby);
 
 					// Trigger event with value (This starts the game if all players are ready)
@@ -682,7 +684,7 @@ public class LobbyManager : Singleton<LobbyManager>
 				}
 				else
 				{
-					Debug.Log("Lobby Manager :: OnLobbyChangedNotif : Player Not in Lobby");
+					// Debug.Log("Lobby Manager :: OnLobbyChangedNotif : Player Not in Lobby");
 					OnPlayerNotInLobby();
 				}
 				return;
@@ -725,7 +727,7 @@ public class LobbyManager : Singleton<LobbyManager>
 
 			// Callbacks
 			LobbyEventCallbacks callbacks = new LobbyEventCallbacks();
-			callbacks.LobbyEventConnectionStateChanged += OnConnectionStateChanged;
+			callbacks.LobbyEventConnectionStateChanged += OnLobbyConnectionStateChanged;
 			callbacks.LobbyChanged += OnLobbyChangedNotif;
 			
 			try
