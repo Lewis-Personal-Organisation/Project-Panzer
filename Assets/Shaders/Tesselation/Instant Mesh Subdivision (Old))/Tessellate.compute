@@ -1,0 +1,74 @@
+#pragma kernel CSMain
+
+struct VertexData
+{
+    float3 pos;
+    float2 uv;
+};
+
+StructuredBuffer<VertexData> _InVertices;
+RWStructuredBuffer<VertexData> _OutVertices;
+
+StructuredBuffer<int3>   _InTriangles;
+RWStructuredBuffer<uint3>  _OutTriangles;
+
+int _TriangleCount;
+
+[numthreads(128, 1, 1)]
+void CSMain(uint id : SV_DispatchThreadID)
+{
+    if (id >= _TriangleCount) return;
+
+    int3 tri = _InTriangles[id];
+
+    VertexData vd0 = _InVertices[tri.x];
+    VertexData vd1 = _InVertices[tri.y];
+    VertexData vd2 = _InVertices[tri.z];
+
+    float3 v0 = vd0.pos;
+    float3 v1 = vd1.pos;
+    float3 v2 = vd2.pos;
+
+    float2 uv0 = vd0.uv;
+    float2 uv1 = vd1.uv;
+    float2 uv2 = vd2.uv;
+
+    float3 m0 = (v0 + v1) * 0.5;
+    float3 m1 = (v1 + v2) * 0.5;
+    float3 m2 = (v2 + v0) * 0.5;
+
+    float2 uv_m0 = (uv0 + uv1) * 0.5;
+    float2 uv_m1 = (uv1 + uv2) * 0.5;
+    float2 uv_m2 = (uv2 + uv0) * 0.5;
+
+    uint baseVert = id * 6;
+    uint baseTri  = id * 4;
+
+    // Vertices
+    // Vertices
+    VertexData o;
+
+    o.pos = v0; o.uv = uv0;
+    _OutVertices[baseVert + 0] = o;
+
+    o.pos = m0; o.uv = uv_m0;
+    _OutVertices[baseVert + 1] = o;
+
+    o.pos = m2; o.uv = uv_m2;
+    _OutVertices[baseVert + 2] = o;
+
+    o.pos = v1; o.uv = uv1;
+    _OutVertices[baseVert + 3] = o;
+
+    o.pos = m1; o.uv = uv_m1;
+    _OutVertices[baseVert + 4] = o;
+
+    o.pos = v2; o.uv = uv2;
+    _OutVertices[baseVert + 5] = o;
+
+    // Triangles
+    _OutTriangles[baseTri + 0] = uint3(baseVert + 0, baseVert + 1, baseVert + 2);
+    _OutTriangles[baseTri + 1] = uint3(baseVert + 1, baseVert + 3, baseVert + 4);
+    _OutTriangles[baseTri + 2] = uint3(baseVert + 2, baseVert + 4, baseVert + 5);
+    _OutTriangles[baseTri + 3] = uint3(baseVert + 1, baseVert + 4, baseVert + 2);
+}
