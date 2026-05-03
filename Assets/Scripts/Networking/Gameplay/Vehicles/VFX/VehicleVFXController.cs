@@ -34,8 +34,9 @@ public class VehicleVFXController : NetworkedVehicleComponent
     public ValueTracker exhaustSmoke;
     
     public ParticleSystem[] exhaustParticles;
-    public ParticleSystem onDeathFireParticles;
-    
+    [SerializeField] private ParticleSystem onDeathFireParticles;
+    [SerializeField] private ParticleSystem onDeathSmokeParticles;
+
     
     private void Awake()
     {
@@ -86,6 +87,12 @@ public class VehicleVFXController : NetworkedVehicleComponent
         }
     }
 
+    public void OnRespawn()
+    {
+        onDeathFireParticles.gameObject.SetActive(false);
+        onDeathFireParticles.Pause();
+    }
+    
     public void ApplyLifetimeOptions()
     {
         for (int i = 0; i < exhaustParticles.Length; i++)

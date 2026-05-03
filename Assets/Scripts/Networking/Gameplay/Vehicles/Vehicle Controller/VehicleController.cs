@@ -130,7 +130,7 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
         
         groundDetector.DetectGroundState();
 
-        SceneData.Label("Can Rotate? ", $"{groundDetector.FullyGrounded}");
+        // SceneData.Label("Can Rotate? ", $"{groundDetector.FullyGrounded}");
         if (groundDetector.FullyGrounded)
         {
             bodyRotator.RotateTank();
@@ -153,7 +153,8 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
     public void Disable()
     {
         Debug.Log("PLAYER DESTROYED");
-        OnFixedUpdate = null;
+        // OnFixedUpdate = null;
+        inputManager.enabled = false;
         weaponController.Disable();
         turretRotator.Disable();
         defence.Disable();
@@ -163,7 +164,6 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
     // Called when the player respawns. Reactivates systems
     public void Enable()
     {
-        vfxController.onDeathFireParticles.gameObject.SetActive(false);
-        vfxController.onDeathFireParticles.Pause();
+        vfxController.OnRespawn();
     }
 }

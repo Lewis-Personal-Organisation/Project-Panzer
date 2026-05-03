@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
@@ -25,6 +26,14 @@ public class VehicleDefence : VehicleComponent, IVehicleComponentToggleable
     public void Setup(VehicleController owner)
     {
         vehicle = owner;
+    }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Alpha0))
+        {
+            TakeDamageLocal(Extensions.TankSide.Front, 55);
+        }
     }
 
     /// <summary>
@@ -84,7 +93,7 @@ public class VehicleDefence : VehicleComponent, IVehicleComponentToggleable
     /// </summary>
     private void TakeDamage(Extensions.TankSide side, float baseDamage)
     {
-        // Get the thickness for the side of tank that was hit
+        // Get the thickness for the side of vehicle that was hit
         float thickness = vehicleArmour.GetThickness(side);
         float damage = baseDamage - thickness * 0.075F;         // base 25 dmg subtract (80 * 0.075) => 6 = 19
         health = Mathf.Clamp(health - damage, 0F, 100);
@@ -108,6 +117,21 @@ public class VehicleDefence : VehicleComponent, IVehicleComponentToggleable
         {
             vehicle.Disable();
             GameplayNotifications.Instance.SendNetworkMessage($"Player {GameplayNetworkManager.Instance.localPlayerName} was destroyed!");
+        }
+    }
+
+    private void TakeDamageLocal(Extensions.TankSide side, float baseDamage)
+    {
+        // Get the thickness for the side of vehicle that was hit
+        float thickness = vehicleArmour.GetThickness(side);
+        float damage = baseDamage - thickness * 0.075F;         // base 25 dmg subtract (80 * 0.075) => 6 = 19
+        health = Mathf.Clamp(health - damage, 0F, 100);
+        
+        Debug.Log($"Hit taken! => Side hit: {side} | Damage: {damage} | New Health: {health}");
+
+        if (health <= 0F)
+        {
+            vehicle.Disable();
         }
     }
 }

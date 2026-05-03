@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class VehicleInputManager : MonoBehaviour
@@ -35,5 +36,11 @@ public class VehicleInputManager : MonoBehaviour
     {
         moveInput = Input.GetAxisRaw("Vertical");
         turnInputValue = Input.GetAxis("Horizontal");
+    }
+
+    private void OnDisable()
+    {
+        moveInput = 0;
+        turnInputValue = 0;
     }
 }

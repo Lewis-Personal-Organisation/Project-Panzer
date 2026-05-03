@@ -13,7 +13,7 @@ public abstract class VehicleWeaponController : NetworkedVehicleComponent, IVehi
     [field: SerializeField] public Transform shellSpawnPoint {get; private set;}
     [SerializeField] protected VehicleWeaponLeanController weaponLeanController;
     [SerializeField] protected int initPoolSize;
-    public float reloadTimer = 0;
+    protected float reloadTimer = 0;
     private UnityAction OnSimulate;
 
 

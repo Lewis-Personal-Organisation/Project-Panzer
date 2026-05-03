@@ -124,7 +124,6 @@ public class SingleShotWeapon : VehicleWeaponController
             shell.Setup(this, shellSpawnPoint.position, shellSpawnPoint.rotation);
         }
         
-        audioSource.PlayOneShot(weapon.fireAudio);
         vehicle.cameraController.Shake(weapon.OnFireShakeParams);
         weaponLeanController.PrepareLean();
     }
@@ -147,6 +146,7 @@ public class SingleShotWeapon : VehicleWeaponController
     private void ShootServerRpc(ulong ownerID, Vector3 position, Quaternion rotation)
     {
         NetworkObject shellNetObj = GetFromOrAddToPool(position, rotation, ownerID);
+        audioSource.PlayOneShot(weapon.fireAudio);
         Debug.Log($"Server: Asking clients to move new shell");
         ActivateClientRpc(shellNetObj.NetworkObjectId, position, rotation);
     }
@@ -157,9 +157,11 @@ public class SingleShotWeapon : VehicleWeaponController
     [ClientRpc]
     private void ActivateClientRpc(ulong bulletID, Vector3 pos, Quaternion rotation)
     {
-        if (NetworkManager.Singleton.IsServer) return;
+        if (NetworkManager.Singleton.IsServer) return;  // Don't run this on the server
         if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(bulletID, out var netObj))
             return;
+        
+        audioSource.PlayOneShot(weapon.fireAudio);  // Play Gunfire sound
         
         Debug.Log($"Client (All): Moving new shell");
         netObj.transform.SetPositionAndRotation(pos, rotation);

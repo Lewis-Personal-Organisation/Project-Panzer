@@ -71,7 +71,7 @@ public class MainMenuUI : Panel
 		// Display error popup if we reloaded this script from another scene (e.g, gameplay)
 		if (PersistentDataHost.Instance.crossSceneData.errorMessage != string.Empty)
 		{
-			UIManager.Instance.PushErrorScreen(PersistentDataHost.Instance.crossSceneData.errorMessage, 0.333333F, 5, 5, 1, 1.75F);
+			UIManager.Instance.PushErrorScreen(PersistentDataHost.Instance.crossSceneData.errorMessage, NotifStyle.Info, 0.333333F, 5, 5, 1, 1.75F);
 			PersistentDataHost.Instance.crossSceneData.errorMessage = string.Empty;
 		}
 	}

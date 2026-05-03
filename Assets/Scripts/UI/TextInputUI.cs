@@ -192,7 +192,7 @@ public class TextInputUI : Panel
 				}
 				else
 				{
-					UIManager.PushPanel(UIManager.NotificationUI.PrepareErrorMsg("Entered Relay Code is incorrect. Try again."));
+					UIManager.Instance.PushErrorScreen("Join Code or Code Format incorrect", NotifStyle.Error, 0.2F, 5, 5, 1.5F, 1F);
 				}
 				break;
 		}

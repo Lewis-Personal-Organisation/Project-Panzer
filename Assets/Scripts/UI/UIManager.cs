@@ -77,12 +77,12 @@ public class UIManager : Singleton<UIManager>
 	/// <summary>
 	/// Shows the error screen with a message, timeout speed, fade speeds and size and then returns to the main menu
 	/// </summary>
-	public void PushErrorScreen(string errMsg, float progressSpeed = 0.333333F, float fadeInSpeed = 5F, float fadeOutSpeed = 5F, float widthMulti = 0, float heightMulti = 0)
+	public void PushErrorScreen(string errMsg, NotifStyle msgStyle = NotifStyle.Info, float progressSpeed = 0.333333F, float fadeInSpeed = 5F, float fadeOutSpeed = 5F, float widthMulti = 0, float heightMulti = 0)
 	{
 		// Show and Fade in
 		FadedBackgroundUI.Fade(0, .75F, fadeInSpeed, () =>
 		{
-			NotificationUI.PrepareStyleAndMessage(NotifStyle.Info, errMsg, widthMulti, heightMulti);
+			NotificationUI.PrepareStyleAndMessage(msgStyle, errMsg, widthMulti, heightMulti);
 			NotificationUI.StartProgressBar(0, progressSpeed, true, true, () =>
 			{
 				FadedBackgroundUI.Fade(.75F, 0F, fadeOutSpeed, () =>

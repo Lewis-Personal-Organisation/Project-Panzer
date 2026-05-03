@@ -320,6 +320,7 @@ public class LobbyManager : Singleton<LobbyManager>
 		try
 		{
 			await PrepareToJoinLobby(playerName);
+			
 			if (this == null)
 			{
 				Debug.LogError($"LobbyManager :: JoinPrivateLobby :: Task Failed!");
@@ -330,6 +331,7 @@ public class LobbyManager : Singleton<LobbyManager>
 
 			Debug.Log($"Joining lobby with Code {lobbyJoinCode}");
 			activeLobby = await LobbyService.Instance.JoinLobbyByCodeAsync(lobbyJoinCode, options);
+			
 			if (this == null)
 			{
 				Debug.LogError($"LobbyManager :: JoinPrivateLobby :: Task Failed!");
@@ -337,27 +339,15 @@ public class LobbyManager : Singleton<LobbyManager>
 			
 			players = activeLobby?.Players;
 		}
-		catch (LobbyServiceException e) when (e.Reason == LobbyExceptionReason.LobbyNotFound)
-		{
-			Debug.LogException(e);
-			if (this == null) return null;
-
-			activeLobby = null;
-
-			throw;
-		}
-		catch (LobbyServiceException e) when (e.Reason == LobbyExceptionReason.LobbyFull)
-		{
-			Debug.LogException(e);
-			if (this == null) return null;
-
-			activeLobby = null;
-
-			throw;
-		}
 		catch (Exception e)
 		{
-			Debug.LogException(e);
+			Debug.LogWarning(e);
+			if (this == null) return null;
+
+			activeLobby = null;
+
+			LobbyToMainMenuTransition();
+			UIManager.Instance.PushErrorScreen("Could not join lobby");
 		}
 
 		return activeLobby;
