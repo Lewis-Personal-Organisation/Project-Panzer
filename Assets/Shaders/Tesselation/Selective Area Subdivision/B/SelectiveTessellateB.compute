@@ -1,0 +1,254 @@
+#pragma kernel CSApplyBrush
+#pragma kernel CSMarkTessellation
+#pragma kernel CSCountOutput
+#pragma kernel CSPrefixSum
+#pragma kernel CSTessellate
+#pragma kernel CSScatter
+
+struct VertexData
+{
+    float3 pos;
+    float2 uv;
+};
+
+RWStructuredBuffer<float3>      _InVertices;          // persistent, deformable positions
+RWStructuredBuffer<float3>      _OriginalVertices;    // original positions (for max drop)
+                                                      // RWStructuredBuffer so it can be bound to both
+                                                      // kApply and kTess without access flag conflicts.
+                                                      // Neither kernel writes to it.
+StructuredBuffer<float2>        _InUVs;               // original UVs
+StructuredBuffer<uint3>         _InTriangles;         // base triangles
+
+RWStructuredBuffer<uint>        _TessFlags;           // 0 = no tess, 1 = tess
+RWStructuredBuffer<uint>        _PersistentMask;      // 1 = was tessellated at least once
+
+RWStructuredBuffer<uint>        _Counts;              // per-triangle output tri count (1 or 4)
+RWStructuredBuffer<uint>        _Offsets;             // prefix sum of _Counts
+
+RWStructuredBuffer<VertexData>  _OutVertices;         // expanded vertices (max 6 per input tri)
+RWStructuredBuffer<uint3>       _OutTriangles;        // expanded triangles (max 4 per input tri)
+RWStructuredBuffer<uint3>       _OutTrianglesCompact; // compacted triangles
+
+cbuffer TessParams
+{
+    int   _TriangleCount;
+    int   _VertexCount;
+    int   _UsePersistentMask;
+    int   _PersistentMaskCount;
+    float3 _TessCenter;
+    float  _TessRadius;
+    float  _DeformRadius;
+    float  _FlattenDepth;
+    float  _FlattenSpeed;   // ADDED: scales _FlattenDepth each frame.
+                            // 1 = original speed. Higher = faster descent.
+    float  _MaxSnowDepth;
+    float  _FlatBottomWorldY;
+    float4x4 _LocalToWorld;
+    float4x4 _WorldToLocal;
+};
+
+float3 FlattenSnow(float3 p, float3 original)
+{
+    float3 pWorld = mul(_LocalToWorld, float4(p, 1.0)).xyz;
+    float dist = distance(pWorld, _TessCenter);
+
+    if (dist > _DeformRadius)
+        return p;
+
+    float t = 1.0 - saturate(dist / _DeformRadius);
+
+    // CHANGED: multiply by _FlattenSpeed to make descent rate configurable.
+    float newY = p.y - (_FlattenDepth * _FlattenSpeed * t);
+
+    float3 flatWorld = pWorld;
+    flatWorld.y = _FlatBottomWorldY;
+    float flatMinLocalY = mul(_WorldToLocal, float4(flatWorld, 1.0)).y;
+    p.y = max(newY, flatMinLocalY);
+
+    return p;
+}
+
+// 1) Apply brush directly to persistent vertex buffer (persistent deformation)
+[numthreads(128,1,1)]
+void CSApplyBrush(uint id : SV_DispatchThreadID)
+{
+    if (id >= _VertexCount) return;
+
+    float3 defPos  = _InVertices[id];
+    float3 origPos = _OriginalVertices[id];
+
+    _InVertices[id] = FlattenSnow(defPos, origPos);
+}
+
+// 2) Mark triangles for tessellation.
+//    Boundary-aware: any vertex inside _TessRadius triggers subdivision.
+[numthreads(128,1,1)]
+void CSMarkTessellation(uint id : SV_DispatchThreadID)
+{
+    if (id >= _TriangleCount) return;
+
+    if (_UsePersistentMask == 1 && id < (uint)_PersistentMaskCount && _PersistentMask[id] == 1u)
+    {
+        _TessFlags[id] = 1u;
+        return;
+    }
+
+    uint3 tri = _InTriangles[id];
+
+    float3 p0 = _InVertices[tri.x];
+    float3 p1 = _InVertices[tri.y];
+    float3 p2 = _InVertices[tri.z];
+
+    float3 p0World = mul(_LocalToWorld, float4(p0, 1.0)).xyz;
+    float3 p1World = mul(_LocalToWorld, float4(p1, 1.0)).xyz;
+    float3 p2World = mul(_LocalToWorld, float4(p2, 1.0)).xyz;
+
+    float d0 = distance(p0World, _TessCenter);
+    float d1 = distance(p1World, _TessCenter);
+    float d2 = distance(p2World, _TessCenter);
+
+    bool inside = (d0 <= _TessRadius) || (d1 <= _TessRadius) || (d2 <= _TessRadius);
+
+    if (inside)
+    {
+        _TessFlags[id] = 1u;
+        if (_UsePersistentMask == 1 && id < (uint)_PersistentMaskCount)
+            _PersistentMask[id] = 1u;
+    }
+    else
+    {
+        _TessFlags[id] = 0u;
+    }
+}
+
+// 3) Count output triangles
+[numthreads(128,1,1)]
+void CSCountOutput(uint id : SV_DispatchThreadID)
+{
+    if (id >= _TriangleCount) return;
+
+    uint flag = _TessFlags[id];
+
+    _Counts[id] = (flag == 1u) ? 4u : 1u;
+}
+
+// 4) Prefix sum over counts
+[numthreads(1,1,1)]
+void CSPrefixSum(uint id : SV_DispatchThreadID)
+{
+    if (id != 0) return;
+
+    uint sum = 0;
+    for (uint i = 0; i < (uint)_TriangleCount; i++)
+    {
+        _Offsets[i] = sum;
+        sum += _Counts[i];
+    }
+}
+
+// 5) Tessellate using already-deformed vertices.
+[numthreads(128,1,1)]
+void CSTessellate(uint id : SV_DispatchThreadID)
+{
+    if (id >= _TriangleCount) return;
+
+    uint3 tri = _InTriangles[id];
+
+    float3 v0 = _InVertices[tri.x];
+    float3 v1 = _InVertices[tri.y];
+    float3 v2 = _InVertices[tri.z];
+
+    float2 uv0 = _InUVs[tri.x];
+    float2 uv1 = _InUVs[tri.y];
+    float2 uv2 = _InUVs[tri.z];
+
+    uint flag = _TessFlags[id];
+
+    uint baseVert = id * 6;
+    uint baseTri  = id * 4;
+
+    if (flag == 0u)
+    {
+        VertexData vd0, vd1, vd2;
+
+        vd0.pos = v0; vd0.uv = uv0;
+        vd1.pos = v1; vd1.uv = uv1;
+        vd2.pos = v2; vd2.uv = uv2;
+
+        _OutVertices[baseVert + 0] = vd0;
+        _OutVertices[baseVert + 1] = vd1;
+        _OutVertices[baseVert + 2] = vd2;
+
+        _OutTriangles[baseTri + 0] = uint3(baseVert + 0, baseVert + 1, baseVert + 2);
+        _OutTriangles[baseTri + 1] = uint3(0,0,0);
+        _OutTriangles[baseTri + 2] = uint3(0,0,0);
+        _OutTriangles[baseTri + 3] = uint3(0,0,0);
+
+        return;
+    }
+
+    // FIXED: midpoints are the average of the already-deformed corner positions.
+    // v0/v1/v2 come from _InVertices which CSApplyBrush has already deformed this
+    // frame. Averaging them gives exactly the correct deformed midpoint position —
+    // it naturally inherits the accumulated depression from its two parent corners
+    // without needing any extra FlattenSnow call. Calling FlattenSnow on top of
+    // this (as before) caused double-deformation. Calling FlattenSnow(origM, origM)
+    // caused teleporting because it always snapped to a fixed one-step offset from
+    // the resting surface regardless of accumulated corner depth.
+    float3 m0 = (v0 + v1) * 0.5;
+    float3 m1 = (v1 + v2) * 0.5;
+    float3 m2 = (v2 + v0) * 0.5;
+
+    float2 uv_m0 = (uv0 + uv1) * 0.5;
+    float2 uv_m1 = (uv1 + uv2) * 0.5;
+    float2 uv_m2 = (uv2 + uv0) * 0.5;
+
+    VertexData o;
+
+    o.pos = v0; o.uv = uv0;
+    _OutVertices[baseVert + 0] = o;
+
+    o.pos = m0; o.uv = uv_m0;
+    _OutVertices[baseVert + 1] = o;
+
+    o.pos = m2; o.uv = uv_m2;
+    _OutVertices[baseVert + 2] = o;
+
+    o.pos = v1; o.uv = uv1;
+    _OutVertices[baseVert + 3] = o;
+
+    o.pos = m1; o.uv = uv_m1;
+    _OutVertices[baseVert + 4] = o;
+
+    o.pos = v2; o.uv = uv2;
+    _OutVertices[baseVert + 5] = o;
+
+    _OutTriangles[baseTri + 0] = uint3(baseVert + 0, baseVert + 1, baseVert + 2);
+    _OutTriangles[baseTri + 1] = uint3(baseVert + 1, baseVert + 3, baseVert + 4);
+    _OutTriangles[baseTri + 2] = uint3(baseVert + 2, baseVert + 4, baseVert + 5);
+    _OutTriangles[baseTri + 3] = uint3(baseVert + 1, baseVert + 4, baseVert + 2);
+}
+
+// 6) Scatter compact triangles
+[numthreads(128,1,1)]
+void CSScatter(uint id : SV_DispatchThreadID)
+{
+    if (id >= _TriangleCount) return;
+
+    uint flag    = _TessFlags[id];
+    uint inBase  = id * 4;
+    uint outBase = _Offsets[id];
+
+    if (flag == 0u)
+    {
+        uint3 t0 = _OutTriangles[inBase + 0];
+        _OutTrianglesCompact[outBase + 0] = t0;
+    }
+    else
+    {
+        _OutTrianglesCompact[outBase + 0] = _OutTriangles[inBase + 0];
+        _OutTrianglesCompact[outBase + 1] = _OutTriangles[inBase + 1];
+        _OutTrianglesCompact[outBase + 2] = _OutTriangles[inBase + 2];
+        _OutTrianglesCompact[outBase + 3] = _OutTriangles[inBase + 3];
+    }
+}

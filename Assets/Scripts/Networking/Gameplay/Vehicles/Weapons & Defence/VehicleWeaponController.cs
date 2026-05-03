@@ -8,6 +8,7 @@ using UnityEngine.Pool;
 public abstract class VehicleWeaponController : NetworkedVehicleComponent, IVehicleComponentToggleable
 {
     [field: SerializeField] public VehicleWeapon weapon { get; protected set; }
+    [field: SerializeField] public AudioSource audioSource { get; protected set; }
     // [field: SerializeField] public ObjectPool<WeaponShell> shellPool { get; protected set; }
     [field: SerializeField] public Transform shellSpawnPoint {get; private set;}
     [SerializeField] protected VehicleWeaponLeanController weaponLeanController;

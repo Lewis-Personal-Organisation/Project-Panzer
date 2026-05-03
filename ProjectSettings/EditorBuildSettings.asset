@@ -17,4 +17,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Test Ground.unity
     guid: e48e07763b075204f9c648ede40fb776
+  - enabled: 1
+    path: Assets/Scenes/Tesselation Testing Ground.unity
+    guid: 0909367607fe1004aa9a1fc84e487c5a
   m_configObjects: {}

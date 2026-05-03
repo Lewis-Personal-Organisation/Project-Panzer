@@ -18,10 +18,14 @@ public class WeaponShell : WeaponAmmoBehaviour
 
 	public override void Setup(VehicleWeaponController weaponController, Vector3 position, Quaternion rotation)
     {
-        this.owner = weaponController;
-        
-        ownerName.Value = new NetworkString(GameplayNetworkManager.Instance.localPlayerName);
-        Debug.Log(ownerName.Value.Value);
+        owner = weaponController;
+
+        // Setup if in non-testing environment
+        if (VehicleController.IsNetworked)
+        {
+            ownerName.Value = new NetworkString(GameplayNetworkManager.Instance.localPlayerName);
+            Debug.Log(ownerName.Value.Value); 
+        }
         
         transform.SetPositionAndRotation(position, rotation);
         shellDirection = rotation * Vector3.forward;

@@ -124,6 +124,7 @@ public class SingleShotWeapon : VehicleWeaponController
             shell.Setup(this, shellSpawnPoint.position, shellSpawnPoint.rotation);
         }
         
+        audioSource.PlayOneShot(weapon.fireAudio);
         vehicle.cameraController.Shake(weapon.OnFireShakeParams);
         weaponLeanController.PrepareLean();
     }

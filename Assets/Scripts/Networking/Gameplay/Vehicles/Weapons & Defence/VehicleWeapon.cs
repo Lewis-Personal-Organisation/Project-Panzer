@@ -5,8 +5,10 @@ using UnityEngine;
 public class VehicleWeapon : ScriptableObject
 {
     [field: SerializeField] public WeaponAmmoBehaviour shellPrefab { get; private set; }
+    [field: SerializeField] public AudioClip fireAudio { get; private set; }
     [field: SerializeField] public int ammoCount { get; private set; }
     [field: SerializeField] public float reloadTime { get; private set; }
+    
     
     // Shot UpdateLeanValues Data
     [field: SerializeField] public float xLeanMax { get; private set; }
