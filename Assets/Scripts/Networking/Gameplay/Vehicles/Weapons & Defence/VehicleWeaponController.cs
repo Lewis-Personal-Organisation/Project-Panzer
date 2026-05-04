@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Events;
@@ -15,6 +16,9 @@ public abstract class VehicleWeaponController : NetworkedVehicleComponent, IVehi
     [SerializeField] protected int initPoolSize;
     protected float reloadTimer = 0;
     private UnityAction OnSimulate;
+    
+    protected Queue<NetworkObject> availableShells = new Queue<NetworkObject>();
+    protected HashSet<NetworkObject> activeShells = new HashSet<NetworkObject>();
 
 
     public virtual void Setup(VehicleController vehicleController)
@@ -60,4 +64,49 @@ public abstract class VehicleWeaponController : NetworkedVehicleComponent, IVehi
     protected abstract void Reload();
     protected abstract void ResetWeapon();
 
+    /// <summary>
+    /// Server method for returning a weapon shell to the server pool
+    /// </summary>
+    [ServerRpc(RequireOwnership = false)]
+    public void ReturnToPoolServerRpc(NetworkObjectReference netObjRef)
+    {
+        if (!netObjRef.TryGet(out NetworkObject netObj))
+            return;
+
+        if (!activeShells.Remove(netObj))       // If the shell wasnt present in the active list, return
+            return;
+        
+        Debug.Log("Server: Pooling expired shell");
+        netObj.transform.position = new Vector3(0, -5, 0);              // Hide (reposition) the shell from gameplay
+        
+        if (netObj.TryGetComponent<WeaponShell>(out var shell))
+        {
+            shell.isPooled = true;
+        }
+        
+        availableShells.Enqueue(netObj);
+        
+        // Notify all clients to deactivate
+        DeactivateShellClientRpc(netObj.NetworkObjectId);
+    }
+    
+    /// <summary>
+    /// Deactivates a spawned shell object for all clients, if found in the list of server spawned objects
+    /// </summary>
+    [ClientRpc]
+    private void DeactivateShellClientRpc(ulong shellID)
+    {
+        if (NetworkManager.Singleton.IsServer) return;
+        
+        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(shellID, out var netObj))
+            return;
+        
+        Debug.Log("Client (All): Deactivating expired shell as requested from Server");
+        netObj.transform.position = new Vector3(0, -5, 0);
+        
+        if (netObj.TryGetComponent<WeaponShell>(out var shell))
+        {
+            shell.isPooled = true;
+        }
+    }
 }

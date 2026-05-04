@@ -22,6 +22,7 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
     [SerializeField] private VehicleTrackTextureScroller trackTextureScroller;
     [SerializeField] private VehicleWeaponController weaponController;
     [SerializeField] private VehicleDefence defence;
+    [SerializeField] private AudioListener audioListener;
     
     [Header("Transforms")]
     public Rigidbody hullRigidbody;
@@ -72,6 +73,9 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
         OnFixedUpdate?.Invoke();
     }
 
+    /// <summary>
+    /// The setup called on only the owning players client
+    /// </summary>
     private void Setup()
     {
         Debug.Log($"VehicleController :: Setup :: Called! We are the owner", this.gameObject);
@@ -82,6 +86,7 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
         TryGetComponent(ref weaponLean);
         TryGetComponent(ref weaponController, false);
         TryGetComponent(ref defence);
+        TryGetComponent(ref audioListener);
 
         cameraController = FindObjectOfType<CameraController>();
         cameraController.Setup(this);
@@ -94,6 +99,9 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
 
         if (defence)
             defence.Setup(this);
+
+        if (audioListener)
+            audioListener.enabled = true;
 
         paintMaterials = transform.GetComponentsInChildren<Renderer>();
 
@@ -114,6 +122,9 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
         OnFixedUpdate += ProcessVehicle;
     }
 
+    /// <summary>
+    /// Process Vehicle components
+    /// </summary>
     private void ProcessVehicle()
     {
         if (NetworkManager == null && !testing)

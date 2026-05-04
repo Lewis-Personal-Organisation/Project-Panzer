@@ -163,12 +163,8 @@ public class WeaponMissile : WeaponAmmoBehaviour
 
         if (lifetimeTimer <= 0)
         {
-            if (owner is SingleShotWeapon sWeapon)
-            {
-                Debug.Log("Client: Asking server to pool our expired shell");
-                sWeapon.ReturnToPoolServerRpc(networkObject);
-            }
-            // Implement for clip weapon
+            Debug.Log("Client: Asking server to pool our expired shell");
+            owner.ReturnToPoolServerRpc(networkObject);
         }
     }
     public override void OnUpdate()
@@ -178,11 +174,7 @@ public class WeaponMissile : WeaponAmmoBehaviour
 
         if (lifetimeTimer <= 0)
         {
-            if (owner is SingleShotWeapon sWeapon)
-            {
-                Destroy(this.gameObject);
-            }
-            // Implement for clip weapon
+            Destroy(this.gameObject);
         }
     }
     public override void OnNetworkedFixedUpdate()

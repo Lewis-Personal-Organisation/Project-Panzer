@@ -44,8 +44,9 @@ public class WeaponShell : WeaponAmmoBehaviour
             OnUpdate();
         }
     }
-
-    // The update method called when connected to a network
+    /// <summary>
+    /// The update method called when connected to a network
+    /// </summary>
     public override void OnNetworkedUpdate()
     {
         if (isPooled) return;
@@ -56,15 +57,13 @@ public class WeaponShell : WeaponAmmoBehaviour
 
         if (lifetimeTimer <= 0)
         {
-            if (owner is SingleShotWeapon sWeapon)
-            {
-                Debug.Log("Client: Asking server to pool our expired shell");
-                sWeapon.ReturnToPoolServerRpc(networkObject);
-            }
-            // Implement for clip weapon
+            owner.ReturnToPoolServerRpc(networkObject);
         }
     }
 
+    /// <summary>
+    /// The Update method called when not connected to a network
+    /// </summary>
     public override void OnUpdate()
     {
         // Decrement timer to 0, then deactivate and return to pool
@@ -72,11 +71,7 @@ public class WeaponShell : WeaponAmmoBehaviour
 
         if (lifetimeTimer <= 0)
         {
-            if (owner is SingleShotWeapon sWeapon)
-            {
-                Destroy(this.gameObject);
-            }
-            // TODO: IMPLEMENT CLIP WEAPON
+            Destroy(this.gameObject);
         }
     }
 

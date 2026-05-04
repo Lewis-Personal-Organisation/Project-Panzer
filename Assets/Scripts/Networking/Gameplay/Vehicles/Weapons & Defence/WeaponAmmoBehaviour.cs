@@ -7,7 +7,7 @@ using UnityEngine;
 public abstract class WeaponAmmoBehaviour : NetworkBehaviour
 {
     public NetworkObject networkObject;
-    public bool isPooled = true; 
+    public bool isPooled = true;                // Is the shell inactive (pooled)
     public float baseDamage;
     internal Vector3 shellDirection;
     

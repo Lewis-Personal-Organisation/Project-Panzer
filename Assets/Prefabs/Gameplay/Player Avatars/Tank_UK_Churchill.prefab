@@ -489,6 +489,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6098138856682070899, guid: f7d24758a89a6bc488a4798627dca150, type: 3}
       insertIndex: -1
       addedObject: {fileID: 145998864456310038}
+    - targetCorrespondingSourceObject: {fileID: 6098138856682070899, guid: f7d24758a89a6bc488a4798627dca150, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7616549311141766862}
   m_SourcePrefab: {fileID: 100100000, guid: f7d24758a89a6bc488a4798627dca150, type: 3}
 --- !u!54 &3582152835948603133 stripped
 Rigidbody:
@@ -533,7 +536,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 3037949363
+  GlobalObjectIdHash: 434294605
   InScenePlacedSourceGlobalObjectIdHash: 0
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
@@ -625,6 +628,7 @@ MonoBehaviour:
   trackTextureScroller: {fileID: 6437474314342085753}
   weaponController: {fileID: 7759402707074100814}
   defence: {fileID: 8063876861978009509}
+  audioListener: {fileID: 7616549311141766862}
   hullRigidbody: {fileID: 3582152835948603133}
   <hullBoneTransform>k__BackingField: {fileID: 3624013315225115793}
   bodyLean: {fileID: 2427957391795224263}
@@ -917,6 +921,14 @@ CapsuleCollider:
   m_Height: 4.75
   m_Direction: 2
   m_Center: {x: -1.575, y: 0.561, z: 0}
+--- !u!81 &7616549311141766862
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6117887212838239997}
+  m_Enabled: 0
 --- !u!4 &7982582866939490001 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7962432484466373471, guid: f7d24758a89a6bc488a4798627dca150, type: 3}

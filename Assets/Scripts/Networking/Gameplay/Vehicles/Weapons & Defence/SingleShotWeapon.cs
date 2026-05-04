@@ -7,9 +7,9 @@ using UnityEngine.Networking;
 
 public class SingleShotWeapon : VehicleWeaponController
 {
-    private Queue<NetworkObject> availableShells = new Queue<NetworkObject>();
-    private HashSet<NetworkObject> activeShells = new HashSet<NetworkObject>();
-
+    /// <summary>
+    /// Initialises the weapon shell pool if we are on the server
+    /// </summary>
     public override void OnNetworkSpawn()
     {
         // Only server creates the pool
@@ -19,6 +19,10 @@ public class SingleShotWeapon : VehicleWeaponController
         }
     }
 
+    /// <summary>
+    /// Sets up the systems for this weapon
+    /// </summary>
+    /// <param name="vehicleController"></param>
     public override void Setup(VehicleController vehicleController)
     {
         base.Setup(vehicleController);
@@ -30,6 +34,8 @@ public class SingleShotWeapon : VehicleWeaponController
     /// </summary>
     private void InitializeServerPool()
     {
+        string playerName = GameplayNetworkManager.Instance.GetPlayerName((int)GetComponent<NetworkObject>().OwnerClientId);
+        
         for (int i = 0; i < initPoolSize; i++)
         {
             WeaponAmmoBehaviour shell = Instantiate(weapon.shellPrefab);
@@ -37,6 +43,7 @@ public class SingleShotWeapon : VehicleWeaponController
             // We can't disable NetworkBehaviours, so hide objects
             shell.transform.position = new Vector3(0, -5F, 0);
             shell.isPooled = true;
+            shell.name = $"Shell (Pooled, {playerName})";
             
             NetworkObject shellNetObj = shell.networkObject;
             shellNetObj.Spawn(true);
@@ -83,30 +90,10 @@ public class SingleShotWeapon : VehicleWeaponController
         return shellNetObj;
     }
     
-    [ServerRpc(RequireOwnership = false)]
-    public void ReturnToPoolServerRpc(NetworkObjectReference netObjRef)
-    {
-        if (!netObjRef.TryGet(out  NetworkObject netObj))
-            return;
-
-        if (!activeShells.Remove(netObj))
-            return;
-        
-        Debug.Log("Server: Pooling expired shell");
-        netObj.transform.position = new Vector3(0, -5, 0);
-        var shell = netObj.GetComponent<WeaponShell>();
-        if (shell != null)
-        {
-            shell.isPooled = true;
-        }
-        
-        // netObj.transform.root.gameObject.SetActive(false);
-        availableShells.Enqueue(netObj);
-                
-        // Notify all clients to deactivate
-        DeactivateShellClientRpc(netObj.NetworkObjectId);
-    }
-    
+    /// <summary>
+    /// Attempts to fire this weapon for Server and Clients
+    /// Also processes leaning of the vehicle and camera shake
+    /// </summary>
     protected override void Fire()
     {
         if (reloadTimer > 0)
@@ -128,12 +115,18 @@ public class SingleShotWeapon : VehicleWeaponController
         weaponLeanController.PrepareLean();
     }
 
+    /// <summary>
+    /// Counts down the reload timer
+    /// </summary>
     protected override void Reload()
     {
         if (reloadTimer > 0)
             reloadTimer -= Time.deltaTime;
     }
 
+    /// <summary>
+    /// Resets the reload timer
+    /// </summary>
     protected override void ResetWeapon()
     {
         reloadTimer = weapon.reloadTime;
@@ -147,7 +140,8 @@ public class SingleShotWeapon : VehicleWeaponController
     {
         NetworkObject shellNetObj = GetFromOrAddToPool(position, rotation, ownerID);
         audioSource.PlayOneShot(weapon.fireAudio);
-        Debug.Log($"Server: Asking clients to move new shell");
+        Debug.Log($"Server: Creating Shell");
+        Debug.Log($"Server: Playing Fire audio at {this.gameObject.transform.position}");
         ActivateClientRpc(shellNetObj.NetworkObjectId, position, rotation);
     }
     
@@ -161,35 +155,16 @@ public class SingleShotWeapon : VehicleWeaponController
         if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(bulletID, out var netObj))
             return;
         
+        Debug.Log($"Clients: Moving new shell");
+        Debug.Log($"Clients: Playing Fire audio at {this.gameObject.transform.position}");
         audioSource.PlayOneShot(weapon.fireAudio);  // Play Gunfire sound
         
-        Debug.Log($"Client (All): Moving new shell");
         netObj.transform.SetPositionAndRotation(pos, rotation);
         var shell = netObj.GetComponent<WeaponShell>();
         if (shell != null)
         {
             shell.isPooled = false; // Activate it
-            Debug.Log($"Client (All): Disabled pooling of shell");
-        }
-    }
-    
-    /// <summary>
-    /// Deactivates a spawned shell object for all clients, if found in the list of server spawned objects
-    /// </summary>
-    [ClientRpc]
-    private void DeactivateShellClientRpc(ulong shellID)
-    {
-        if (NetworkManager.Singleton.IsServer) return;
-        
-        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(shellID, out var netObj))
-            return;
-        
-        Debug.Log("Client (All): Deactivating expired shell as requested from Server");
-        netObj.transform.position = new Vector3(0, -5, 0);
-        var shell = netObj.GetComponent<WeaponShell>();
-        if (shell != null)
-        {
-            shell.isPooled = true;
+            Debug.Log($"Clients: Disabled pooling of shell");
         }
     }
 }
