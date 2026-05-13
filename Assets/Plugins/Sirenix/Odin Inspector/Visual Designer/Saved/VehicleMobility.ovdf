@@ -1,0 +1,11 @@
+OVDF v1.0
+VehicleMobility, Assembly-CSharp
+
+# <horizontalGrip>k__BackingField
+Position: $root:8
++ [UnityEngine.RangeAttribute]
+	min = 0
+	max = 1
+
+# <physicsBounciness>k__BackingField
+Position: $root:7

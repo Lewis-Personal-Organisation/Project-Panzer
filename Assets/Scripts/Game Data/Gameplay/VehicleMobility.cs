@@ -12,7 +12,8 @@ public class VehicleMobility : ScriptableObject
     [field: SerializeField] public float speedDelta { get; private set; }
     [field: SerializeField] public float brakeDelta { get; private set; }
     [field: SerializeField] public float steerVelocity { get; private set; }
-    [field: SerializeField] public float physicsBounciness{ get; private set; }
+    [field: SerializeField] public float physicsBounciness { get; private set; }
+    [field: SerializeField] public float horizontalGrip { get; private set; } = 0.5F;
 
     [Header("Rotation")]
     public float torqueMultipler = 30F;

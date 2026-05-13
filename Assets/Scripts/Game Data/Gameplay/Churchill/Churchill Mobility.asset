@@ -14,12 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   turnSpeed: 65
   <forwardSpeed>k__BackingField: 16.8
-  <forceMultiplier>k__BackingField: 1500
+  <forceMultiplier>k__BackingField: 27.5
   <backwardSpeed>k__BackingField: 5
   <speedDelta>k__BackingField: 0.8
   <brakeDelta>k__BackingField: 5
   <steerVelocity>k__BackingField: 3
   <physicsBounciness>k__BackingField: 0.375
+  <horizontalGrip>k__BackingField: 0.75
   torqueMultipler: 30
   maxAngularVelocity: 1.25
   straightSteerDrag: 50

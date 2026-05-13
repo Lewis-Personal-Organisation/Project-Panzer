@@ -1703,7 +1703,7 @@ AudioListener:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1263930569}
-  m_Enabled: 1
+  m_Enabled: 0
 --- !u!20 &1263930571
 Camera:
   m_ObjectHideFlags: 0
@@ -14730,7 +14730,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 72
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -14932,6 +14932,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 53200175157320520, guid: a985a14ea77ffa9499a68e72353be759, type: 3}
+      propertyPath: sidewaysGrip
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 374330070309482414, guid: a985a14ea77ffa9499a68e72353be759, type: 3}
       propertyPath: m_CastShadows
       value: 0
@@ -14949,7 +14953,15 @@ PrefabInstance:
       value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 3582152835948603133, guid: a985a14ea77ffa9499a68e72353be759, type: 3}
+      propertyPath: m_Mass
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3582152835948603133, guid: a985a14ea77ffa9499a68e72353be759, type: 3}
       propertyPath: m_Interpolate
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3582152835948603133, guid: a985a14ea77ffa9499a68e72353be759, type: 3}
+      propertyPath: m_IncludeLayers.m_Bits
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3780877708364680475, guid: a985a14ea77ffa9499a68e72353be759, type: 3}

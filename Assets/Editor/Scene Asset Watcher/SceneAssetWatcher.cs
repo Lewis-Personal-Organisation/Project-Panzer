@@ -121,7 +121,6 @@ public class SceneAssetWatcher : AssetPostprocessor
         if (PathIncluderHasFieldErrors())
             return;
         
-        Debug.Log("Project Change detected");
         string newHash = EditorSceneMenuGenerator.StableHash(string.Join("|", EditorSceneMenuGenerator.currentPathIncluder.includedPaths));
 
         if (newHash != _lastHash)
