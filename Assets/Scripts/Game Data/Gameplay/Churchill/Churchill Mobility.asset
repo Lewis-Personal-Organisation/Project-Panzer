@@ -20,13 +20,10 @@ MonoBehaviour:
   <brakeDelta>k__BackingField: 5
   <steerVelocity>k__BackingField: 3
   <physicsBounciness>k__BackingField: 0.375
-  <horizontalGrip>k__BackingField: 0.75
+  <traction>k__BackingField: 0.888
   torqueMultipler: 30
   maxAngularVelocity: 1.25
-  straightSteerDrag: 50
-  steeringDrag: 0
-  minAngleForCorrection: 5
-  correctionTorqueForce: 5
+  steeringPrecision: 50
   turretRotationSpeed: 151.1
   trackMultiplier: 0.75
   <localGravity>k__BackingField: 32

@@ -14,7 +14,7 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
     [field: SerializeField] public CameraController cameraController {get; private set;}
     [field: SerializeField] public VehicleInputManager inputManager {get; private set;}
     [field: SerializeField] public RigidBodyVelocityTracker velocityTracker {get; private set;}
-    [SerializeField] private VehicleGroundDetector groundDetector;
+    public VehicleGroundDetector groundDetector;
     [SerializeField] private VehicleBodyMover bodyMover;
     [SerializeField] private VehicleBodyRotator bodyRotator;
     [SerializeField] private VehicleTurretRotator turretRotator;
@@ -22,6 +22,7 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
     [SerializeField] private VehicleTrackTextureScroller trackTextureScroller;
     [SerializeField] private VehicleWeaponController weaponController;
     [SerializeField] private VehicleDefence defence;
+    [SerializeField] private VehicleStuckManager stuckManager;
     [SerializeField] private AudioListener audioListener;
     
     [Header("Transforms")]
@@ -80,44 +81,36 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
     {
         Debug.Log($"VehicleController :: Setup :: Called! We are the owner", this.gameObject);
 
-        TryGetComponent(ref hullRigidbody);
-        TryGetComponent(ref bodyRotator);
-        TryGetComponent(ref bodyLean);
-        TryGetComponent(ref weaponLean);
-        TryGetComponent(ref weaponController, false);
-        TryGetComponent(ref defence);
-        TryGetComponent(ref audioListener);
-
-        cameraController = FindObjectOfType<CameraController>();
-        cameraController.Setup(this);
-
-        if (weaponController)
-            weaponController.Setup(this);
-
-        if (turretRotator)
-            turretRotator.Setup(this);
-
-        if (defence)
-            defence.Setup(this);
-
-        if (audioListener)
-            audioListener.enabled = true;
-
-        paintMaterials = transform.GetComponentsInChildren<Renderer>();
-
         if (!mobility)
         {
             Debug.LogError("VehicleController :: Setup :: Mobility field not set", this.gameObject);
         }
+        
+        cameraController = FindObjectOfType<CameraController>();
+        cameraController.Setup(this);
+        
+        TryGetComponent(ref hullRigidbody);
+        TryGetComponent(ref bodyRotator);
+        TryGetComponent(ref bodyLean);
+        TryGetComponent(ref weaponLean);
+        TryGetComponent(ref audioListener);
+        TryGetComponentAdv(ref weaponController, false)?.Setup(this);
+        TryGetComponentAdv(ref turretRotator)?.Setup(this);
+        TryGetComponentAdv(ref defence)?.Setup(this);
+        TryGetComponentAdv(ref vfxController)?.Setup(this);
+        TryGetComponentAdv(ref stuckManager)?.Setup(this);
 
+        audioListener.enabled = true;
+
+        paintMaterials = transform.GetComponentsInChildren<Renderer>();
+
+        bodyMover.RetainedVelocity = mobility.traction;
         gravitationalForce = mobility.localGravity;
 
         foreach (Renderer r in paintMaterials)
         {
             r.material.SetFloat("_ColorOffset", teamColor - 1);
         }
-
-        vfxController.Setup(this);
 
         OnFixedUpdate += ProcessVehicle;
     }
@@ -135,9 +128,11 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
         
         // FIX FOR KINEMATIC BEING SET TRUE BY UNITY NETWORK
         // Should be optimized
-        hullRigidbody.isKinematic = false;
-        
-        // Debug.Log("Running Vehicle");
+        if (hullRigidbody.isKinematic)
+        {
+            hullRigidbody.isKinematic = false;
+            Debug.Log("VehicleController :: hullRigidbody.isKinematic corrected!");
+        }
         
         groundDetector.DetectGroundState();
 
@@ -164,7 +159,6 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
     public void Disable()
     {
         Debug.Log("PLAYER DESTROYED");
-        // OnFixedUpdate = null;
         inputManager.enabled = false;
         weaponController.Disable();
         turretRotator.Disable();

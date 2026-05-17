@@ -16,7 +16,7 @@ public class VehicleBodyLeanController : VehicleLeanController
     [SerializeField] private RigidBodyVelocityTracker velocityTracker;
 
     // Returns tilt value based on move input and velocity. Order of these items is important!
-    private float tilt => (vehicle.inputManager.moveInput, velocity: velocityTracker.z.velocity) switch
+    private float tilt => (vehicle.inputManager.moveInput, velocityTracker.z.velocity) switch
     {
         // Steering only tilt
         (0, > 0) when vehicle.inputManager.turnInputValue != 0 => -data.verticalMaxLean,         // No input, some velocity, and turning

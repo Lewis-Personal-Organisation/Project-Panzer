@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using UnityEngine;
 
 public class VehicleGroundDetector : LocalVehicleComponent
@@ -22,12 +23,16 @@ public class VehicleGroundDetector : LocalVehicleComponent
         bool leftGroundedThisFrame = Physics.Raycast(leftCastPoint.position, leftCastPoint.forward, castDistance, LayerMask.GetMask("Ground", "PlayerAimDetectable"));
         bool rightGroundedThisFrame = Physics.Raycast(rightCastPoint.position, rightCastPoint.forward, castDistance, LayerMask.GetMask("Ground", "PlayerAimDetectable"));
         
+        SceneData.Label($"Left Grounded? ", leftSideIsGrounded.ToString());
+        SceneData.Label($"Right Grounded? ", rightSideIsGrounded.ToString(), 10, 25);
+        SceneData.Label($"Applied Gravity ", vehicle.gravitationalForce.ToString(CultureInfo.CurrentCulture), 10, 50);
+        
         // If state has not changed, return
         if (leftGroundedThisFrame == leftSideIsGrounded && rightGroundedThisFrame == rightSideIsGrounded) return;
 
         leftSideIsGrounded = leftGroundedThisFrame;
         rightSideIsGrounded = rightGroundedThisFrame;
-
+        
         if (leftSideIsGrounded && rightSideIsGrounded)
         {
             vehicle.gravitationalForce = vehicle.mobility.globalGravity;
@@ -40,11 +45,11 @@ public class VehicleGroundDetector : LocalVehicleComponent
                 vehicle.gravitationalForce = vehicle.mobility.localGravity;
             }
             // Stuck detection - Unused for now
-            // else
-            // {
-            //     bool tiltIsForwards = Vector3.SignedAngle(transform.up, Vector3.up, transform.right) > 0;
-            //     Debug.Log($"Stuck!! {Vector3.SignedAngle(transform.forward, Vector3.forward, Vector3.up)}");
-            // }
+            else
+            {
+                bool tiltIsForwards = Vector3.SignedAngle(transform.up, Vector3.up, transform.right) > 0;
+                Debug.Log($"Stuck!! {Vector3.SignedAngle(transform.forward, Vector3.forward, Vector3.up)}");
+            }
 
             physicsMaterial.bounciness = 0;
             lastFramePos = vehicle.hullBoneTransform.position;

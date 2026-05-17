@@ -26,7 +26,7 @@ public class VehicleInputManager : MonoBehaviour
         (-1 or 1, 0) => InputState.Rotating,
         _ => InputState.None
     };
-    public void SetLastInputState() => lastInputState =  vehicleState;
+    public void SetLastInputState() => lastInputState = vehicleState;
     public InputState lastInputState;
     public float MouseXDelta => Input.GetAxis("Mouse X");
     public float MouseYDelta => Input.GetAxis("Mouse Y");

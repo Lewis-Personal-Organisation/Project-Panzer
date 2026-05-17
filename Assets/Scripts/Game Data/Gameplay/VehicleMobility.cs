@@ -13,20 +13,19 @@ public class VehicleMobility : ScriptableObject
     [field: SerializeField] public float brakeDelta { get; private set; }
     [field: SerializeField] public float steerVelocity { get; private set; }
     [field: SerializeField] public float physicsBounciness { get; private set; }
-    [field: SerializeField] public float horizontalGrip { get; private set; } = 0.5F;
+    [field: SerializeField] public float traction { get; private set; } = 0.5F;
 
     [Header("Rotation")]
     public float torqueMultipler = 30F;
     public float maxAngularVelocity = 1.35F;
-    [Tooltip("How sharp the steering feels")]
-    public float straightSteerDrag = 130;
-    public float steeringDrag = 0F;
+    [Tooltip("Steering sharpness - Higher values result in steering feeling precise")]
+    public float steeringPrecision = 130;
     
-    [FormerlySerializedAs("angleLimit")]
-    [Header("Stabilisation/Correction Variables")]
-    public float minAngleForCorrection = 5F;
-    [Tooltip("The force used to correct the vehicle rotation")]
-    [FormerlySerializedAs("rotationAngleForce")] public float correctionTorqueForce = 10F;
+    // [FormerlySerializedAs("angleLimit")]
+    // [Header("Stabilisation/Correction Variables")]
+    // public float minAngleForCorrection = 5F;
+    // [Tooltip("The force used to correct the vehicle rotation")]
+    // public float correctionTorqueForce = 5F;
     
     [Header("Turret")]
     public float turretRotationSpeed = 240.0f;

@@ -9,3 +9,11 @@ Position: $root:8
 
 # <physicsBounciness>k__BackingField
 Position: $root:7
+
+# <grip>k__BackingField
++ [UnityEngine.RangeAttribute]
+	max = 1
+
+# <traction>k__BackingField
++ [UnityEngine.RangeAttribute]
+	max = 1

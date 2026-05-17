@@ -11,7 +11,7 @@ public class VehicleBodyRotator : LocalVehicleComponent
 
     public void RotateTank()
     {
-        vehicle.hullRigidbody.angularDrag = vehicle.inputManager.rotationInput == 0 ? vehicle.mobility.straightSteerDrag : vehicle.mobility.steeringDrag;
+        vehicle.hullRigidbody.angularDrag = vehicle.inputManager.rotationInput == 0 ? vehicle.mobility.steeringPrecision : 0;
         vehicle.hullRigidbody.maxAngularVelocity = vehicle.mobility.maxAngularVelocity;
         // Torque
         vehicle.hullRigidbody.AddTorque(Vector3.up * vehicle.inputManager.rotationInput * vehicle.mobility.turnSpeed * Time.deltaTime * vehicle.mobility.torqueMultipler, ForceMode.Force);

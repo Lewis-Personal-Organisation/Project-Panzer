@@ -417,53 +417,53 @@ MonoBehaviour:
       TangentIn:
         x: -0
         y: -0
-        z: -5.212779
+        z: -5.5164886
       TangentOut:
         x: 0
         y: 0
-        z: 4.778717
+        z: 6.3304214
       Rotation:
         value:
-          x: 0.22452404
-          y: 0.37274393
-          z: 0.46456683
-          w: 0.7712514
+          x: 0.17783761
+          y: 0.30985236
+          z: 0.46493086
+          w: 0.8100645
     - Position:
-        x: 92.017586
+        x: 90.5
         y: -0.6
-        z: 36.550293
+        z: 46.4
       TangentIn:
         x: -0
         y: -0
-        z: -5.3407764
+        z: -6.7376075
       TangentOut:
         x: 0
         y: 0
-        z: 7.125153
+        z: 7.3419857
       Rotation:
         value:
-          x: -0.0067701805
-          y: 0.3798322
-          z: -0.01648525
-          w: 0.92488366
+          x: -0.0066218297
+          y: 0.40625164
+          z: -0.014891777
+          w: 0.9136158
     - Position:
-        x: 111.3778
+        x: 116
         y: -0.6
         z: 52.49073
       TangentIn:
         x: -0
         y: -0
-        z: -7.5059485
+        z: -6.9480767
       TangentOut:
         x: 0
         y: 0
-        z: 6.1235795
+        z: 4.9258623
       Rotation:
         value:
-          x: 0.00006414209
-          y: 0.4442102
-          z: 0.00012936811
-          w: 0.8959226
+          x: 0.00005940285
+          y: 0.49964204
+          z: 0.00010298701
+          w: 0.866232
     - Position:
         x: 125.04366
         y: -0.6
@@ -471,17 +471,17 @@ MonoBehaviour:
       TangentIn:
         x: -0
         y: -0
-        z: -4.3511033
+        z: -3.6637127
       TangentOut:
         x: 0
         y: 0
-        z: 2.793866
+        z: 2.64767
       Rotation:
         value:
-          x: -5.5763533e-11
-          y: 0.46446615
-          z: -1.06323506e-10
-          w: 0.88559085
+          x: 6.147366e-10
+          y: 0.41899088
+          z: -2.4576433e-10
+          w: 0.90799046
     - Position:
         x: 130.73181
         y: -0.6
@@ -1827,6 +1827,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   addToGlobalShakers: 0
+--- !u!1 &1319747182 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6117887212838239997, guid: a985a14ea77ffa9499a68e72353be759, type: 3}
+  m_PrefabInstance: {fileID: 1911987664}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1363661598 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8087511957282450260, guid: a985a14ea77ffa9499a68e72353be759, type: 3}
@@ -14600,7 +14605,9 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483647
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 3726180071751984045, guid: 1e4f0b2b000261140911e7b598761334, type: 3}
+    - {fileID: 3049138881298356910, guid: 1e4f0b2b000261140911e7b598761334, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -14972,6 +14979,10 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4425514349993116832, guid: a985a14ea77ffa9499a68e72353be759, type: 3}
+      propertyPath: minVelocityForNonIdle
+      value: 0.00001
+      objectReference: {fileID: 0}
     - target: {fileID: 6014932756066758072, guid: a985a14ea77ffa9499a68e72353be759, type: 3}
       propertyPath: m_Enabled
       value: 0
@@ -15302,7 +15313,10 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6161082638131353842, guid: a985a14ea77ffa9499a68e72353be759, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1655129595}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6117887212838239997, guid: a985a14ea77ffa9499a68e72353be759, type: 3}
+      insertIndex: 20
+      addedObject: {fileID: 2060938196}
   m_SourcePrefab: {fileID: 100100000, guid: a985a14ea77ffa9499a68e72353be759, type: 3}
 --- !u!4 &1911987665 stripped
 Transform:
@@ -15612,7 +15626,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4425514349993116832, guid: a985a14ea77ffa9499a68e72353be759, type: 3}
   m_PrefabInstance: {fileID: 1911987664}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 1319747182}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8949c528403d01f4caaf9dc64e356226, type: 3}
@@ -15623,7 +15637,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 8998579079339371193, guid: a985a14ea77ffa9499a68e72353be759, type: 3}
   m_PrefabInstance: {fileID: 1911987664}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 1319747182}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 533ad2b3ae11a4a419cef61bc6f93cd0, type: 3}
@@ -15639,7 +15653,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 7913208950252096550, guid: a985a14ea77ffa9499a68e72353be759, type: 3}
   m_PrefabInstance: {fileID: 1911987664}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 1319747182}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f039e2b330b791946b81eb99ae6480ff, type: 3}
@@ -15650,12 +15664,35 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 7759402707074100814, guid: a985a14ea77ffa9499a68e72353be759, type: 3}
   m_PrefabInstance: {fileID: 1911987664}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 1319747182}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e6eee671eb93b2443b53d89fb3ee4ad0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &2060938196
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1319747182}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4099d5ae0f231a441be511c38aa33277, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  minPos: 0.001
+  deltaPos: {x: 0, y: 0, z: 0}
+  isStuck: 0
+  isMoving: 0
+  tryingToMove: 0
+  stuckTimer: 0
+  stuckTimerMax: 2.5
+  repelForce: 10
+  safePosition: {x: 0, y: 0, z: 0}
+  safePosTimer: 0
+  safePosMarker: {fileID: 1455857417}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

@@ -1,12 +1,22 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using InputStates = VehicleInputManager.InputState;
 
 public class VehicleBodyMover : LocalVehicleComponent
 {
     private float inputSpeed;
-    private float targetInputSpeed => vehicle.inputManager.moveInput switch
+    
+    public float RetainedVelocity
+    {
+        get => velocityMultiplier;
+        set
+        {
+            value = Mathf.Clamp(value, 0, 1);
+            velocityMultiplier = Mathf.Lerp(1, 0.80F, value);       // 0.9714% at 0.143
+        }
+    }
+    private float velocityMultiplier = 0;
+    
+    private float TargetInputSpeed => vehicle.inputManager.moveInput switch
     {
         1 => 1,
         -1 => -1,
@@ -31,11 +41,11 @@ public class VehicleBodyMover : LocalVehicleComponent
                     if (vehicle.inputManager.lastInputState == InputStates.Rotating && vehicle.mobility.steerVelocity > 0)
                         inputSpeed = 0;
 
-                    inputSpeed = Mathf.MoveTowards(inputSpeed, targetInputSpeed, vehicle.mobility.speedDelta * Time.deltaTime);
+                    inputSpeed = Mathf.MoveTowards(inputSpeed, TargetInputSpeed, vehicle.mobility.speedDelta * Time.deltaTime);
                     break;
 
                 case InputStates.MovingForward or InputStates.MovingForwardAndRotating:
-                    inputSpeed = Mathf.MoveTowards(inputSpeed, targetInputSpeed, vehicle.mobility.speedDelta * Time.deltaTime);
+                    inputSpeed = Mathf.MoveTowards(inputSpeed, TargetInputSpeed, vehicle.mobility.speedDelta * Time.deltaTime);
                     break;
 
                 case InputStates.Rotating:
@@ -72,15 +82,14 @@ public class VehicleBodyMover : LocalVehicleComponent
             -vehicle.mobility.backwardSpeed,
             vehicle.mobility.forwardSpeed
         );
+        SceneData.Label("Velocity: ", $"{vehicle.velocityTracker.z.Clamped(-vehicle.mobility.backwardSpeed, vehicle.mobility.forwardSpeed)}", 10, 60, 550, 25, Color.black);
         
         // Set the local velocity multiplier
-        localVelocity.x *= Mathf.Lerp(1, 0.80F, vehicle.mobility.horizontalGrip);
+        localVelocity.x *= RetainedVelocity;
         
         // Write back the new velcoity
         vehicle.hullRigidbody.velocity = transform.TransformDirection(localVelocity);
         
-        
-        // SceneData.Label("Velocity: ", $"{vehicle.velocityTracker.z.Clamped(-vehicle.mobility.backwardSpeed, vehicle.mobility.forwardSpeed)}", 10, 60, 550, 25, Color.black);
 
         vehicle.inputManager.SetLastInputState();
     }
