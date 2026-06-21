@@ -117,6 +117,6 @@ public class CameraController : VehicleComponent, IVehicleComponentToggleable
     
     public void Disable()
     {
-        // Unused for now
+        OnProcessCamera -= ProcessCamera;
     }
 }

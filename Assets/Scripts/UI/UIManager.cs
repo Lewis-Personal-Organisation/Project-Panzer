@@ -4,52 +4,35 @@ using UnityEngine;
 
 public class UIManager : Singleton<UIManager>
 {
-	[SerializeField] private Panel _initialPanel;
-	private static Panel initialPanel;
+#if UNITY_EDITOR
+	public Panel[] activePanels;
+#endif
+	
+	private static Panel[] initialPanels;
 	private static Stack<Panel> panelStack = new Stack<Panel>();
 	public static Panel CurrentPanel => panelStack.Peek();
 	
 	public static View GameView { private set; get; }
-	[Space(5)]
-	[Header("Panels")]
-	[SerializeField] private MainMenuUI mainMenu;
-	[SerializeField] private LobbySetupUI lobbySetup;
-	[SerializeField] private LobbyUI lobby;
-	[SerializeField] private TextInputUI textInputGroup;
-
-	[Header("Shared Panels")]
-	[SerializeField] private FadedBackgroundUI fadedBackground;
-	[SerializeField] private LoadingIcon loadingIcon;
-	[SerializeField] private NotificationUI notificationUI;
 	
 	public DataStructs.GameResultsData previousGameResults { get; private set; }
-	
 	public bool arePreviousGameResultsSet { get; private set; }
-	public static LobbySetupUI LobbySetupMenu => Instance.lobbySetup;
-	public static LobbyUI LobbyUI => Instance.lobby;
-	public static MainMenuUI MainMenu => Instance.mainMenu;
-	public static TextInputUI TextInputGroup => Instance.textInputGroup;
-	public static LoadingIcon LoadingIcon => Instance.loadingIcon;
-	public static FadedBackgroundUI FadedBackgroundUI => Instance.fadedBackground;
-	public static NotificationUI NotificationUI => Instance.notificationUI;
 	
 	
 	private new void Awake()
 	{
 		base.Awake();
-		
-		if (!_initialPanel)
-		{
-			Debug.LogError("Initial Panel not set!");
-			return;
-		}
-		
-		initialPanel = _initialPanel;
-		PushPanels(initialPanel, mainMenu);		// Initially, show game background and Main Menu
+		DontDestroyOnLoad(this);
 
-		SceneData.LabelFixed("TEST LABEL", 10, 10);
-		SceneData.Label("Labels Count: ", $"{SceneData.labels.Count}", 10, 20);
-		SceneData.Texture(64,64, Color.cyan);
+		// SceneData.LabelFixed("TEST LABEL", 10, 10);
+		// SceneData.Label("Labels Count: ", $"{SceneData.labels.Count}", 10, 20);
+		// SceneData.Texture(64,64, Color.cyan);
+	}
+
+	public void SetInitialPanels(params Panel[] panels)
+	{
+		panelStack.Clear();
+		initialPanels = panels;
+		PushPanels(initialPanels);
 	}
 	
 	/// <summary>
@@ -77,22 +60,22 @@ public class UIManager : Singleton<UIManager>
 	/// <summary>
 	/// Shows the error screen with a message, timeout speed, fade speeds and size and then returns to the main menu
 	/// </summary>
-	public void PushErrorScreen(string errMsg, NotifStyle msgStyle = NotifStyle.Info, float progressSpeed = 0.333333F, float fadeInSpeed = 5F, float fadeOutSpeed = 5F, float widthMulti = 0, float heightMulti = 0)
+	public static void PushErrorScreen(string errMsg, NotifStyle msgStyle = NotifStyle.Info, float progressSpeed = 0.333333F, float fadeInSpeed = 5F, float fadeOutSpeed = 5F, float widthMulti = 0, float heightMulti = 0)
 	{
 		// Show and Fade in
-		FadedBackgroundUI.Fade(0, .75F, fadeInSpeed, () =>
+		PreGameplayUI.FadedBackgroundUI.Fade(0, .75F, fadeInSpeed, () =>
 		{
-			NotificationUI.PrepareStyleAndMessage(msgStyle, errMsg, widthMulti, heightMulti);
-			NotificationUI.StartProgressBar(0, progressSpeed, true, true, () =>
+			PreGameplayUI.Notifs.PrepareStyleAndMessage(msgStyle, errMsg, widthMulti, heightMulti);
+			PreGameplayUI.Notifs.StartProgressBar(0, progressSpeed, true, true, () =>
 			{
-				FadedBackgroundUI.Fade(.75F, 0F, fadeOutSpeed, () =>
+				PreGameplayUI.FadedBackgroundUI.Fade(.75F, 0F, fadeOutSpeed, () =>
 				{
-					PopAllAndPush(mainMenu);
+					PopAllAndPush(initialPanels);
 				});
 			});
 		});
 	}
-	
+
 	/// <summary>
 	/// Push a panel to the stack and show it
 	/// Optionally hide the current panel
@@ -100,10 +83,10 @@ public class UIManager : Singleton<UIManager>
 	/// <param name="panel"></param>
 	public static void PushPanel(Panel panel)
 	{
-		panel.Toggle(true);
-		
+		panel.TogglePanels(true);
+
 		// Debug.Log($"Pushed {panel.GetPanel().name}. Count: {panelStack.Count}");
-		
+
 		if (panelStack.Count > 0)
 		{
 			Panel currentPanel = panelStack.Peek();
@@ -111,10 +94,10 @@ public class UIManager : Singleton<UIManager>
 			// If we 
 			if (panel == currentPanel)
 				return;
-			
+
 			// Decide if the current shown panel can be shown simultaniously with the new panel.
 			bool hideCurrent = true;
-			
+
 			for (int i = 0; i < currentPanel.newPagePushExcludedPanels.Length; i++)
 			{
 				if (panel == currentPanel.newPagePushExcludedPanels[i])
@@ -123,15 +106,18 @@ public class UIManager : Singleton<UIManager>
 					// Debug.Log($"We can show {panel.GetPanel().name} above {currentPanel.GetPanel().name}!");
 				}
 			}
-			
+
 			// Only hide the panel if we dont want it shown 
 			if (currentPanel.exitOnNewPagePush && hideCurrent)
 			{
-				currentPanel.Toggle(false);
+				currentPanel.TogglePanels(false);
 			}
 		}
 
 		panelStack.Push(panel);
+#if UNITY_EDITOR
+		Instance.activePanels = panelStack.ToArray();
+#endif
 	}
 
 	/// <summary>
@@ -152,25 +138,29 @@ public class UIManager : Singleton<UIManager>
 		if (panelStack.Count != 0)
 		{
 			Panel panel = panelStack.Pop();
-			panel.Toggle(false);
+			panel.TogglePanels(false);
 			
 			// Debug.Log($"Popped {panel.GetPanel().name}");
 
 			if (panelStack.Count == 0)
 			{
-				PushPanel(initialPanel);
+				PushPanel(initialPanels[0]);
 				return;
 			}
 			
 			Panel newCurrentPanel = panelStack.Peek();
 			
 			if (newCurrentPanel.exitOnNewPagePush)
-				newCurrentPanel.Toggle(true);
+				newCurrentPanel.TogglePanels(true);
 		}
 		else
 		{
 			Debug.LogWarning("Trying to pop a page but only 1 page remains in the stack!");
 		}
+		
+#if UNITY_EDITOR
+		Instance.activePanels = panelStack.ToArray();
+#endif
 	}
 
 	/// <summary>
@@ -242,11 +232,12 @@ public class UIManager : Singleton<UIManager>
 	/// <param name="panels"></param>
 	public static void PopAllAndPush(params Panel[] panels)
 	{
-		PopUntil(initialPanel);
-		Debug.Log($"Popping until {initialPanel.GetPanel().name}");
+		PopUntil(initialPanels[0]);
+		Debug.Log($"Popping until {initialPanels[0].GetPanel().name}");
 		
 		for (int i = 0; i < panels.Length; i++)
 		{
+			Debug.Log($"Pushing {panels[i].GetType().Name}");
 			PushPanel(panels[i]);
 		}
 	}

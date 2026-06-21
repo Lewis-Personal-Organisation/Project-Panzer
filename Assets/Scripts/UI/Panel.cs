@@ -14,24 +14,27 @@ public enum View
 public class Panel : MonoBehaviour
 {
 	[field: SerializeField] public View view { private set; get; }
-	[SerializeField] private GameObject panel;
+	[FormerlySerializedAs("panels")]
+	[SerializeField] protected GameObject panel;
 	
 	public bool exitOnNewPagePush;
 	public Panel[] newPagePushExcludedPanels = Array.Empty<Panel>();
 	[FormerlySerializedAs("postPopAction")] public UnityEvent onPopAction;
 	[FormerlySerializedAs("prePushAction")] public UnityEvent onPushAction;
 	
+	public GameObject GetPanel() => panel;
+	protected bool invertedState => !panel.activeSelf;
 	
 	/// <summary>
 	/// Toggles the visibility of the panel and activates any actions
 	/// </summary>
-	public void Toggle(bool activeState)
+	public virtual void TogglePanels(bool activeState)
 	{
 		if (panel.activeSelf == activeState)
 			return;
-		
-		panel.SetActive(activeState);
 
+		panel.SetActive(activeState);
+		
 		if (activeState)
 		{
 			onPushAction.Invoke();
@@ -41,8 +44,7 @@ public class Panel : MonoBehaviour
 			onPopAction.Invoke();
 		}
 		
-		UIManager.Instance.UpdateGameView(view);
+		// Unused for now
+		// UIManager.Instance?.UpdateGameView(view);
 	}
-	
-	public GameObject GetPanel() => panel;
 }

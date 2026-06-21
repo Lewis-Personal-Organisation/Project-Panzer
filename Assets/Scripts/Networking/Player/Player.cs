@@ -26,7 +26,7 @@ namespace HelloWorld
 				if (IsServer)
 				{
 					networkData = this.gameObject.AddComponent<NetworkData>();
-					networkData.TrySubmitNewPlayerName(UIManager.MainMenu.nameDisplayText.text);
+					networkData.TrySubmitNewPlayerName(PreGameplayUI.MainMenu.nameDisplayText.text);
 				}
 
 				Move();

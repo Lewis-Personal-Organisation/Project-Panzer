@@ -72,7 +72,7 @@ public class PlayerSlot : MonoBehaviour
 		// Only assign interactable events if we are owner
 		if (isOwner)
 		{
-			openVehicleSelectionButton.onClick.AddListener(() => UIManager.LobbyUI.chooseVehicleViewGameObject.SetActive(true));
+			openVehicleSelectionButton.onClick.AddListener(() => PreGameplayUI.Lobby.chooseVehicleViewGameObject.SetActive(true));
 			
 			EventTrigger.Entry scaleUp = new EventTrigger.Entry();
 			scaleUp.eventID = EventTriggerType.PointerEnter;
@@ -113,12 +113,12 @@ public class PlayerSlot : MonoBehaviour
 
 	private IEnumerator IEScale(bool grow)
 	{
-		float speed = UIManager.LobbyUI.playerSlotResizeTime;
+		float speed = PreGameplayUI.Lobby.playerSlotResizeTime;
 		
 		while (true)
 		{
 			scaleTimer = Mathf.Clamp(scaleTimer + (grow ? Time.deltaTime / speed : -(Time.deltaTime / speed)), 0F, 1F);
-			parentRectTransform.localScale = Vector2.one + Vector2.one * UIManager.LobbyUI.sizeCurve.Evaluate(scaleTimer);
+			parentRectTransform.localScale = Vector2.one + Vector2.one * PreGameplayUI.Lobby.sizeCurve.Evaluate(scaleTimer);
 			yield return null;
 		}
 	}

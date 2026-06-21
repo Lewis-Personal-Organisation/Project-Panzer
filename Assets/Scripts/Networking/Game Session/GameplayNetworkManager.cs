@@ -143,7 +143,7 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
             if (clientId != NetworkManager.ServerClientId)
             {
                 // When a client disconnects, we should show a popup ingame here!
-                GameplayNotifications.Instance.SendNetworkMessage($"Player {GetPlayerName((int)clientId)} disconnected!");
+                GameplayUI.Notifications.GlobalMessage($"Player {GetPlayerName((int)clientId)} disconnected!");
                 message = $"Client {GetPlayerName((int)clientId)} ({clientId}) disconnected! Remaining players: {NetworkManager.Singleton.ConnectedClients.Count}";
             }
             else
@@ -286,7 +286,7 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
             if (countdownInSeconds <= 0)
             {
                 m_IsCountdownActive = false;
-                GameplayUI.Instance.ToggleWaitAnimation(false);
+                GameplayUI.CountdownGroup.ToggleWaitAnimation(false);
             }
         }
     }
@@ -313,7 +313,7 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
         {
             Debug.Log($"GameplayNetworkManager :: StartPlayingGame() :: Timer complete, enabling player control");
             localPlayerAvatar.vehicleController.inputManager.enabled = true;
-            GameplayUI.Instance.ToggleCountdownTimer(false);
+            GameplayUI.CountdownGroup.ToggleCountdownTimer(false);
         }
     }
     
@@ -410,7 +410,7 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
             LobbyManager.Instance.DeleteAnyActiveLobbyWithNotify();
 #pragma warning restore CS4014
             m_IsCountdownActive = true;
-            GameplayUI.Instance.ToggleWaitAnimation(true);
+            GameplayUI.CountdownGroup.ToggleWaitAnimation(true);
         }
     }
     

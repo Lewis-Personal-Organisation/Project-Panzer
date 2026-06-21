@@ -14,6 +14,7 @@ public class LobbyUI : Panel
 	[SerializeField] private TextMeshProUGUI title;
 	[SerializeField] private Button leaveButton;
 	[SerializeField] private Button readyButton;
+	[SerializeField] private Button debugSoloReady;
 	[SerializeField] private TextMeshProUGUI readyButtonText;
 	[SerializeField] private Color readyColour;
 	[SerializeField] private Color unreadyColour;
@@ -48,7 +49,28 @@ public class LobbyUI : Panel
 
 		leaveButton.onClick.AddListener(OnLeaveClicked);
 		readyButton.onClick.AddListener(OnReadyClicked);
+		debugSoloReady.onClick.AddListener(DEBUG_OnReadyClicked);
 		joinCodeCopyButton.onClick.AddListener(CopyJoinCode);
+	}
+
+	private async void StartGameSoloDebug()
+	{
+		try
+		{
+			readyButton.interactable = !readyButton.interactable;
+			leaveButton.interactable = !leaveButton.interactable;
+
+			isReady = !isReady;
+			readyButton.image.color = isReady ? readyColour : unreadyColour;
+			readyButtonText.text = isReady ? "Unready" : "Ready";
+
+			DisableReadyButtonTemp();
+			await LobbyManager.Instance.SetReadyState(isReady);
+		}
+		catch (Exception e)
+		{
+			Debug.LogException(e);
+		}
 	}
 
 	private void OnDestroy()
@@ -156,7 +178,20 @@ public class LobbyUI : Panel
 			readyButtonText.text = isReady ? "Unready" : "Ready";
 
 			DisableReadyButtonTemp();
+			
 			await LobbyManager.Instance.SetReadyState(isReady);
+		}
+		catch (Exception e)
+		{
+			Debug.LogException(e);
+		}
+	}
+	
+	private async void DEBUG_OnReadyClicked()
+	{
+		try
+		{
+			await LobbyManager.Instance.DEBUG_SetReadyState(isReady);
 		}
 		catch (Exception e)
 		{

@@ -9,6 +9,8 @@ using Debug = UnityEngine.Debug;
 [RequireComponent(typeof(Rigidbody))]
 public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggleable
 {
+    public static VehicleController Instance { get; private set; }
+
     [Header("Core Components")]
     public VehicleMobility mobility;
     [field: SerializeField] public CameraController cameraController {get; private set;}
@@ -21,8 +23,8 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
     [SerializeField] private VehicleVFXController vfxController;
     [SerializeField] private VehicleTrackTextureScroller trackTextureScroller;
     [SerializeField] private VehicleWeaponController weaponController;
-    [SerializeField] private VehicleDefence defence;
-    [SerializeField] private VehicleStuckManager stuckManager;
+    public VehicleDefence defence;
+    public VehicleStuckManager stuckManager;
     [SerializeField] private AudioListener audioListener;
     
     [Header("Transforms")]
@@ -79,6 +81,8 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
     /// </summary>
     private void Setup()
     {
+        Instance = this;
+        
         Debug.Log($"VehicleController :: Setup :: Called! We are the owner", this.gameObject);
 
         if (!mobility)
@@ -152,23 +156,57 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
         float speedAsT = Mathf.InverseLerp(mobility.forwardSpeed, 0, velocityTracker.z.velocity);
         vfxController.LerpLifetimeOptions(speedAsT, 0.2f);
     }
+    
+    public void DisableSoft()
+    {
+        Debug.Log("PLAYER DISABLED - SOFT");
+        inputManager.enabled = false;
+        weaponController.Disable();
+        turretRotator.Disable();
+        cameraController.Disable();
+    }
+    
+    public void EnableSoft()
+    {
+        Debug.Log("PLAYER ENABLED - SOFT");
+        inputManager.enabled = true;
+        weaponController.Enable();
+        turretRotator.Enable();
+        cameraController.Enable();
+    }
 
     /// <summary>
     /// Called when the player dies - stop systems
     /// </summary>
     public void Disable()
     {
-        Debug.Log("PLAYER DESTROYED");
+        Debug.Log("PLAYER DISABLED - HARD");
         inputManager.enabled = false;
         weaponController.Disable();
         turretRotator.Disable();
         defence.Disable();
+    }
+
+    public void Destroy()
+    {
+        Debug.Log("PLAYER DESTROYED");
+        Disable();
         vfxController.aliveParticles.Value = false;
+    }
+
+    public void Respawn()
+    {
+        Debug.Log("PLAYER RESPAWNED");
+        vfxController.OnRespawn();
     }
 
     // Called when the player respawns. Reactivates systems
     public void Enable()
     {
-        vfxController.OnRespawn();
+        Debug.Log("PLAYER ENABLED");
+        inputManager.enabled = true;
+        weaponController.Enable();
+        turretRotator.Enable();
+        defence.Enable();
     }
 }

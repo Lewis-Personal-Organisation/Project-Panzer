@@ -27,27 +27,28 @@ public class MainMenuUI : Panel
 		hostImmediateDebugButton.onClick.AddListener(() =>
 		{
 			OnHostButtonPressed();
-			UIManager.LobbySetupMenu.confirmButton.onClick.Invoke();
+			PreGameplayUI.LobbySetupMenu.confirmButton.onClick.Invoke();
 		});
 		
 		joinImmediateDebugButton.onClick.AddListener(() =>
 		{
 			joinPrivateGameButton.onClick.Invoke();
-			UIManager.TextInputGroup.SetInputTextAndSubmit(GUIUtility.systemCopyBuffer);
+			PreGameplayUI.TextInputGroup.SetInputTextAndSubmit(GUIUtility.systemCopyBuffer);
 		});
 		
 		transitionDebugButton.onClick.AddListener(() =>
 		{
-			UIManager.Instance.PushErrorScreen("Lobby Closed");
+			UIManager.PushErrorScreen("Lobby Closed");
 		});
 		
 		hostGameButton.onClick.AddListener(OnHostButtonPressed);
 		joinPrivateGameButton.onClick.AddListener(OnJoinPrivateGameButtonPressed);
 		//joinPublicGameButton.onClick.AddListener(OnJoinPublicGameButtonPressed);
+		
 		nameDisplayButton.onClick.AddListener(delegate
 		{
 			// UIManager.PushPanels(UIManager.FadedBackgroundUI);
-			UIManager.PushPanels(UIManager.FadedBackgroundUI, UIManager.TextInputGroup.Prepare(true));
+			UIManager.PushPanels(PreGameplayUI.FadedBackgroundUI, PreGameplayUI.TextInputGroup.Prepare(true));
 		});
 #if UNITY_EDITOR
 		quitButton.onClick.AddListener(EditorApplication.ExitPlaymode);
@@ -61,17 +62,18 @@ public class MainMenuUI : Panel
 		// Ask Player to set their name if not retrieved from Disk
 		if (GameSave.PlayerName == string.Empty)
 		{
-			UIManager.PushPanels(UIManager.FadedBackgroundUI, UIManager.TextInputGroup.Prepare(true, true));
+			UIManager.PushPanels(PreGameplayUI.FadedBackgroundUI, PreGameplayUI.TextInputGroup.Prepare(true, true));
 		}
 		else
 		{
 			SetMainMenuName(GameSave.PlayerName);
+			
 		}
 
 		// Display error popup if we reloaded this script from another scene (e.g, gameplay)
 		if (PersistentDataHost.Instance.crossSceneData.errorMessage != string.Empty)
 		{
-			UIManager.Instance.PushErrorScreen(PersistentDataHost.Instance.crossSceneData.errorMessage, NotifStyle.Info, 0.333333F, 5, 5, 1, 1.75F);
+			UIManager.PushErrorScreen(PersistentDataHost.Instance.crossSceneData.errorMessage, NotifStyle.Info, 0.333333F, 5, 5, 1, 1.75F);
 			PersistentDataHost.Instance.crossSceneData.errorMessage = string.Empty;
 		}
 	}
@@ -97,7 +99,7 @@ public class MainMenuUI : Panel
 	/// </summary>
 	public void OnHostButtonPressed()
 	{
-		UIManager.PopAllAndPush(UIManager.LobbySetupMenu.Prepare());
+		UIManager.PopAllAndPush(PreGameplayUI.LobbySetupMenu.Prepare());
 	}
 
 	/// <summary>
@@ -105,6 +107,6 @@ public class MainMenuUI : Panel
 	/// </summary>
 	public void OnJoinPrivateGameButtonPressed()
 	{
-		UIManager.PopAndPush(1, UIManager.FadedBackgroundUI, UIManager.TextInputGroup.Prepare(true, false, TextSubmissionContext.RelayJoinCode));
+		UIManager.PopAndPush(1, PreGameplayUI.FadedBackgroundUI, PreGameplayUI.TextInputGroup.Prepare(true, false, TextSubmissionContext.RelayJoinCode));
 	}
 }

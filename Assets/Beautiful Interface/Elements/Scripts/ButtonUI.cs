@@ -185,8 +185,11 @@ namespace Interface.Elements.Scripts
 
         protected override void OnDisable()
         {
+#if UNITY_EDITOR
             if (!UnityEditor.EditorApplication.isPlaying || !StateResetable) return;
-
+            #else
+            if (!StateResetable) return;
+#endif
             ResetState();
         }
 

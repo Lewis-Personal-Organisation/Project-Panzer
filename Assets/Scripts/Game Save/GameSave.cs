@@ -28,6 +28,8 @@ public static class GameSave
 
 	public static void PrintPrefix()
 	{
+#if UNITY_EDITOR
 		Debug.Log($"Project is {(ParrelSync.ClonesManager.IsClone() ? "Clone" : "Original")}. Base Prefix is '{basePrefix}'. E.g '{basePrefix}PlayerUsername'");
+		#endif
 	}
 }

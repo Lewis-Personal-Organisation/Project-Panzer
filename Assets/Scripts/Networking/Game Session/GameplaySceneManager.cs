@@ -39,8 +39,7 @@ public class GameplaySceneManager : Singleton<GameplaySceneManager>
 
     public void SetCountdown(int seconds)
     {
-        // GameplaySceneManager.Instance.timer.text = $"{seconds}";
-        GameplayUI.Instance.SetCountdownTimer($"{seconds}");
+        GameplayUI.CountdownGroup.SetCountdownTimer($"{seconds}");
     }
     
     public void ShowGameTimer(int seconds)

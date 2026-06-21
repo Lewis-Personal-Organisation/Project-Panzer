@@ -115,8 +115,8 @@ public class VehicleDefence : VehicleComponent, IVehicleComponentToggleable
 
         if (health <= 0F)
         {
-            vehicle.Disable();
-            GameplayNotifications.Instance.SendNetworkMessage($"Player {GameplayNetworkManager.Instance.localPlayerName} was destroyed!");
+            vehicle.Destroy();
+            GameplayUI.Notifications.GlobalMessage($"Player {GameplayNetworkManager.Instance.localPlayerName} was destroyed!");
         }
     }
 
@@ -131,7 +131,7 @@ public class VehicleDefence : VehicleComponent, IVehicleComponentToggleable
 
         if (health <= 0F)
         {
-            vehicle.Disable();
+            vehicle.Destroy();
         }
     }
 }

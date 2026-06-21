@@ -7,7 +7,8 @@ public class RigidBodyVelocityTracker : LocalVehicleComponent
     [System.Serializable]
     public class VelocityAxisData
     {
-        public bool track = false;
+        [FormerlySerializedAs("track")]
+        public bool trackValue = false;
         public float velocity = 0F;
         internal float delta = 0F;
         internal float normalisedDelta = 0F;
@@ -42,8 +43,6 @@ public class RigidBodyVelocityTracker : LocalVehicleComponent
     [SerializeField] private Rigidbody rb;
     public Vector3 Velocity { get; private set; }
 
-    public float minVelocityForNonIdle;
-
     public VelocityAxisData x = new VelocityAxisData();
     public VelocityAxisData y = new VelocityAxisData();
     public VelocityAxisData z = new VelocityAxisData();
@@ -57,22 +56,22 @@ public class RigidBodyVelocityTracker : LocalVehicleComponent
     private void FixedUpdate()
     {
         if (!enabled) return;
-        if (!x.track && !y.track && !z.track) return;
+        if (!x.trackValue && !y.trackValue && !z.trackValue) return;
 
         // local velocity
         Velocity = transform.InverseTransformDirection(rb.velocity);
         
-        if (x.track)
+        if (x.trackValue)
         {
             x.Update(Velocity.x);
         }
 
-        if (y.track)
+        if (y.trackValue)
         {
             y.Update(Velocity.y);
         }
 
-        if (z.track)
+        if (z.trackValue)
         {
             z.Update(Velocity.z);
         }

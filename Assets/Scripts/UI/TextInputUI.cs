@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using System;
+using System.Text;
 
 public enum TextSubmissionContext
 {
@@ -28,6 +29,8 @@ public class TextInputUI : Panel
 	private UnityAction OnUpdate;
 
 	public void TogglePasteButton(bool state) => pasteButton.gameObject.SetActive(state);
+	
+	private readonly StringBuilder keyboardString = new StringBuilder(10);
 
 
 	private void Awake()
@@ -36,7 +39,7 @@ public class TextInputUI : Panel
 		pasteButton.onClick.AddListener(OnPaste);
 		closeButton.onClick.AddListener(() =>
 		{
-			UIManager.PopAllAndPush(UIManager.MainMenu);
+			UIManager.PopAllAndPush(PreGameplayUI.MainMenu);
 		});
 
 		onPopAction.AddListener(() => Prepare(false));
@@ -47,26 +50,32 @@ public class TextInputUI : Panel
 		OnUpdate?.Invoke();
 	}
 
-	public Panel Prepare(bool state, bool forceHideCloseButton = false, TextSubmissionContext context = TextSubmissionContext.PlayerName)
+	public Panel Prepare(bool isShowing, bool forceHideCloseButton = false, TextSubmissionContext context = TextSubmissionContext.PlayerName)
 	{
-		if (state)
+		if (isShowing)
 		{
-			inputText.text = string.Empty;
 			if (context == TextSubmissionContext.PlayerName)
 			{
 				inputTitle.text = "Enter a Username";
+				
+				// Text field could be empty if it used to input Relay code last
+				if (inputText.text == string.Empty)
+					inputText.text = GameSave.PlayerName;
+				
+				keyboardString.Clear();
+				keyboardString.Append(GameSave.PlayerName);
 				pasteButton.gameObject.SetActive(false);
 				closeButton.gameObject.SetActive(false);
 			}
 			else
 			{
 				inputTitle.text = "Enter Join Code";
+				inputText.text = string.Empty;
 				pasteButton.gameObject.SetActive(true);
 				closeButton.gameObject.SetActive(true);
 			}
 
 			textInputContext = context;
-
 			OnUpdate += TakeKeyboardInput;
 		}
 		else
@@ -78,38 +87,6 @@ public class TextInputUI : Panel
 	}
 	
 	/// <summary>
-	/// Toggles the UI responsible for Text Input for Username etc.,
-	/// </summary>
-	// public void ToggleInputTextGroup(bool state, TextSubmissionContext context = TextSubmissionContext.PlayerName)
-	// {
-	// 	base.Toggle(state);
-	// 	UIManager.FadedBackgroundUI.Toggle(state);
-	//
-	// 	if (state)
-	// 	{
-	// 		inputText.text = string.Empty;
-	// 		if (context == TextSubmissionContext.PlayerName)
-	// 		{
-	// 			inputTitle.text = "Enter a Username";
-	// 			pasteButton.gameObject.SetActive(false);
-	// 		}
-	// 		else
-	// 		{
-	// 			inputTitle.text = "Enter Join Code";
-	// 			pasteButton.gameObject.SetActive(true);
-	// 		}
-	//
-	// 		textInputContext = context;
-	//
-	// 		OnUpdate += TakeKeyboardInput;
-	// 	}
-	// 	else
-	// 	{
-	// 		OnUpdate -= TakeKeyboardInput;
-	// 	}
-	// }
-
-	/// <summary>
 	/// Filter the string inputs from Keyboard - letters/numbers allowed, Characters can be removed with backspace.
 	/// Input can be submitted with Return.
 	/// </summary>
@@ -117,22 +94,24 @@ public class TextInputUI : Panel
 	{
 		foreach (char chr in Input.inputString)
 		{
-			// If character is Letter or Number and the current length is not more than 10, update text
-			if ((Char.IsLetter(chr) || Char.IsDigit(chr)) && inputText.text.Length + 1 <= MaxInputTextLength)
+			// Char add - If char is Letter/Number length is not more than 10, update text
+			if (Char.IsLetterOrDigit(chr) && keyboardString.Length + 1 <= MaxInputTextLength)
 			{
-				string temp = inputText.text + chr;
-				inputText.text = temp;
+				keyboardString.Append(chr);
+				inputText.text = keyboardString.ToString();
 			}
-			// If Char is any return key, attempt to submit name
-			else if (chr == '\r' && inputText.text.Length > 0)
+			
+			// Char remove - If char is backspace and we have minimum 1 char, remove char
+			else if (chr == '\b' && keyboardString.Length > 0)
+			{
+				keyboardString.Length--;
+				inputText.text = keyboardString.ToString();
+			}
+			
+			// Submit - If Char is any return key, attempt to submit name
+			else if (chr == '\r' && keyboardString.Length > 0)
 			{
 				SubmitTextInput();
-			}
-			// If char is backspace and we have minimum 1 char, remove char
-			else if (chr == '\b' && inputText.text.Length > 0)
-			{
-				string temp = inputText.text.Remove(inputText.text.Length - 1);
-				inputText.text = temp;
 			}
 		}
 	}
@@ -158,19 +137,17 @@ public class TextInputUI : Panel
 	{
 		if (inputText.text.Length == 0)
 		{
-			UIManager.PushPanel(UIManager.NotificationUI.PrepareErrorMsg("Text can't be empty"));
+			UIManager.PushPanel(PreGameplayUI.Notifs.PrepareErrorMsg("Text can't be empty"));
 			return;
 		}
 
 		switch (textInputContext)
 		{
 			case TextSubmissionContext.PlayerName:
-				// UIManager.PushPanel(UIManager.MainMenu.Prepare(inputText.text));
-				UIManager.MainMenu.Prepare(inputText.text);
-				GameSave.PlayerName = UIManager.MainMenu.nameDisplayText.text;
-				inputText.text = string.Empty;
+				PreGameplayUI.MainMenu.Prepare(inputText.text);
+				GameSave.PlayerName = PreGameplayUI.MainMenu.nameDisplayText.text;
 				
-				UIManager.PopAllAndPush(UIManager.MainMenu);
+				UIManager.PopAllAndPush(PreGameplayUI.MainMenu);
 				SceneData.Label("UI View: ", UIManager.CurrentPanel.GetPanel().name);
 
 				if (LobbyManager.previouslyRefusedUsername)
@@ -178,8 +155,8 @@ public class TextInputUI : Panel
 					LobbyManager.Instance.JoinPrivateLobbyAsClient(enteredJoinCode, GameSave.PlayerName);
 				}
 				break;
+			
 			case TextSubmissionContext.RelayJoinCode:
-				
 				Debug.Log($"Trying to Submit Text for lobby: '{inputText.text}'");
 				if (JoinCode.IsValid(inputText.text.ToUpper()))
 				{
@@ -188,11 +165,11 @@ public class TextInputUI : Panel
 					UIManager.PopPanel();
 					inputText.text = string.Empty;
 
-					UIManager.PopPanel(UIManager.NotificationUI);
+					UIManager.PopPanel(PreGameplayUI.Notifs);
 				}
 				else
 				{
-					UIManager.Instance.PushErrorScreen("Join Code or Code Format incorrect", NotifStyle.Error, 0.2F, 5, 5, 1.5F, 1F);
+					UIManager.PushErrorScreen("Join Code or Code Format incorrect", NotifStyle.Error, 0.2F, 5, 5, 1.5F, 1F);
 				}
 				break;
 		}

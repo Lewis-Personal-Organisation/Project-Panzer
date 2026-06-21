@@ -479,6 +479,9 @@ PrefabInstance:
       addedObject: {fileID: 4425514349993116832}
     - targetCorrespondingSourceObject: {fileID: 6098138856682070899, guid: f7d24758a89a6bc488a4798627dca150, type: 3}
       insertIndex: -1
+      addedObject: {fileID: 5099109183933842090}
+    - targetCorrespondingSourceObject: {fileID: 6098138856682070899, guid: f7d24758a89a6bc488a4798627dca150, type: 3}
+      insertIndex: -1
       addedObject: {fileID: 2736296236384809592}
     - targetCorrespondingSourceObject: {fileID: 6098138856682070899, guid: f7d24758a89a6bc488a4798627dca150, type: 3}
       insertIndex: -1
@@ -628,6 +631,7 @@ MonoBehaviour:
   trackTextureScroller: {fileID: 6437474314342085753}
   weaponController: {fileID: 7759402707074100814}
   defence: {fileID: 8063876861978009509}
+  stuckManager: {fileID: 5099109183933842090}
   audioListener: {fileID: 7616549311141766862}
   hullRigidbody: {fileID: 3582152835948603133}
   <hullBoneTransform>k__BackingField: {fileID: 3624013315225115793}
@@ -817,6 +821,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rb: {fileID: 3582152835948603133}
+  minVelocityForNonIdle: 0
   x:
     track: 0
     velocity: 0
@@ -829,6 +834,27 @@ MonoBehaviour:
     track: 1
     velocity: 0
     deadZone: 0.01
+--- !u!114 &5099109183933842090
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6117887212838239997}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4099d5ae0f231a441be511c38aa33277, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  minPos: 0.001
+  isStuck: 0
+  isMoving: 0
+  tryingToMove: 0
+  stuckTimer: 0
+  stuckTimerMax: 1.25
+  stuckTime: 0
+  stuckHelperTime: 2.5
+  safePosMarker: {fileID: 0}
 --- !u!136 &2736296236384809592
 CapsuleCollider:
   m_ObjectHideFlags: 0

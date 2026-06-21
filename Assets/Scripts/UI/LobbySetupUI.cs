@@ -37,7 +37,7 @@ public class LobbySetupUI : Panel
 		onPushAction.AddListener(privateButton.onClick.Invoke);
 		onPopAction.AddListener(privateButton.onClick.Invoke);
 		
-		closeButton.onClick.AddListener(() => UIManager.PopAllAndPush(UIManager.MainMenu));
+		closeButton.onClick.AddListener(() => UIManager.PopAllAndPush(PreGameplayUI.MainMenu));
 
 		privateButton.onClick.AddListener(delegate
 		{
@@ -78,7 +78,7 @@ public class LobbySetupUI : Panel
 		closeButton.enabled = false;
 
 		ToggleLobbyCreationInteractables(false);
-		UIManager.PushPanel(UIManager.LoadingIcon.SetText("Creating Lobby..."));
+		UIManager.PushPanel(PreGameplayUI.LoadingIcon.SetText("Creating Lobby..."));
 
 		// Shut down the Net Manager to clean up its state
 		if (NetworkManager.Singleton.IsClient || NetworkManager.Singleton.IsHost)
@@ -115,7 +115,7 @@ public class LobbySetupUI : Panel
 		// Copy code to buffer
 		GUIUtility.systemCopyBuffer = lobby.LobbyCode;
 		
-		UIManager.PopAndPush(2, UIManager.LobbyUI.Prepare(lobby.LobbyCode, lobby.Name));
+		UIManager.PopAndPush(2, PreGameplayUI.Lobby.Prepare(lobby.LobbyCode, lobby.Name));
 	}
 
 	/// <summary>
@@ -150,7 +150,7 @@ public class LobbySetupUI : Panel
 
 	public Panel Prepare()
 	{
-		lobbyNameText.text = $"{UIManager.MainMenu.nameDisplayText.text}'s {(isLobbyPrivate ? "Private" : "Public")} Lobby";
+		lobbyNameText.text = $"{PreGameplayUI.MainMenu.nameDisplayText.text}'s {(isLobbyPrivate ? "Private" : "Public")} Lobby";
 		return this;
 	}
 	
@@ -159,6 +159,6 @@ public class LobbySetupUI : Panel
 	/// </summary>
 	public void SetLobbyNameText()
 	{
-		lobbyNameText.text = $"{UIManager.MainMenu.nameDisplayText.text}'s {(isLobbyPrivate ? "Private" : "Public")} Lobby";
+		lobbyNameText.text = $"{PreGameplayUI.MainMenu.nameDisplayText.text}'s {(isLobbyPrivate ? "Private" : "Public")} Lobby";
 	}
 }

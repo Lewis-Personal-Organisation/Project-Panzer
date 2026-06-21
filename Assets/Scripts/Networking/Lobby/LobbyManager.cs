@@ -163,6 +163,23 @@ public class LobbyManager : Singleton<LobbyManager>
 		OnLobbyChanged?.Invoke(activeLobby, isGameReady);
 	}
 
+	void DEBUG_UpdateLobby(Lobby updatedLobby)
+	{
+		// Since this is called after an await, ensure that the Lobby wasn't closed while waiting.
+		if (activeLobby == null || updatedLobby == null)
+		{
+			return;
+		}
+
+		activeLobby = updatedLobby;
+		
+		Debug.Log($"LobbyManager :: We clicked Ready Button. Checking if Game is ready'd up");
+		// bool isGameReady = AllPlayersReady(activeLobby);
+
+		// Trigger event with value (This starts the game if all players are ready)
+		OnLobbyChanged?.Invoke(activeLobby, true);
+	}
+
 	/// <summary>
 	/// If Lobby is not null, remove ourselves from it
 	/// </summary>
@@ -347,7 +364,7 @@ public class LobbyManager : Singleton<LobbyManager>
 			activeLobby = null;
 
 			LobbyToMainMenuTransition();
-			UIManager.Instance.PushErrorScreen("Could not join lobby");
+			UIManager.PushErrorScreen("Could not join lobby");
 		}
 
 		return activeLobby;
@@ -533,12 +550,41 @@ public class LobbyManager : Singleton<LobbyManager>
 			options.Data = CreatePlayerDictionary();
 			localPlayer.Data = options.Data;
 
-			UIManager.LobbyUI.AdjustLocalPlayerSlotReadyState();
+			PreGameplayUI.Lobby.AdjustLocalPlayerSlotReadyState();
 
 			var updatedLobby = await LobbyService.Instance.UpdatePlayerAsync(activeLobby.Id, localPlayerId, options);
 			if (this == null) return;
 
 			UpdateLobby(updatedLobby);
+		}
+		catch (Exception e)
+		{
+			Debug.LogException(e);
+		}
+	}
+
+	public async Task DEBUG_SetReadyState(bool isReady)
+	{
+		try
+		{
+			if (activeLobby == null)
+			{
+				Debug.Log("LobbyManager :: SetReadyState :: Attempting to toggle ready state when not already in a lobby.");
+				return;
+			}
+
+			playerDictionaryData.isReady = isReady;
+
+			var options = new UpdatePlayerOptions();
+			options.Data = CreatePlayerDictionary();
+			localPlayer.Data = options.Data;
+
+			PreGameplayUI.Lobby.AdjustLocalPlayerSlotReadyState();
+
+			var updatedLobby = await LobbyService.Instance.UpdatePlayerAsync(activeLobby.Id, localPlayerId, options);
+			if (this == null) return;
+
+			DEBUG_UpdateLobby(updatedLobby);
 		}
 		catch (Exception e)
 		{
@@ -576,7 +622,7 @@ public class LobbyManager : Singleton<LobbyManager>
 			localPlayer.Data = options.Data;
 
 			// Adjust the local player slot, showing the new vehicle
-			UIManager.LobbyUI.AdjustLocalPlayerSlot();
+			PreGameplayUI.Lobby.AdjustLocalPlayerSlot();
 
 			// Update the Lobby with our new data
 			string lobbyId = activeLobby.Id;
@@ -637,8 +683,8 @@ public class LobbyManager : Singleton<LobbyManager>
 	/// </summary>
 	private void LobbyToMainMenuTransition()
 	{
-		UIManager.PopAllAndPush(UIManager.MainMenu);
-		UIManager.LobbySetupMenu.ToggleLobbyCreationInteractables(true);
+		UIManager.PopAllAndPush(PreGameplayUI.MainMenu);
+		PreGameplayUI.LobbySetupMenu.ToggleLobbyCreationInteractables(true);
 	}
 	
 	/// <summary>
@@ -652,7 +698,7 @@ public class LobbyManager : Singleton<LobbyManager>
 			OnPlayerNotInLobby();
 
 			LobbyToMainMenuTransition();
-			UIManager.Instance.PushErrorScreen("Host has closed the Lobby!");
+			UIManager.PushErrorScreen("Host has closed the Lobby!");
 		}
 		else
 		{
@@ -704,7 +750,7 @@ public class LobbyManager : Singleton<LobbyManager>
 	{
 		try
 		{
-			UIManager.PushPanel(UIManager.LoadingIcon.Prepare("Joining Lobby..."));
+			UIManager.PushPanel(PreGameplayUI.LoadingIcon.Prepare("Joining Lobby..."));
 			await SessionManager.Instance.InitialiseAndAuthenticatePlayer();
 			Lobby joinedLobby = await Instance.JoinPrivateLobby(playerJoinCode, playerName);
 
@@ -761,8 +807,8 @@ public class LobbyManager : Singleton<LobbyManager>
 				previouslyRefusedUsername = true;
 				await Instance.LeaveJoinedLobby();
 				
-				UIManager.PopAndPush(1, UIManager.FadedBackgroundUI, UIManager.TextInputGroup.Prepare(true, true));
-				UIManager.TextInputGroup.TogglePasteButton(false);
+				UIManager.PopAndPush(1, PreGameplayUI.FadedBackgroundUI, PreGameplayUI.TextInputGroup.Prepare(true, true));
+				PreGameplayUI.TextInputGroup.TogglePasteButton(false);
 			}
 		}
 		catch (Exception e)
@@ -811,7 +857,7 @@ public class LobbyManager : Singleton<LobbyManager>
 				return;
 			}
 
-			UIManager.PopAndPush(1, UIManager.LobbyUI.Prepare(lobbyJoined.LobbyCode, lobbyJoined.Name));
+			UIManager.PopAndPush(1, PreGameplayUI.Lobby.Prepare(lobbyJoined.LobbyCode, lobbyJoined.Name));
 			CacheLocalPlayer();
 		}
 		catch (Exception e)

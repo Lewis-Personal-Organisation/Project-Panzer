@@ -65,3 +65,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   scoresText: {fileID: 0}
+  timer: 0
+  maxtime: 0
+  countdownText: {fileID: 0}
+  countdownTimer: {fileID: 0}
+  animatedGameObject: {fileID: 0}
+  repositionCanvasGroup: {fileID: 0}
+  fadeDuration: 0.25

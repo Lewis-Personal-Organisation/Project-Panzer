@@ -10,7 +10,7 @@ public enum NotifStyle
 	Error
 }
 
-public class NotificationUI : Panel
+public class Notifs : Panel
 {
 	private NotifStyle activeStyle = NotifStyle.Info;
 	private const string errorPrefix = "ERROR: ";
@@ -52,7 +52,7 @@ public class NotificationUI : Panel
 	/// <summary>
 	/// Prepares the Style and Message of the notification
 	/// </summary>
-	public NotificationUI PrepareStyleAndMessage(NotifStyle style, string message, float widthMulti = 0, float heightMulti = 0)
+	public Notifs PrepareStyleAndMessage(NotifStyle style, string message, float widthMulti = 0, float heightMulti = 0)
 	{
 		messageText.color = style switch
 		{
@@ -88,9 +88,9 @@ public class NotificationUI : Panel
 		}
 		
 		if (showPanel)
-			Toggle(true);
+			TogglePanels(true);
 		
-		this.StopAllCoroutines();
+		StopAllCoroutines();
 		StartCoroutine(Animate(target, speed, onComplete));
 	}
 
@@ -108,6 +108,6 @@ public class NotificationUI : Panel
 		
 		onComplete?.Invoke();
 		
-		Toggle(false);
+		TogglePanels(false);
 	}
 }

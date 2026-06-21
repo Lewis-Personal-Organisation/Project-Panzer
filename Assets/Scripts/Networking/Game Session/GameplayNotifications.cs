@@ -13,7 +13,7 @@ using UnityEngine.UI;
 #endif
 
 [DisallowMultipleComponent]
-public class GameplayNotifications : NetworkSingleton<GameplayNotifications>
+public class GameplayNotifications : NetworkBehaviour
 {
     [System.Serializable]
     public class TextElementController
@@ -61,27 +61,20 @@ public class GameplayNotifications : NetworkSingleton<GameplayNotifications>
     private bool clearToSpawn => lastElementDistance > activeElements[^1].textElement.rectTransform.sizeDelta.y + messageMargin;
 
 
-    private new void Awake()
+    private void Awake()
     {
-        base.Awake();
         Setup();
     }
 
     public void Setup()
     {
+        inactiveElements.Clear();
         TextMeshProUGUI[] textItems = canvas.GetComponentsInChildren<TextMeshProUGUI>(true);
         spawnPos = textItems[0].rectTransform.anchoredPosition;
         for (int i = 0; i < textItems.Length; i++)
         {
             inactiveElements.Add(new TextElementController(textItems[i], "", 0, defaultExpiryTime, spawnPos));
         }
-    }
-
-    private void OnApplicationQuit()
-    {
-#if UNITY_EDITOR
-        inactiveElements.Clear();
-#endif
     }
 
     [ExecuteInEditMode]
@@ -174,7 +167,7 @@ public class GameplayNotifications : NetworkSingleton<GameplayNotifications>
     /// Send a network notification message to all players
     /// </summary>
     /// <param name="message"></param>
-    public void SendNetworkMessage(string message)
+    public void GlobalMessage(string message)
     {
         SendNetworkNotificationServerRPC(message);
     }
@@ -186,7 +179,7 @@ public class GameplayNotifications : NetworkSingleton<GameplayNotifications>
     [ServerRpc(RequireOwnership = false)]
     private void SendNetworkNotificationServerRPC(string message)
     {
-        Instance.Queue(message);
+        Queue(message);
         SendNetworkNotifClientRPC(message);
     }
 
@@ -198,6 +191,6 @@ public class GameplayNotifications : NetworkSingleton<GameplayNotifications>
     private void SendNetworkNotifClientRPC(string message)
     {
         if (NetworkManager.Singleton.IsServer) return;
-        Instance.Queue(message);
+        Queue(message);
     }
 }
