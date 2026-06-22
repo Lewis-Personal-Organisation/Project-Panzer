@@ -28,7 +28,7 @@ public class VehicleSlot : MonoBehaviour
 		}
 		else
 		{
-			VehicleLobbyData vData = VehicleData.GetLobbyItem(index);
+			VehicleLobbyData vData = PreGameplayUI.Lobby.GetVehicleLobbyData(index);
 
 			// Will be null if this script is within a Player Slot
 			if (vehicleSelectButton != null)

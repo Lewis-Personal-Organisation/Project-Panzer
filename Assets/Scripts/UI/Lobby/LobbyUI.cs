@@ -38,6 +38,10 @@ public class LobbyUI : Panel
 	[Header("Vehicle Slots")]
 	[SerializeField] private VehicleSlot[] vehicleSlots = new VehicleSlot[5];
 	
+	[Header("Vehicle Data")]
+	[SerializeField] private List<VehicleLobbyData> vehicleLobbyData = new List<VehicleLobbyData>();
+	public VehicleLobbyData GetVehicleLobbyData(int index) => vehicleLobbyData[index];
+	
 
 	private void Awake()
 	{

@@ -175,7 +175,7 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
     /// <returns></returns>
     private IEnumerator ResetToMainMenu(string message)
     {
-        PersistentDataHost.Instance.crossSceneData.errorMessage = message;
+        PersistentDataHost.errorMessage = message;
         AsyncOperation asyncLoadLevel = SceneManager.LoadSceneAsync(SceneHelper.Instance.mainMenuScene.Name, LoadSceneMode.Single);
         yield return new WaitUntil(() => asyncLoadLevel.isDone);
         yield return StartCoroutine(SessionManager.Instance.IEShutdownNetworkClient());
