@@ -1,38 +1,59 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 
 public class BehaviourStep
 {
+    private enum BehaviourStage
+    {
+        Starting,
+        Running,
+        Complete
+    }
+    
+    private BehaviourStage stage;
+    private Action startAction;
     private Action behaviour;
     private Func<bool> completeCondition;
     private Action onComplete;
-    private bool isComplete = false;
-    private bool stopOnComplete = false;
-
-    public BehaviourStep(Action behaviour, Func<bool> completeCondition, Action onComplete, bool stopOnComplete)
+    private bool stopOnComplete;
+    public bool ShouldCancel => stage == BehaviourStage.Complete && stopOnComplete;
+    
+    
+    public BehaviourStep(Action startAction, Action behaviour, Func<bool> completeCondition, Action onComplete, bool stopOnComplete)
     {
+        this.startAction = startAction;
         this.behaviour = behaviour;
         this.completeCondition = completeCondition;
         this.onComplete = onComplete;
-        this.onComplete += () => isComplete = true;
         this.stopOnComplete = stopOnComplete;
     }
 
+    /// <summary>
+    /// Process this behaviour step and return finishe state
+    /// </summary>
+    /// <returns></returns>
     public bool Process()
     {
-        if (stopOnComplete && isComplete)
-            return true;
-            
-        behaviour.Invoke();
-
-        if (completeCondition == null || completeCondition != null && completeCondition())
+        switch (stage)
         {
-            onComplete?.Invoke();
-            return true;
-        }
+            case BehaviourStage.Starting:
+                startAction?.Invoke();
+                stage = BehaviourStage.Running;
+                break;
+            
+            case BehaviourStage.Running:
+                behaviour.Invoke();
 
-        return false;
+                if (completeCondition == null || completeCondition != null && completeCondition())
+                {
+                    stage = BehaviourStage.Complete;
+                }
+                break;
+            
+            case BehaviourStage.Complete:
+                onComplete?.Invoke();
+                break;
+        }
+        
+        return stage == BehaviourStage.Complete;
     }
 }

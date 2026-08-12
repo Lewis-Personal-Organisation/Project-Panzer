@@ -189,6 +189,33 @@ public static class Extensions
         UnityEngine.Debug.Log(perpendicular * forceMagnitude);
     }
     #endregion
+
+    #region Camera
+
+    private static Plane[] planes = new Plane[6];
+    /// <summary>
+    /// Check if the camera can see the bounds of a Mesh
+    /// </summary>
+    /// <param name="renderer">The renderer holding the mesh</param>
+    /// <param name="camera">The target Camera</param>
+    /// <returns></returns>
+    public static bool CanSeeBounds(this Camera camera, Renderer renderer)
+    {
+        if (!renderer)
+            return false;
+
+        if (!renderer.enabled)
+            return false;
+
+        if (!renderer.gameObject.activeInHierarchy)
+            return false;
+
+        planes = GeometryUtility.CalculateFrustumPlanes(camera);
+
+        return GeometryUtility.TestPlanesAABB(planes, renderer.bounds);
+    }
+
+    #endregion
     
     public static class Debug
     {

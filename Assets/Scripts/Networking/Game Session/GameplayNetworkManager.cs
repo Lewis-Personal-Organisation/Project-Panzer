@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
@@ -5,8 +6,10 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.SceneManagement;
 using System.Linq;
+using System.Threading.Tasks;
 using Unity.Mathematics;
 using Unity.Services.Lobbies.Models;
+using UnityEditor;
 
 public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
 {
@@ -43,8 +46,15 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
     public string GetPlayerVehicleIndex(int playerIndex) => Instance.cachedLobby.Players[playerIndex].Data[LobbyManager.PlayerDictionaryData.vehicleIndexKey].Value;
     
     public List<PlayerAvatar> playerAvatars { get; private set; } = new List<PlayerAvatar>();
-    private PlayerAvatar localPlayerAvatar;
+    public PlayerAvatar localPlayerAvatar;
     public string localPlayerName => localPlayerAvatar.playerName;
+
+    // Invoked when the Player is fully spawned and Assigned.
+    // Useful for queuing actions for objects which need access to Player information such as name or ID.
+    public static Action OnPlayerAssigned;
+
+    // Invoked when the local player avater is finished settoing up
+    public static Action OnLocalPlayerAssigned;
     
     
     private new void Awake()
@@ -56,9 +66,9 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
     // intantiating player avatars and starting the countdown (host only).
     void Start()
     {
-        cachedLobby = LobbyManager.Instance.activeLobby;
-        LobbyDebugViewer.Instance.CancelCheck();
-        Extensions.Debug.ClearConsole();
+        cachedLobby = LobbyManager.activeLobby;
+        // LobbyDebugViewer.Instance.CancelCheck();
+        // Extensions.Debug.ClearConsole();
         
         if (NetworkManager.Singleton != null)
         {
@@ -143,7 +153,7 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
             if (clientId != NetworkManager.ServerClientId)
             {
                 // When a client disconnects, we should show a popup ingame here!
-                GameplayUI.Notifications.GlobalMessage($"Player {GetPlayerName((int)clientId)} disconnected!");
+                GameplayUI.Notifications.QueueNetworkNotif($"Player {GetPlayerName((int)clientId)} disconnected!");
                 message = $"Client {GetPlayerName((int)clientId)} ({clientId}) disconnected! Remaining players: {NetworkManager.Singleton.ConnectedClients.Count}";
             }
             else
@@ -162,8 +172,16 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
         Debug.Log($"GameplaySceneManager :: OnClientDisconnect :: Message  -> {message}");
         if (ReturnToMenu)
         {
+            #if UNITY_EDITOR
+            // If editor is quiting, don't use routine
             await LobbyManager.Instance.activeLobbyEvents.UnsubscribeAsync();
-            StartCoroutine(ResetToMainMenu(message));
+            
+            if (!EditorQuitWatcher.IsQuiting)
+                await ResetToMainMenu(message);
+            #else
+            await LobbyManager.Instance.activeLobbyEvents.UnsubscribeAsync();
+            await ResetToMainMenu(message);
+            #endif
         }
     }
     
@@ -173,12 +191,15 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
     /// </summary>
     /// <param name="message"></param>
     /// <returns></returns>
-    private IEnumerator ResetToMainMenu(string message)
+    private async Task ResetToMainMenu(string message)
     {
         PersistentDataHost.errorMessage = message;
         AsyncOperation asyncLoadLevel = SceneManager.LoadSceneAsync(SceneHelper.Instance.mainMenuScene.Name, LoadSceneMode.Single);
-        yield return new WaitUntil(() => asyncLoadLevel.isDone);
-        yield return StartCoroutine(SessionManager.Instance.IEShutdownNetworkClient());
+        
+        while (asyncLoadLevel.isDone == false)
+            await Task.Yield();
+        
+        await SessionManager.Instance.ShutdownNetwork();
     }
     
     /// <summary>
@@ -346,25 +367,26 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
         
         var playerIndex = 0;
         
-        foreach (ulong relayClientId in connectedClients.Keys)
+        foreach (ulong clientID in connectedClients.Keys)
         {
             // int vehicleIndex = int.Parse(cachedLobby.Players[playerIndex].Data[LobbyManager.PlayerDictionaryData.vehicleIndexKey].Value);
             // Debug.Log($"Player {playerIndex} should spawn with vehicle {VehicleData.GetLobbyItem(vehicleIndex).name} using {vehicleIndex}");
             
-            SpawnPlayer(playerIndex, relayClientId);
+            SpawnPlayer(playerIndex, clientID);
             playerIndex++;
         }
     }
     
-    void SpawnPlayer(int playerIndex, ulong relayClientId)
+    void SpawnPlayer(int playerIndex, ulong clientID)
     {
         Vector3 pos = GameplaySceneManager.Instance.spawnPoints[playerIndex].position;
         quaternion rot = GameplaySceneManager.Instance.spawnPoints[playerIndex].rotation;
         
         PlayerAvatar playerAvatar = GameObject.Instantiate(playerAvatarPrefabs[playerIndex], pos, rot);
         playerAvatar.gameObject.name = playerAvatarPrefabs[playerIndex].name;           // Remove clone from name field
-        playerAvatar.networkObject.SpawnWithOwnership(relayClientId);
-        playerAvatar.SetPlayerAvatarClientRpc(playerIndex, GetPlayerID(playerIndex), GetPlayerName(playerIndex), relayClientId);
+        playerAvatar.networkObject.SpawnWithOwnership(clientID);
+        playerAvatar.SetPlayerAvatarClientRpc(playerIndex, GetPlayerID(playerIndex), GetPlayerName(playerIndex), clientID);
+        OnPlayerAssigned.Invoke();
         Debug.Log($"GameplayNetworkManager :: SpawnPlayer :: Spawned Player with ID {playerIndex}", playerAvatar.gameObject);
     }
     
@@ -377,6 +399,7 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
     {
         localPlayerAvatar = playerAvatar;
         localPlayerAvatar.gameObject.name += " (Local Player)";
+        OnLocalPlayerAssigned?.Invoke();
     }
     
     void InitializeGame()

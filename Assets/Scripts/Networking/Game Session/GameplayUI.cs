@@ -22,6 +22,11 @@ public class GameplayUI : Singleton<GameplayUI>
     private new void Awake()
     {
         base.Awake();
+        
+        if (Cursor.lockState != CursorLockMode.Locked)
+            Cursor.lockState = CursorLockMode.Locked;
+
+        Cursor.visible = false;
     }
   
     public void UpdateScores()

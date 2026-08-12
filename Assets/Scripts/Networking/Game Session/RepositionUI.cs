@@ -9,7 +9,7 @@ public class RepositionUI : Panel
     public float fadeDuration;
     
     
-    public void FadeForPlayerReposition(Vector3 safePosition, Quaternion safeRotation)
+    public void RepositionPlayer(Vector3 safePosition, Quaternion safeRotation)
     {
         if (canvasFadeCoroutine == null)
         {
@@ -25,7 +25,8 @@ public class RepositionUI : Panel
         repositionCanvasGroup.gameObject.SetActive(true);
         canvasFadeCoroutine = StartCoroutine(FadeCanvas(fadeDuration, 1F));
 
-        yield return new WaitUntil(() => canvasFadeCoroutine == null);
+        float wait = fadeDuration * 0.75F;
+        yield return new WaitForSeconds(wait);
         
         VehicleController.Instance.hullRigidbody.MovePosition(safePosition);
         VehicleController.Instance.hullRigidbody.MoveRotation(safeRotation);
@@ -44,13 +45,12 @@ public class RepositionUI : Panel
         float startAlpha = repositionCanvasGroup.alpha;
         float rate = 1F / duration;
         float progress = 0F;
-        Debug.Log($"Fade: {startAlpha}, {targetAlpha}");
+        // Debug.Log($"Fade: {startAlpha}, {targetAlpha}");
 
         while (progress < 1F)
         {
             repositionCanvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, progress);
             progress += rate * Time.deltaTime;
-            Debug.Log($"Fade: {progress}");
             yield return null;
         }
         

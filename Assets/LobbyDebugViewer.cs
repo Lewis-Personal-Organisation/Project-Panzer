@@ -65,7 +65,7 @@ public class LobbyDebugViewer : Singleton<LobbyDebugViewer>
     {
         while (!token.IsCancellationRequested)
         {
-            if (isPrivate && LobbyManager.Instance.activeLobby == null)
+            if (isPrivate && LobbyManager.activeLobby == null)
                 return;
             
             if (!string.IsNullOrEmpty(lobbyID))

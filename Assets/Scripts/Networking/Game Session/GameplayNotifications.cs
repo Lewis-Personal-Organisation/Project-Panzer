@@ -1,12 +1,12 @@
-using System;
-using System.Collections;
+/*  This script provides a convenient way to display Local or Networked on-screen
+ *  Notifications for players. A message can be sent by any player, and is
+ *  received by all players, including the server's client.
+ */
+
 using System.Collections.Generic;
 using TMPro;
 using Unity.Netcode;
-using UnityEditor;
 using UnityEngine;
-using UnityEngine.Serialization;
-using UnityEngine.UI;
 
 #if UNITY_EDITOR
 [ExecuteAlways]
@@ -77,15 +77,14 @@ public class GameplayNotifications : NetworkBehaviour
         }
     }
 
-    [ExecuteInEditMode]
     private void Update()
     {
         if (Application.isPlaying)
         {
             // DEBUG
-            if (Input.GetKeyDown(KeyCode.A))
+            if (Input.GetKeyDown(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.M))
             {
-                Queue($"Test {(int)Time.time}!");
+                QueueNetworkNotif($"Debug Message | Time: {(int)Time.time}!");
             }
             
             // 1. If we have a queued element, check if the space is clear to spawn a new element
@@ -144,8 +143,7 @@ public class GameplayNotifications : NetworkBehaviour
     /// <summary>
     /// Call to schedule a message popup
     /// </summary>
-    /// <param name="text"></param>
-    public void Queue(string text)
+    public void QueueLocalNotif(string text)
     {
         // Re-use pooled elements
         if (inactiveElements.Count > 0)
@@ -164,33 +162,33 @@ public class GameplayNotifications : NetworkBehaviour
     }
 
     /// <summary>
-    /// Send a network notification message to all players
+    /// Send a network notification message to all players. Fallback to local message if not possible
     /// </summary>
-    /// <param name="message"></param>
-    public void GlobalMessage(string message)
+    public void QueueNetworkNotif(string message)
     {
-        SendNetworkNotificationServerRPC(message);
+        if (!NetworkManager.Singleton)
+            QueueLocalNotif(message);
+        else
+            SendNetworkNotifServerRPC(message);
     }
     
     /// <summary>
-    /// Queues a Gameplay Notification for the server
+    /// Queues a Gameplay Notification for the server. Alert clients to also Queue notifications
     /// </summary>
-    /// <param name="playerName"></param>
     [ServerRpc(RequireOwnership = false)]
-    private void SendNetworkNotificationServerRPC(string message)
+    private void SendNetworkNotifServerRPC(string message)
     {
-        Queue(message);
+        QueueLocalNotif(message);
         SendNetworkNotifClientRPC(message);
     }
 
     /// <summary>
-    /// Queues a Gameplay Notification for all clients. Excludes the servers client
+    /// Queues a Gameplay Notification for clients. Excludes the servers client
     /// </summary>
-    /// <param name="playerName"></param>
     [ClientRpc]
     private void SendNetworkNotifClientRPC(string message)
     {
         if (NetworkManager.Singleton.IsServer) return;
-        Queue(message);
+        QueueLocalNotif(message);
     }
 }

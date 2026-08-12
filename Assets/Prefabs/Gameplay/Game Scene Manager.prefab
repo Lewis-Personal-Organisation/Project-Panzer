@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 3690941483853279635}
   - component: {fileID: 4288163012440176063}
-  - component: {fileID: 3668124704481803101}
   m_Layer: 0
   m_Name: Game Scene Manager
   m_TagString: Untagged
@@ -52,23 +51,4 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   timer: {fileID: 0}
---- !u!114 &3668124704481803101
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7124935067154660963}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d6af80720f3e24947a04c90c5d1c1702, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  scoresText: {fileID: 0}
-  timer: 0
-  maxtime: 0
-  countdownText: {fileID: 0}
-  countdownTimer: {fileID: 0}
-  animatedGameObject: {fileID: 0}
-  repositionCanvasGroup: {fileID: 0}
-  fadeDuration: 0.25
+  rocketTargets: []

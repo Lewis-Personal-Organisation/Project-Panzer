@@ -1,13 +1,9 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Sirenix.OdinInspector;
 using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.Splines;
 
 [RequireComponent(typeof(SplineContainer))]
@@ -28,49 +24,84 @@ public class SplineColliderGenerator : MonoBehaviour
     [SerializeField] private SplineContainer splineContainer;
     [EnumToggleButtons] public GenerationType generationTypeField;
     private GameObject splinePathColliderHolder;
+    private MeshCollider splinePathColliderHolderMeshCollider;
     private GameObject splineBoundsColliderHolder;
     
     [ShowIf("generationTypeField",  GenerationType.Path)]
+    [Min(0.01f)]
     [SerializeField] private float colliderWidth = 1f;
+    [Min(0.01f)]
     [SerializeField] private float colliderHeight = 1f;
     [ShowIf("generationTypeField",  GenerationType.Path)]
+    [Min(1)]
     [SerializeField] private int resolution = 50;
     [ShowIf("generationTypeField",  GenerationType.Path)]
     [SerializeField] private bool allowTilt = true;
+    
+    [Tooltip("Center Collider at or above the generator transforms Y axis")]
     [SerializeField] private bool generateAbove = true;
     [ShowIf("generationTypeField", GenerationType.BoundingBox)]
     [SerializeField] private BoundingScaleMethod scaleMethod;
 
+    // Create lists for vertices and triangles
+    List<Vector3> vertices = new List<Vector3>();
+    List<int> triangles = new List<int>();
+    
+    #if UNITY_EDITOR
     /// <summary>
     /// Finds the Colliders on editor load
     /// </summary>
     private void OnValidate()
     {
-#if UNITY_EDITOR
         if (Application.isPlaying)
             return;
-        
-        splineBoundsColliderHolder = GameObject.Find("Spline Bounds Collider");
-        splinePathColliderHolder = GameObject.Find("Spline Mesh Collider");
-#endif
-    }
-    
-    [ShowInInspector, ReadOnly, HideIf("@clickCounter == 0"), GUIColor("RGBA(0, 1, 0, 1)")]
-    private string NewColliderYPos;
-    private int clickCounter = 0;
-    
 
-    private bool buttonToggle;
-    [Button("Generate", ButtonSizes.Medium)]
-    private void MediumSizedButton()
+        // Delay the call so we can use Destroy method effectively
+        EditorApplication.delayCall += () =>
+        {
+            if (this == null) return;   // object may have been destroyed/reloaded by the time this runs
+
+            if (splineContainer == null && !TryGetComponent(out splineContainer))
+            {
+                splineContainer = this.gameObject.AddComponent<SplineContainer>();
+                Debug.Log($"{GetType()}:: SplineContainer was null. New SplineContainer added!");
+            }
+
+            if (splineBoundsColliderHolder == null) 
+                splineBoundsColliderHolder = GameObject.Find("Spline Bounds Collider");
+            
+            if (splinePathColliderHolder == null)
+                splinePathColliderHolder = GameObject.Find("Spline Mesh Collider");
+
+            if (generationTypeField == GenerationType.Path)
+            {
+                GenerateSplineCollider();
+            }
+            else
+            {
+                GenerateBoundingCollider();
+            }
+        };
+    }
+    #endif
+    
+    // [ShowInInspector, ReadOnly, HideIf("@clickCounter == 0"), GUIColor("RGBA(0, 1, 0, 1)")]
+    // private string NewColliderYPos;
+    // private int clickCounter = 0;
+    
+    private void OnDrawGizmos()
     {
-        if (generationTypeField == GenerationType.Path)
+        if (splinePathColliderHolder == null)
+            return;
+
+        if (!splinePathColliderHolderMeshCollider && splinePathColliderHolder.TryGetComponent(out MeshCollider meshCollider))
         {
-            GenerateSplineCollider();
-        }
-        else
-        {
-            GenerateBoundingCollider();
+            if (meshCollider.sharedMesh == null)
+                return;
+            
+            Gizmos.color = Color.green;
+            Gizmos.matrix = meshCollider.transform.localToWorldMatrix;
+            Gizmos.DrawWireMesh(meshCollider.sharedMesh);
         }
     }
     
@@ -79,6 +110,10 @@ public class SplineColliderGenerator : MonoBehaviour
     /// </summary>
     private void GenerateSplineCollider()
     {
+        // Clear old data
+        vertices.Clear();
+        triangles.Clear();
+        
         // Setup/Cleanup
         if (!splinePathColliderHolder)
         {
@@ -91,13 +126,18 @@ public class SplineColliderGenerator : MonoBehaviour
         {
             foreach (var col in splinePathColliderHolder.GetComponents<MeshCollider>())
             {
-                DestroyImmediate(col);
+                if (Application.isPlaying)
+                {
+                    Destroy(col.sharedMesh);
+                    Destroy(col);
+                }
+                else
+                {
+                    DestroyImmediate(col.sharedMesh);
+                    DestroyImmediate(col);
+                }
             }
         }
-        
-        // Create lists for vertices and triangles
-        List<Vector3> vertices = new List<Vector3>();
-        List<int> triangles = new List<int>();
         
         // Sample points along the spline
         for (int i = 0; i <= resolution; i++)
@@ -256,17 +296,17 @@ public class SplineColliderGenerator : MonoBehaviour
             box.center = new Vector3(box.center.x, counter / splineContainer.Spline.Knots.Count(), box.center.z);
         }
         
-        ShowNewValue($"{box.center.y}", 2);
+        // ShowNewValue($"{box.center.y}", 2);
     }
 
     /// <summary>
     /// Create a delay with a counter for hiding the NewColliderYPos field
     /// </summary>
-    private async void ShowNewValue(string value, int displayTimeSecs)
-    {
-        clickCounter++;
-        NewColliderYPos = value;
-        await Task.Delay(displayTimeSecs * 1000);
-        clickCounter--;
-    }
+    // private async void ShowNewValue(string value, int displayTimeSecs)
+    // {
+        // clickCounter++;
+        // NewColliderYPos = value;
+        // await Task.Delay(displayTimeSecs * 1000);
+        // clickCounter--;
+    // }
 }

@@ -296,6 +296,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5846433886915903107}
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+--- !u!1 &9155348694733104356
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4408697606064983819}
+  m_Layer: 0
+  m_Name: Center Transform
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4408697606064983819
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9155348694733104356}
+  serializedVersion: 2
+  m_LocalRotation: {x: -3.5527137e-15, y: -1.4210856e-14, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.018637633, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5641660923914563932}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &20243085068475790
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -331,6 +362,10 @@ PrefabInstance:
     - target: {fileID: 6098138856682070899, guid: f7d24758a89a6bc488a4798627dca150, type: 3}
       propertyPath: m_Name
       value: Tank_UK_Churchill
+      objectReference: {fileID: 0}
+    - target: {fileID: 6098138856682070899, guid: f7d24758a89a6bc488a4798627dca150, type: 3}
+      propertyPath: m_Layer
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 7962432484466373471, guid: f7d24758a89a6bc488a4798627dca150, type: 3}
       propertyPath: m_LocalScale.x
@@ -539,7 +574,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 434294605
+  GlobalObjectIdHash: 3037949363
   InScenePlacedSourceGlobalObjectIdHash: 0
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
@@ -635,6 +670,7 @@ MonoBehaviour:
   audioListener: {fileID: 7616549311141766862}
   hullRigidbody: {fileID: 3582152835948603133}
   <hullBoneTransform>k__BackingField: {fileID: 3624013315225115793}
+  centerTransform: {fileID: 4408697606064983819}
   bodyLean: {fileID: 2427957391795224263}
   weaponLean: {fileID: 8764180980383383910}
   testing: 0
@@ -821,17 +857,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rb: {fileID: 3582152835948603133}
-  minVelocityForNonIdle: 0
   x:
-    track: 0
+    trackValue: 0
     velocity: 0
     deadZone: 0
   y:
-    track: 1
+    trackValue: 1
     velocity: 0
     deadZone: 0
   z:
-    track: 1
+    trackValue: 1
     velocity: 0
     deadZone: 0.01
 --- !u!114 &5099109183933842090
@@ -1073,6 +1108,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -4052016286257013434, guid: 4dc215b02e0f8314fae3e02fb14e6e84, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6241886166903141013}
+    - targetCorrespondingSourceObject: {fileID: -4052016286257013434, guid: 4dc215b02e0f8314fae3e02fb14e6e84, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4408697606064983819}
     - targetCorrespondingSourceObject: {fileID: 2164237903308490140, guid: 4dc215b02e0f8314fae3e02fb14e6e84, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4681953084616885454}

@@ -80,34 +80,13 @@ public class LobbySetupUI : Panel
 		ToggleLobbyCreationInteractables(false);
 		UIManager.PushPanel(PreGameplayUI.LoadingIcon.SetText("Creating Lobby..."));
 
-		// Shut down the Net Manager to clean up its state
-		if (NetworkManager.Singleton.IsClient || NetworkManager.Singleton.IsHost)
-		{
-			NetworkManager.Singleton.Shutdown();
-			
-			// Wait until the Net Manager is shut down, to clear the transport data fully.
-			// Not doing this means residual old data could exist, resulting in errors
-			while (NetworkManager.Singleton.ShutdownInProgress)
-			{
-				await Task.Yield();
-			}
-        
-			Debug.Log("Network shutdown complete, proceeding to create new host");
-		}
+		await SessionManager.Instance.ShutdownNetwork();
 		
 		// Get a relayJoinCode for our server allocation
 		relayJoinCode = await InitializeHostWithRelay(maxPlayers);
-		if (this == null)
-		{
-			Debug.LogError("OnHostConfirmLobbyPressed :: We are null - A");
-		}
 		
 		// Create lobby with Relay
 		Lobby lobby = await LobbyManager.Instance.CreateLobby(lobbyNameText.text, maxPlayers, GameSave.PlayerName, isLobbyPrivate, relayJoinCode);
-		if (this == null)
-		{
-			Debug.LogError("OnHostConfirmLobbyPressed :: We are null - B");
-		}
 
 		closeButton.image.color = closeButtonEnabledColour;
 		closeButton.enabled = true;
@@ -138,7 +117,7 @@ public class LobbySetupUI : Panel
 			SessionManager.Instance.unityTransport.SetRelayServerData(relayServerData);
 
 			NetworkManager.Singleton.StartHost();
-			LobbyDebugViewer.Instance.SetAllocationID(allocation);
+			// LobbyDebugViewer.Instance.SetAllocationID(allocation);
 			return joinCode;
 		}
 		catch (RelayServiceException e)

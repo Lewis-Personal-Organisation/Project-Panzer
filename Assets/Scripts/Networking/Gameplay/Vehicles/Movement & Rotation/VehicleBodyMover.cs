@@ -5,6 +5,12 @@ public class VehicleBodyMover : LocalVehicleComponent
 {
     private float inputSpeed;
     
+    // external velocity
+    public Vector3 externalVelocity;
+    public float externalVelocityTimer;
+    public float externalVelocityDuration;
+    public bool hasExternalVelocity => externalVelocityTimer > 0;
+    
     public float RetainedVelocity
     {
         get => velocityMultiplier;
@@ -72,7 +78,7 @@ public class VehicleBodyMover : LocalVehicleComponent
 
         // Add Gravity
         vehicle.hullRigidbody.AddForce(vehicle.gravitationalForce * vehicle.hullRigidbody.mass * Vector3.down);
-
+        
         // Get Local velocity as vector
         Vector3 localVelocity = transform.InverseTransformDirection(vehicle.hullRigidbody.velocity);
         
@@ -87,10 +93,26 @@ public class VehicleBodyMover : LocalVehicleComponent
         // Set the local velocity multiplier
         localVelocity.x *= RetainedVelocity;
         
-        // Write back the new velcoity
-        vehicle.hullRigidbody.velocity = transform.TransformDirection(localVelocity);
-        
+        // Write back the new velocity
+        vehicle.hullRigidbody.velocity = transform.TransformDirection(localVelocity) + GetCurrentExternalVelocity();
 
         vehicle.inputManager.SetLastInputState();
+    }
+
+    public void AddExternalVelocity(Vector3 velocity, float duration)
+    {
+        externalVelocity = velocity;
+        externalVelocityDuration = duration;
+        externalVelocityTimer = duration;
+    }
+
+    private Vector3 GetCurrentExternalVelocity()
+    {
+        if (externalVelocityTimer <= 0f)
+            return Vector3.zero;
+
+        externalVelocityTimer -= Time.deltaTime;
+        float t = Mathf.Clamp01(externalVelocityTimer / externalVelocityDuration);
+        return externalVelocity * t;
     }
 }

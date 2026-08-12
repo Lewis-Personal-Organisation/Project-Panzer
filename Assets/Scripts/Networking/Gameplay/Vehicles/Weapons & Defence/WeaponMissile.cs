@@ -75,7 +75,9 @@ public class WeaponMissile : WeaponAmmoBehaviour
         lifetimeTimer = lifetime;
         velocityMax = velocity * 2F;
 
-        BehaviourStep launchStep = new BehaviourStep(() =>
+        BehaviourStep launchStep = new BehaviourStep(
+            null,
+            () =>
             {
                 trailRenderer.emitting = false;
                 rigidBody.MovePosition(rigidBody.position + transform.forward * (velocity * Time.fixedDeltaTime) + transform.up * stepZeroGravity * Time.fixedDeltaTime);
@@ -85,7 +87,9 @@ public class WeaponMissile : WeaponAmmoBehaviour
             null,
             false);
 
-        BehaviourStep altitudeIncreaseStep = new BehaviourStep(() =>
+        BehaviourStep altitudeIncreaseStep = new BehaviourStep(
+            null,
+            () =>
             {
                 trailRenderer.emitting = true;
                 Quaternion currentRotation = transform.rotation;
@@ -99,8 +103,8 @@ public class WeaponMissile : WeaponAmmoBehaviour
             false);
 
         BehaviourStep forwardVelocity = new BehaviourStep(
-            () =>
-            {
+            null,
+            () => {
                 velocity = Mathf.MoveTowards(velocity, velocityMax, Time.deltaTime * velocityDelta);
                 rigidBody.MovePosition(rigidBody.position + transform.forward * (velocity * Time.fixedDeltaTime));
             },
@@ -111,8 +115,9 @@ public class WeaponMissile : WeaponAmmoBehaviour
             },
             false);
 
-        BehaviourStep rotateAndLand = new BehaviourStep(() =>
-            {
+        BehaviourStep rotateAndLand = new BehaviourStep(
+            null,
+            () => {
                 // Rotate towards new angle and move forward
                 rigidBody.rotation = Quaternion.Lerp(transform.rotation, Quaternion.Euler(new Vector3(90F, angle, 0)), Time.deltaTime * rotationSpeed * 0.2F);
                 rigidBody.MovePosition(rigidBody.position + transform.forward * (velocity * Time.fixedDeltaTime));

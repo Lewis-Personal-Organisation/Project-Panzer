@@ -49,6 +49,7 @@ public static class Easer
 	/// </summary>
 	public static float Calculate(Ease func, float t) => func switch
 	{
+		Ease.None => 0f,
 		Ease.Linear => FilterNaN(Linear(t)),
 		Ease.InQuad => FilterNaN(InQuad(t)),
 		Ease.OutQuad => FilterNaN(OutQuad(t)),
@@ -59,6 +60,9 @@ public static class Easer
 		Ease.InQuart => FilterNaN(InQuart(t)),
 		Ease.OutQuart => FilterNaN(OutQuart(t)),
 		Ease.InOutQuart => FilterNaN(InOutQuart(t)),
+		Ease.InQuint => FilterNaN(InQuint(t)),
+		Ease.OutQuint => FilterNaN(OutQuint(t)),
+		Ease.InOutQuint => FilterNaN(InOutQuint(t)),
 		Ease.InSine => FilterNaN(InSine(t)),
 		Ease.OutSine => FilterNaN(OutSine(t)),
 		Ease.InOutSine => FilterNaN(InOutSine(t)),
@@ -76,7 +80,8 @@ public static class Easer
 		Ease.InOutBack => FilterNaN(InOutBack(t)),
 		Ease.InBounce => FilterNaN(InBounce(t)),
 		Ease.OutBounce => FilterNaN(OutBounce(t)),
-		Ease.InOutBounce => FilterNaN(InOutBounce(t))
+		Ease.InOutBounce => FilterNaN(InOutBounce(t)),
+		_ => 0f
 	};
 
 	private static float Linear(float t) => t;
@@ -120,8 +125,17 @@ public static class Easer
 	private static float OutSine(float t) => Mathf.Sin(t * Mathf.PI / 2);
 	private static float InOutSine(float t) => (Mathf.Cos(t * Mathf.PI) - 1) / -2;
 
-	private static float InExpo(float t) => Mathf.Pow(2, 10 * (t - 1));
-	private static float OutExpo(float t) => 1 - InExpo(1 - t);
+	private static float InExpo(float t)
+	{
+		if (t <= 0f) return 0f;
+		return Mathf.Pow(2, 10 * (t - 1));
+	}
+
+	private static float OutExpo(float t)
+	{
+		if (t >= 1f) return 1f;
+		return 1 - InExpo(1 - t);
+	}
 
 	private static float InOutExpo(float t)
 	{

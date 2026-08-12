@@ -43,8 +43,5 @@ public class Panel : MonoBehaviour
 		{
 			onPopAction.Invoke();
 		}
-		
-		// Unused for now
-		// UIManager.Instance?.UpdateGameView(view);
 	}
 }

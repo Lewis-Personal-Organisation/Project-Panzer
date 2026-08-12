@@ -28,7 +28,6 @@ public class LobbyUI : Panel
 
 	public GameObject chooseVehicleViewGameObject;
 
-	private List<Player> activeLobbyPlayers => LobbyManager.Instance.activeLobby.Players;
 
 	[Header("Player Slots")]
 	public float playerSlotResizeTime;
@@ -104,13 +103,13 @@ public class LobbyUI : Panel
 			playerSlots[LobbyManager.Instance.localPlayerIndex].DisableInteraction(LobbyManager.Instance.localPlayer);
 		}
 		
-		if (LobbyManager.Instance.isHost)
+		if (LobbyManager.Instance.isLobbyHost)
 		{
-			OnHostLobbyChanged(updatedLobby, isGameReady);
+			OnHostLobbyChanged(isGameReady);
 		}
 		else
 		{
-			OnClientLobbyChanged(updatedLobby, isGameReady);
+			OnClientLobbyChanged(isGameReady);
 		}
 	}
 
@@ -119,18 +118,18 @@ public class LobbyUI : Panel
 	/// </summary>
 	private void AdjustLocalReadyButton()
 	{
-		for (int i = 0; i < LobbyManager.Instance.activeLobby.Players.Count; i++)
+		for (int i = 0; i < activeLobby.Players.Count; i++)
 		{
-			if (localPlayerId == LobbyManager.Instance.activeLobby.Players[i].Id)
+			if (localPlayerId == activeLobby.Players[i].Id)
 			{
-				isReady = bool.Parse(LobbyManager.Instance.activeLobby.Players[i].Data[PlayerDictionaryData.isReadyKey].Value);
+				isReady = bool.Parse(activeLobby.Players[i].Data[PlayerDictionaryData.isReadyKey].Value);
 				readyButton.image.color = isReady ? readyColour : unreadyColour;
 				readyButtonText.text = isReady ? "Unready" : "Ready";
 			}
 		}
 	}
 
-	private async Task OnHostLobbyChanged(Lobby updatedLobby, bool isGameReady)
+	private async Task OnHostLobbyChanged(bool isGameReady)
 	{
 		if (isGameReady)
 		{
@@ -143,7 +142,7 @@ public class LobbyUI : Panel
 		}
 	}
 
-	private async Task OnClientLobbyChanged(Lobby updatedLobby, bool isGameReady)
+	private async Task OnClientLobbyChanged(bool isGameReady)
 	{
 		if (isGameReady)
 		{
@@ -214,7 +213,7 @@ public class LobbyUI : Panel
 		readyButton.interactable = false;
 		leaveButton.interactable = false;
 		
-		if (LobbyManager.Instance.isHost)
+		if (LobbyManager.Instance.isLobbyHost)
 		{
 			await LobbyManager.Instance.DeleteAnyActiveLobbyWithNotify();
 		}
@@ -228,9 +227,9 @@ public class LobbyUI : Panel
 	{
 		for (int i = 0; i < playerSlots.Length; i++)
 		{
-			if (i < activeLobbyPlayers.Count)
+			if (i < activeLobby.Players.Count)
 			{
-				playerSlots[i].ConfigureAndShow(activeLobbyPlayers[i]);		// Configure active slots
+				playerSlots[i].ConfigureAndShow(activeLobby.Players[i]);		// Configure active slots
 			}
 			else
 			{

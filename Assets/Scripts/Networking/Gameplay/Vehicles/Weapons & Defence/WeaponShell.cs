@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class WeaponShell : WeaponAmmoBehaviour
 {
-    internal VehicleWeaponController owner;
+    public VehicleWeaponController owner;
     [SerializeField] private Rigidbody rigidBody;
     
     [Header("Lifetime")]
@@ -44,6 +44,7 @@ public class WeaponShell : WeaponAmmoBehaviour
             OnUpdate();
         }
     }
+    
     /// <summary>
     /// The update method called when connected to a network
     /// </summary>
@@ -57,6 +58,7 @@ public class WeaponShell : WeaponAmmoBehaviour
 
         if (lifetimeTimer <= 0)
         {
+            Debug.Log($"Owner null: {owner == null}");
             owner.ReturnToPoolServerRpc(networkObject);
         }
     }

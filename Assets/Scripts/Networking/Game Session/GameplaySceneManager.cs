@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using TMPro;
 using Unity.Netcode;
@@ -13,6 +14,8 @@ public class GameplaySceneManager : Singleton<GameplaySceneManager>
     
     [field: SerializeField] public Transform[] spawnPoints { get; private set; } = new Transform[4];
     [SerializeField] public TextMeshProUGUI timer;
+    [SerializeField] List<Transform> rocketTargets = new List<Transform>();
+    
     
     private new void Awake()
     {
@@ -29,9 +32,15 @@ public class GameplaySceneManager : Singleton<GameplaySceneManager>
         spawnPoints.Shuffle();
         
         // Null check for non-network testing
-        if (LobbyManager.Instance && LobbyManager.Instance.isHost)
+        if (NetworkManager.Singleton && NetworkManager.Singleton.IsServer)
         {
             GameplayNetworkManager.Instantiate(gameplayNetworkManagerPrefab);
+        }
+        else
+        {
+            #if UNITY_EDITOR
+            GameplayUI.CountdownGroup.TogglePanels(false);
+            #endif
         }
         
         GameplayUI.Instance.UpdateScores();
@@ -93,13 +102,21 @@ public class GameplaySceneManager : Singleton<GameplaySceneManager>
                 await Task.Yield();
         }
         
-        if (LobbyManager.Instance.activeLobby != null && LobbyManager.Instance.activeLobby.HostId == AuthenticationService.Instance.PlayerId)
+        if (LobbyManager.activeLobby != null && LobbyManager.activeLobby.HostId == AuthenticationService.Instance.PlayerId)
         {
-            await LobbyService.Instance.DeleteLobbyAsync(LobbyManager.Instance.activeLobby.Id);
+            await LobbyService.Instance.DeleteLobbyAsync(LobbyManager.activeLobby.Id);
         }
-        else if (LobbyManager.Instance.activeLobby != null)
+        else if (LobbyManager.activeLobby != null)
         {
-            await LobbyService.Instance.RemovePlayerAsync(LobbyManager.Instance.activeLobby.Id, AuthenticationService.Instance.PlayerId);
+            await LobbyService.Instance.RemovePlayerAsync(LobbyManager.activeLobby.Id, AuthenticationService.Instance.PlayerId);
         }
+    }
+
+    public Transform UnusedRocketTarget()
+    {
+        int rand =  Random.Range(0, rocketTargets.Count);
+        Transform target = rocketTargets[rand];
+        rocketTargets.RemoveAt(rand);
+        return target;
     }
 }

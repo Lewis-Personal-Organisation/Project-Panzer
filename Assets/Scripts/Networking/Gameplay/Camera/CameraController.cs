@@ -19,13 +19,15 @@ public class CameraController : VehicleComponent, IVehicleComponentToggleable
     [SerializeField] private Transform targetTransform;
     [SerializeField] private float yOffset;
     public UnityAction OnProcessCamera;
-
     
     [FormerlySerializedAs("camShiftRadius")]
     [SerializeField] private float lookAheadMax = 5F;
     [SerializeField] private float lookAheadDistance;
     [SerializeField] private bool hideCursor;
+
+    public bool takeOrbitInput = true;
     private Vector3 orbitOffset;
+    
     
     /// <summary>
     /// Sets up this camera for a players vehicle during gameplay
@@ -47,11 +49,6 @@ public class CameraController : VehicleComponent, IVehicleComponentToggleable
         // Enable Camera functionality
         Enable();
     }
-
-    // private void LateUpdate()
-    // {
-    //     OnProcessCamera?.Invoke();
-    // }
     
     /// <summary>
     /// The Method which process the cameras functionality
@@ -59,14 +56,16 @@ public class CameraController : VehicleComponent, IVehicleComponentToggleable
     private void ProcessCamera()
     {
         // Orbit this transform around the Y axis of the target
-        orbitOffset = Quaternion.AngleAxis(vehicle.inputManager.MouseXDelta, Vector3.up) * orbitOffset;
+        if (takeOrbitInput)
+            orbitOffset = Quaternion.AngleAxis(vehicle.inputManager.MouseXDelta, Vector3.up) * orbitOffset;
+        
         transform.position = vehicle.hullBoneTransform.position + orbitOffset;
         
         // Get the Camera Direction
         Vector3 dirToCamera = new Vector3(orbitOffset.x, 0, orbitOffset.z).normalized;
         
         // Set look ahead Dist based on Mouse Y delta, clamped
-        lookAheadDistance = Mathf.Clamp(lookAheadDistance + vehicle.inputManager.MouseYDelta, 0, lookAheadMax);
+        lookAheadDistance = Mathf.Clamp(lookAheadDistance + (takeOrbitInput ? vehicle.inputManager.MouseYDelta : 0), 0, lookAheadMax);
         
         // Set position for camera to look at 
         Vector3 lookPoint = vehicle.hullBoneTransform.position + -dirToCamera * lookAheadDistance;
@@ -110,6 +109,7 @@ public class CameraController : VehicleComponent, IVehicleComponentToggleable
     //         Gizmos.DrawLine(targetTransform.position, targetTransform.position + targetTransform.forward * offset.z);
     //     }
     // }
+    
     public void Enable()
     {
         OnProcessCamera += ProcessCamera;
@@ -119,4 +119,6 @@ public class CameraController : VehicleComponent, IVehicleComponentToggleable
     {
         OnProcessCamera -= ProcessCamera;
     }
+    
+    
 }

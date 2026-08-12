@@ -7,12 +7,22 @@ public class BehaviourSequence
 {
     private List<BehaviourStep> behaviourSteps = new List<BehaviourStep>();
     [SerializeField] private int stepIndex = 0;
+    public bool isPaused = false;
 
-    public void AddStep(Action behaviour, Func<bool> completeCondition, Action onComplete, bool stopOnComplete)
+    public BehaviourSequence(bool startPaused = false, params BehaviourStep[] steps)
     {
-        behaviourSteps.Add(new BehaviourStep(behaviour, completeCondition, onComplete, stopOnComplete));
+        isPaused = startPaused;
+        for (int i = 0; i < steps.Length; i++)
+        {
+            behaviourSteps.Add(steps[i]);
+        }
     }
-    
+
+    public void AddStep(Action startBehaviour, Action behaviour, Func<bool> completeCondition, Action onComplete, bool stopOnComplete)
+    {
+        behaviourSteps.Add(new BehaviourStep(startBehaviour, behaviour, completeCondition, onComplete, stopOnComplete));
+    }
+
     public void AddStep(BehaviourStep behaviourStep)
     {
         behaviourSteps.Add(behaviourStep);
@@ -25,13 +35,21 @@ public class BehaviourSequence
 
     public void Process()
     {
-        bool isComplete = behaviourSteps[stepIndex].Process();
-
-        if (isComplete)
+        if (behaviourSteps.Count == 0 || isPaused)
+            return;
+        
+        // Process the step. Cancel if required or move to the next step if possible
+        if (behaviourSteps[stepIndex].Process())
         {
-            // Move onto the next step if there is one
+            if (behaviourSteps[stepIndex].ShouldCancel)
+            {
+                behaviourSteps.Clear();
+                return;
+            }
+            
             if (stepIndex < behaviourSteps.Count - 1)
                 stepIndex++;
         }
     }
 }
+

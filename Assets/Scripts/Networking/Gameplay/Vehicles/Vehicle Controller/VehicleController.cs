@@ -17,7 +17,7 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
     [field: SerializeField] public VehicleInputManager inputManager {get; private set;}
     [field: SerializeField] public RigidBodyVelocityTracker velocityTracker {get; private set;}
     public VehicleGroundDetector groundDetector;
-    [SerializeField] private VehicleBodyMover bodyMover;
+    public VehicleBodyMover bodyMover;
     [SerializeField] private VehicleBodyRotator bodyRotator;
     [SerializeField] private VehicleTurretRotator turretRotator;
     [SerializeField] private VehicleVFXController vfxController;
@@ -30,6 +30,7 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
     [Header("Transforms")]
     public Rigidbody hullRigidbody;
     [field: SerializeField] public Transform hullBoneTransform {get; private set;}
+    public Transform centerTransform;
     
     [Header("Color offset")]
     [Range(1, 12)]
@@ -49,9 +50,8 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
     public bool testing = false;
 
     private UnityAction OnFixedUpdate = null;
-    
-    
-    
+
+
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
@@ -62,12 +62,24 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
             // Debug.Log($"Player Object is {NetworkManager.Singleton.LocalClient.PlayerObject.gameObject.name}", gameObject);
             // Debug.Log($"VehicleController :: OnNetworkSpawn() :: IsLocalPlayer => {playerAvatar.IsLocalPlayer} (playerAvatar)", this.gameObject);
         }
+        else
+        {
+            inputManager.enabled = false;
+            velocityTracker.enabled = false;
+            weaponController.enabled = false;
+            turretRotator.enabled = false;
+            defence.enabled = false;
+            stuckManager.enabled = false;
+        }
     }
 
     private void Awake()
     {
         if (testing && !IsNetworked)
+        {
             Setup();
+            inputManager.enabled = true;
+        }
     }
     
     // [BurstCompile]
@@ -93,20 +105,17 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
         cameraController = FindObjectOfType<CameraController>();
         cameraController.Setup(this);
         
-        TryGetComponent(ref hullRigidbody);
-        TryGetComponent(ref bodyRotator);
-        TryGetComponent(ref bodyLean);
-        TryGetComponent(ref weaponLean);
-        TryGetComponent(ref audioListener);
-        TryGetComponentAdv(ref weaponController, false)?.Setup(this);
-        TryGetComponentAdv(ref turretRotator)?.Setup(this);
-        TryGetComponentAdv(ref defence)?.Setup(this);
-        TryGetComponentAdv(ref vfxController)?.Setup(this);
-        TryGetComponentAdv(ref stuckManager)?.Setup(this);
+        weaponController.Setup(this);
+        turretRotator.Setup(this);
+        defence.Setup(this);
+        vfxController.Setup(this);
+        stuckManager.Setup(this);
 
         audioListener.enabled = true;
 
+        Debug.Log("Reached A");
         paintMaterials = transform.GetComponentsInChildren<Renderer>();
+        Debug.Log("Reached B");
 
         bodyMover.RetainedVelocity = mobility.traction;
         gravitationalForce = mobility.localGravity;
@@ -159,20 +168,18 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
     
     public void DisableSoft()
     {
-        Debug.Log("PLAYER DISABLED - SOFT");
         inputManager.enabled = false;
         weaponController.Disable();
-        turretRotator.Disable();
-        cameraController.Disable();
+        // turretRotator.Disable();
+        cameraController.takeOrbitInput = false;
     }
     
     public void EnableSoft()
     {
-        Debug.Log("PLAYER ENABLED - SOFT");
         inputManager.enabled = true;
         weaponController.Enable();
-        turretRotator.Enable();
-        cameraController.Enable();
+        // turretRotator.Enable();
+        cameraController.takeOrbitInput = true;
     }
 
     /// <summary>
@@ -180,7 +187,6 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
     /// </summary>
     public void Disable()
     {
-        Debug.Log("PLAYER DISABLED - HARD");
         inputManager.enabled = false;
         weaponController.Disable();
         turretRotator.Disable();

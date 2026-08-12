@@ -38,9 +38,9 @@ public class ValueTracker
 
     public void Shutdown()
     {
-        Debug.Log("SHUTDOWN!");
         if (routine != null)
         {
+            Debug.Log("SHUTDOWN!");
             host.StopCoroutine(routine);
             onShutdown?.Invoke();
         }

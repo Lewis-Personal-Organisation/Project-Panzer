@@ -60,11 +60,8 @@ public class SessionManager : Singleton<SessionManager>
 		await AuthenticatePlayer();
 		
 		// Wait until Cloud Save Manager is ready
-		await Task.Run(async () => 
-		{
-			while (!CloudSaveManager.Instance)
-				await Task.Yield();
-		});
+		while (!CloudSaveManager.Instance)
+			await Task.Yield();
 		
 		await InitialiseCloudSaveServices();
 	}
@@ -149,20 +146,13 @@ public class SessionManager : Singleton<SessionManager>
 		{
 			await CloudSaveManager.Instance.LoadAndCacheData();
 
-			if (this == null)
-				return;
-
-			string cloudSavePlayerName = CloudSaveManager.Instance.playerStats.playerName;
-
-			if (string.IsNullOrEmpty(cloudSavePlayerName))
+			if (string.IsNullOrEmpty(CloudSaveManager.Instance.playerStats.playerName))
 			{
 				Debug.Log($"Session Manager :: No Player Name found! Saving Player Name as '{GameSave.PlayerName}' to Cloud");
 				await CloudSaveManager.Instance.SetPlayerName(GameSave.PlayerName);
 			}
-			else
-			{
-				Debug.Log($"Session Manager :: Found Player Name '{cloudSavePlayerName}' from Cloud");
-			}
+			
+			Debug.Log($"Session Manager :: Using Player Name '{CloudSaveManager.Instance.playerStats.playerName}' from Cloud");
 		}
 		catch (Exception e)
 		{
@@ -217,21 +207,24 @@ public class SessionManager : Singleton<SessionManager>
 	/// Shuts down the NetworkManager and Unity Transport and yields when done
 	/// </summary>
 	/// <returns></returns>
-	public IEnumerator IEShutdownNetworkClient()
+	public async Task ShutdownNetwork()
 	{
-		// Dont attempt if already shutting down
-		if (NetworkManager.Singleton.ShutdownInProgress)
-			yield break;
-		
-		NetworkManager.Singleton.Shutdown();
-		while (NetworkManager.Singleton.ShutdownInProgress)
+		// Shut down the Net Manager to clean up its state
+		if (NetworkManager.Singleton.IsClient || NetworkManager.Singleton.IsHost)
 		{
-			// Debug.Log("SessionManager :: IEShutdownNetworkClient :: Shutting Down...");
-			yield return null;
+			NetworkManager.Singleton.Shutdown();
+			
+			// Wait until the Net Manager is shut down, to clear the transport data fully.
+			// Not doing this means residual old data could exist, resulting in errors
+			while (NetworkManager.Singleton.ShutdownInProgress)
+			{
+				await Task.Yield();
+			}
+        
+			Debug.Log("Network shutdown complete, proceeding to create new host");
 		}
-		yield return new WaitUntil(() => !NetworkManager.Singleton.ShutdownInProgress);
-		// Debug.Log("SessionManager :: IEShutdownNetworkClient :: Complete!");
 		
+		// Dispose of stale transport
 		unityTransport.Shutdown();
 	}
 

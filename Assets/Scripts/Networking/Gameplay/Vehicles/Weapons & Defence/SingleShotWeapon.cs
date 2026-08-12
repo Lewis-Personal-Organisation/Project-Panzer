@@ -16,6 +16,7 @@ public class SingleShotWeapon : VehicleWeaponController
         if (NetworkManager.Singleton.IsServer)
         {
             InitializeServerPool();
+            // GameplayNetworkManager.OnLocalPlayerAssigned += InitializeServerPool;
         }
     }
 
@@ -77,6 +78,8 @@ public class SingleShotWeapon : VehicleWeaponController
             Debug.Log($"Server: Created Shell for Pool! Active shells: {activeShells.Count}");
         }
 
+        Debug.Log($"{GetType()} is null? {this == null}");
+        
         // Configure the shell
         shell.Setup(this, position, rotation);
         shell.isPooled = false;
@@ -101,6 +104,8 @@ public class SingleShotWeapon : VehicleWeaponController
 
         ResetWeapon();
 
+        Debug.Log($"Weapon networked?: {VehicleController.IsNetworked}");
+        
         if (VehicleController.IsNetworked)
         {
             ShootServerRpc(OwnerClientId, shellSpawnPoint.position, shellSpawnPoint.rotation);

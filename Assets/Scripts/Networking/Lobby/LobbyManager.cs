@@ -10,13 +10,13 @@ using System.Linq;
 [DisallowMultipleComponent]
 public class LobbyManager : Singleton<LobbyManager>
 {
-	public Lobby activeLobby { get; private set; }
+	public static Lobby activeLobby { get; private set; }
+	public bool isLobbyHost => activeLobby?.HostId == AuthenticationService.Instance.PlayerId;
 	public static string localPlayerId => AuthenticationService.Instance.PlayerId;
-	public List<Player> players { get; private set; }
+	// public List<Player> players { get; private set; }
 	
 	public Player localPlayer { get; private set; }
 	public int localPlayerIndex { get; private set; }
-	public bool isHost { get; private set; }
 	public const string hostNameKey = "hostName";
 	public const string relayJoinCodeKey = "relayJoinCode";
 	public static event Action<Lobby, bool> OnLobbyChanged;
@@ -110,9 +110,9 @@ public class LobbyManager : Singleton<LobbyManager>
     {
 		try
 		{
-			if (activeLobby != null && !wasGameStarted)
+			if (!wasGameStarted && activeLobby != null)
 			{
-				if (isHost && Time.realtimeSinceStartup >= nextHostHeartbeatTime)
+				if (isLobbyHost && Time.realtimeSinceStartup >= nextHostHeartbeatTime)
 				{
 					await PeriodicHostHeartbeat();
 				}
@@ -200,21 +200,17 @@ public class LobbyManager : Singleton<LobbyManager>
 		await activeLobbyEvents.UnsubscribeAsync();
 		OnLobbyChanged -= OnLobbyChanged;
 
-		if (activeLobby != null)
-		{
-			activeLobby = null;
-		}
-
+		activeLobby = null;
+		
 		// Shutdown network if not in Gameplay Scene
 		if (UIManager.GameView != View.Gameplay)
 		{
-			StartCoroutine(SessionManager.Instance.IEShutdownNetworkClient());
+			await SessionManager.Instance.ShutdownNetwork();
 		}
 		
-		isHost = false;
-		this.wasGameStarted = false;
+		wasGameStarted = false;
 		
-		LobbyDebugViewer.Instance.CancelCheck();
+		// LobbyDebugViewer.Instance.CancelCheck();
 	}
 
 	/// <summary>
@@ -250,16 +246,10 @@ public class LobbyManager : Singleton<LobbyManager>
 		{
 			// Debug.Log($"LobbyManager :: CreateLobby called with relay join code: {relayJoinCode}");
 			playerDictionaryData = new(hostName, false, -1);
-			isHost = true;
 			wasGameStarted = false;
 
 			// Delete any existing lobby we own
 			await DeleteAnyActiveLobbyWithNotify();
-			
-			if (this == null)
-			{
-				Debug.LogError($"LobbyManager :: CreateLobby :: Task Failed!");
-			}
 
 			// Create Lobby Options
 			var options = new CreateLobbyOptions
@@ -307,15 +297,9 @@ public class LobbyManager : Singleton<LobbyManager>
 				}
 			}
 
-			if (this == null)
-			{
-				Debug.LogError($"LobbyManager :: CreateLobby :: Task Failed!");
-			}
-
 			CacheLocalPlayer();
-			players = activeLobby?.Players;
 			LogLobbyCreation(activeLobby);
-			LobbyDebugViewer.Instance.StartCheck(activeLobby.Id, activeLobby.IsPrivate);
+			// LobbyDebugViewer.Instance.StartCheck(activeLobby.Id, activeLobby.IsPrivate);
 		}
 		catch (Exception e)
 		{
@@ -326,57 +310,11 @@ public class LobbyManager : Singleton<LobbyManager>
 	}
 	
 	/// <summary>
-	/// Creates the Player Data Object needed to join a lobby and attempts to join a Lobby using provided lobby code and name
-	/// Caches the players in the lobby
-	/// </summary>
-	/// <param name="lobbyJoinCode"></param>
-	/// <param name="playerName"></param>
-	/// <returns></returns>
-	public async Task<Lobby> JoinPrivateLobby(string lobbyJoinCode, string playerName)
-	{
-		try
-		{
-			await PrepareToJoinLobby(playerName);
-			
-			if (this == null)
-			{
-				Debug.LogError($"LobbyManager :: JoinPrivateLobby :: Task Failed!");
-			}
-
-			var options = new JoinLobbyByCodeOptions();
-			options.Player = CreatePlayerData();
-
-			Debug.Log($"Joining lobby with Code {lobbyJoinCode}");
-			activeLobby = await LobbyService.Instance.JoinLobbyByCodeAsync(lobbyJoinCode, options);
-			
-			if (this == null)
-			{
-				Debug.LogError($"LobbyManager :: JoinPrivateLobby :: Task Failed!");
-			}
-			
-			players = activeLobby?.Players;
-		}
-		catch (Exception e)
-		{
-			Debug.LogWarning(e);
-			if (this == null) return null;
-
-			activeLobby = null;
-
-			LobbyToMainMenuTransition();
-			UIManager.PushErrorScreen("Could not join lobby");
-		}
-
-		return activeLobby;
-	}
-
-	/// <summary>
 	/// Prepares the Player for Lobby joining. Leaves any pre-existing connection to a lobby.
 	/// </summary>
 	/// <param name="playerName"></param>
 	async Task PrepareToJoinLobby(string playerName)
 	{
-		isHost = false;
 		wasGameStarted = false;
 		playerDictionaryData = new(playerName, false, -1);
 
@@ -395,13 +333,8 @@ public class LobbyManager : Singleton<LobbyManager>
 		try
 		{
 			await RemovePlayerFromLobby(localPlayerId);
-			
-			if (this == null)
-			{
-				Debug.LogError($"LobbyManager :: LeaveJoinedLobby :: Task Failed.");
-			}
-
 			await OnPlayerNotInLobby();
+			
 			LobbyToMainMenuTransition();
 		}
 		catch (Exception e)
@@ -444,7 +377,7 @@ public class LobbyManager : Singleton<LobbyManager>
 		string lobbyPlayerNames = "Player(s) ";
 		for (int i = 0; i < activeLobby.Players.Count; i++)
 		{
-			lobbyPlayerNames += $"'{players[i].Data[PlayerDictionaryData.nameKey].Value}'";
+			lobbyPlayerNames += $"'{activeLobby.Players[i].Data[PlayerDictionaryData.nameKey].Value}'";
 
 			if (i == activeLobby.Players.Count - 1)
 				lobbyPlayerNames += " are present";
@@ -462,7 +395,7 @@ public class LobbyManager : Singleton<LobbyManager>
 	{
 		try
 		{
-			if (activeLobby != null && isHost)
+			if (activeLobby != null)
 			{
 				await LobbyService.Instance.DeleteLobbyAsync(activeLobby.Id);
 			}
@@ -553,7 +486,6 @@ public class LobbyManager : Singleton<LobbyManager>
 			PreGameplayUI.Lobby.AdjustLocalPlayerSlotReadyState();
 
 			var updatedLobby = await LobbyService.Instance.UpdatePlayerAsync(activeLobby.Id, localPlayerId, options);
-			if (this == null) return;
 
 			UpdateLobby(updatedLobby);
 		}
@@ -582,7 +514,6 @@ public class LobbyManager : Singleton<LobbyManager>
 			PreGameplayUI.Lobby.AdjustLocalPlayerSlotReadyState();
 
 			var updatedLobby = await LobbyService.Instance.UpdatePlayerAsync(activeLobby.Id, localPlayerId, options);
-			if (this == null) return;
 
 			DEBUG_UpdateLobby(updatedLobby);
 		}
@@ -646,7 +577,7 @@ public class LobbyManager : Singleton<LobbyManager>
 		
 		for (int i = 0; i < activeLobby.Players.Count; i++)
 		{
-			if (ownerName == players[i].Data[PlayerDictionaryData.nameKey].Value)
+			if (ownerName == activeLobby.Players[i].Data[PlayerDictionaryData.nameKey].Value)
 			{
 				matches++;
 
@@ -668,7 +599,7 @@ public class LobbyManager : Singleton<LobbyManager>
 	/// <param name="newState"></param>
 	public void OnLobbyConnectionStateChanged(LobbyEventConnectionState newState)
 	{
-		if (isHost)
+		if (isLobbyHost)
 		{
 			Debug.Log($"LobbyManager :: OnConnectionStateChanged :: Lobby Connection State is {newState} (Host)");
 		}
@@ -752,9 +683,15 @@ public class LobbyManager : Singleton<LobbyManager>
 		{
 			UIManager.PushPanel(PreGameplayUI.LoadingIcon.Prepare("Joining Lobby..."));
 			await SessionManager.Instance.InitialiseAndAuthenticatePlayer();
-			Lobby joinedLobby = await Instance.JoinPrivateLobby(playerJoinCode, playerName);
 
-			if (this == null || joinedLobby == null)
+			await PrepareToJoinLobby(playerName);
+
+			var options = new JoinLobbyByCodeOptions();
+			options.Player = CreatePlayerData();
+
+			activeLobby = await LobbyService.Instance.JoinLobbyByCodeAsync(playerJoinCode, options);
+
+			if (activeLobby == null)
 			{
 				Debug.Log("Failed to Join Private Lobby");
 				// HANDLE WHEN A LOBBY DOESN'T EXIST
@@ -765,7 +702,7 @@ public class LobbyManager : Singleton<LobbyManager>
 			LobbyEventCallbacks callbacks = new LobbyEventCallbacks();
 			callbacks.LobbyEventConnectionStateChanged += OnLobbyConnectionStateChanged;
 			callbacks.LobbyChanged += OnLobbyChangedNotif;
-			
+
 			try
 			{
 				activeLobbyEvents = await LobbyService.Instance.SubscribeToLobbyEventsAsync(activeLobby.Id, callbacks);
@@ -775,44 +712,44 @@ public class LobbyManager : Singleton<LobbyManager>
 				FilterLobbyError(ex);
 				throw;
 			}
-			
+
 			// Fetch fresh lobby data to get the current relay join code
 			// The initial join response may have stale data
-			joinedLobby = await LobbyService.Instance.GetLobbyAsync(joinedLobby.Id);
-			
-			if (this == null )
-				return;
-			
-			Debug.Log($"Fresh lobby data relay code: {joinedLobby.Data[relayJoinCodeKey].Value}");
-			
-			activeLobby = joinedLobby;
-			
+			activeLobby = await LobbyService.Instance.GetLobbyAsync(activeLobby.Id);
+			Debug.Log($"Fresh lobby data relay code: {activeLobby.Data[relayJoinCodeKey].Value}");
+
 			UIManager.PopPanel();
 
-			if (Instance.activeLobby == null)
+			if (activeLobby == null)
 				return;
 
-			bool nameCheckPassed = Instance.IsPlayerNameValid(playerName);
-
-			if (nameCheckPassed)
+			if (Instance.IsPlayerNameValid(playerName))
 			{
 				previouslyRefusedUsername = false;
 				Instance.LogLobbyPlayers();
-				await OpenLobby(joinedLobby);
 				
-				LobbyDebugViewer.Instance.StartCheck(activeLobby.Id, activeLobby.IsPrivate);
+				await SessionManager.Instance.InitializeRelayClient(activeLobby);
+				Debug.Log("Lobby Manager :: OpenLobby :: Lobby Data Retrieved. Initializing Relay Client");
+
+				UIManager.PopAndPush(1, PreGameplayUI.Lobby.Prepare(activeLobby.LobbyCode, activeLobby.Name));
+				CacheLocalPlayer();
+				
+				// LobbyDebugViewer.Instance.StartCheck(activeLobby.Id, activeLobby.IsPrivate);
 			}
 			else
 			{
 				previouslyRefusedUsername = true;
 				await Instance.LeaveJoinedLobby();
-				
+
 				UIManager.PopAndPush(1, PreGameplayUI.FadedBackgroundUI, PreGameplayUI.TextInputGroup.Prepare(true, true));
 				PreGameplayUI.TextInputGroup.TogglePasteButton(false);
 			}
 		}
 		catch (Exception e)
 		{
+			activeLobby = null;
+			LobbyToMainMenuTransition();
+			UIManager.PushErrorScreen("Could not join lobby");
 			Debug.LogException(e);
 		}
 	}
@@ -841,32 +778,6 @@ public class LobbyManager : Singleton<LobbyManager>
 	}
 
 	/// <summary>
-	/// Shows the Lobby UI once a lobby is joined using Relay
-	/// </summary>
-	async Task OpenLobby(Lobby lobbyJoined)
-	{
-		try
-		{
-			await SessionManager.Instance.InitializeRelayClient(lobbyJoined);
-
-			Debug.Log("Lobby Manager :: OpenLobby :: Lobby Data Retrieved. Initializing Relay Client");
-			
-			if (this == null)
-			{
-				Debug.Log("Lobby Manager :: OpenLobby :: Null. Returning");
-				return;
-			}
-
-			UIManager.PopAndPush(1, PreGameplayUI.Lobby.Prepare(lobbyJoined.LobbyCode, lobbyJoined.Name));
-			CacheLocalPlayer();
-		}
-		catch (Exception e)
-		{
-			Debug.LogException(e);
-		}
-	}
-
-	/// <summary>
 	/// Caches the Local Player for quick/efficient access
 	/// </summary>
 	/// <returns></returns>
@@ -891,7 +802,7 @@ public class LobbyManager : Singleton<LobbyManager>
 	public void OnGameStarted()
 	{
 		// When game actually starts, the host stops updating
-		if (isHost)
+		if (isLobbyHost)
 		{
 			wasGameStarted = true;
 		}
