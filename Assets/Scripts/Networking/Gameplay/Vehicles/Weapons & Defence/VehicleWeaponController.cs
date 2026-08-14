@@ -10,7 +10,6 @@ public abstract class VehicleWeaponController : NetworkedVehicleComponent, IVehi
 {
     [field: SerializeField] public VehicleWeapon weapon { get; protected set; }
     [field: SerializeField] public AudioSource audioSource { get; protected set; }
-    // [field: SerializeField] public ObjectPool<WeaponShell> shellPool { get; protected set; }
     [field: SerializeField] public Transform shellSpawnPoint {get; private set;}
     [SerializeField] protected VehicleWeaponLeanController weaponLeanController;
     [SerializeField] protected int initPoolSize;

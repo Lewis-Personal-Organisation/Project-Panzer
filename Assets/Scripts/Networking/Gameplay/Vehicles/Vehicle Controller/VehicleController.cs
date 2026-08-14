@@ -10,6 +10,7 @@ using Debug = UnityEngine.Debug;
 public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggleable
 {
     public static VehicleController Instance { get; private set; }
+    public VehicleWeaponController WeaponController => weaponController;
 
     [Header("Core Components")]
     public VehicleMobility mobility;

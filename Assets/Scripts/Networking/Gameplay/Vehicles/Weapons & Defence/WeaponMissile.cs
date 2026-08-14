@@ -138,7 +138,7 @@ public class WeaponMissile : WeaponAmmoBehaviour
     {
         if (VehicleController.IsNetworked)
         {
-            OnNetworkedUpdate();
+            OwnerNetworkUpdate();
         }
         else
         {
@@ -150,7 +150,7 @@ public class WeaponMissile : WeaponAmmoBehaviour
     {
         if (VehicleController.IsNetworked)
         {
-            OnNetworkedFixedUpdate();
+            NetworkedFixedUpdate();
         }
         else
         {
@@ -158,7 +158,7 @@ public class WeaponMissile : WeaponAmmoBehaviour
         }
     }
 
-    public override void OnNetworkedUpdate()
+    public override void OwnerNetworkUpdate()
     {
         if (isPooled) return;
         if (!IsOwner) return;
@@ -169,7 +169,7 @@ public class WeaponMissile : WeaponAmmoBehaviour
         if (lifetimeTimer <= 0)
         {
             Debug.Log("Client: Asking server to pool our expired shell");
-            owner.ReturnToPoolServerRpc(networkObject);
+            owner.ReturnToPoolServerRpc(NetworkObject);
         }
     }
     public override void OnUpdate()
@@ -182,7 +182,7 @@ public class WeaponMissile : WeaponAmmoBehaviour
             Destroy(this.gameObject);
         }
     }
-    public override void OnNetworkedFixedUpdate()
+    public override void NetworkedFixedUpdate()
     {
         if (isPooled) return;
 
@@ -190,10 +190,10 @@ public class WeaponMissile : WeaponAmmoBehaviour
         {
             rigidBody.MovePosition(rigidBody.position + transform.forward * (velocity * Time.fixedDeltaTime));
         }
-        else if (rigidBody.isKinematic)
-        {
-            rigidBody.position += shellDirection * shellSpeed * Time.fixedDeltaTime;
-        }
+        // else if (rigidBody.isKinematic)
+        // {
+        //     rigidBody.position += shellDirection * shellSpeed * Time.fixedDeltaTime;
+        // }
     }
     public override void OnFixedUpdate()
     {

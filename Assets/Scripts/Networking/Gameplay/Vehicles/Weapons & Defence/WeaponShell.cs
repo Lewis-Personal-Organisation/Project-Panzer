@@ -1,9 +1,14 @@
-using Unity.Netcode;
+using System;
 using UnityEngine;
+
+/*  This class is attached to a moving project or 'Shell'
+ *  It is responsible for moving the projectile on every client
+ *  Whether Authoritive or not
+ */
 
 public class WeaponShell : WeaponAmmoBehaviour
 {
-    public VehicleWeaponController owner;
+    // public VehicleWeaponController owner;
     [SerializeField] private Rigidbody rigidBody;
     
     [Header("Lifetime")]
@@ -15,40 +20,64 @@ public class WeaponShell : WeaponAmmoBehaviour
     [SerializeField] private float velocity;
     private float shellSpeed;
 
+    private Action OnOwnerNetworkUpdate;
+    private Action OnNetworkFixedUpdate;
+    
 
+    /// <summary>
+    /// Called by the server or Locally in non-networked scenarios
+    /// </summary>
 	public override void Setup(VehicleWeaponController weaponController, Vector3 position, Quaternion rotation)
     {
-        owner = weaponController;
+        // owner = weaponController;
 
-        // Setup if in non-testing environment
-        if (VehicleController.IsNetworked)
-        {
-            ownerName.Value = new NetworkString(GameplayNetworkManager.Instance.localPlayerName);
-            Debug.Log(ownerName.Value.Value); 
-        }
-        
+        // ownerName is assigned by the caller (which knows the actual firing client's ID),
+        // since this shell may be initialized here before it is owned by the shooter.
+
         transform.SetPositionAndRotation(position, rotation);
         shellDirection = rotation * Vector3.forward;
         shellSpeed = velocity;
         lifetimeTimer = lifetime;
+    }
+    
+    /// <summary>
+    /// Called when the server gives ownership to the owning player. Called on both Server and Owner
+    /// </summary>
+    public override void OnGainedOwnership()
+    {
+        base.OnGainedOwnership();
+        
+        // Excludes the server, if the server is not the owner
+        if (!IsOwner)
+            return;
+        
+        // owner = VehicleController.Instance.WeaponController;
+        
+        lifetimeTimer = lifetime;
+        shellSpeed = velocity;
+        
+        OnOwnerNetworkUpdate = OwnerNetworkUpdate;
+        OnNetworkFixedUpdate = NetworkedFixedUpdate;
+        
+        Debug.Log($"GAINED OWNERSHIP OF SHELL ({transform.name}). LIFETIME IS {lifetimeTimer}", gameObject);
     }
 
     private void Update()
     {
         if (VehicleController.IsNetworked)
         {
-            OnNetworkedUpdate();
+            OnOwnerNetworkUpdate?.Invoke();
         }
         else
         {
-            OnUpdate();
+            OnUpdate();     // The Local-only/Testing Update
         }
     }
     
     /// <summary>
     /// The update method called when connected to a network
     /// </summary>
-    public override void OnNetworkedUpdate()
+    public override void OwnerNetworkUpdate()
     {
         if (isPooled) return;
         if (!IsOwner) return;
@@ -58,8 +87,7 @@ public class WeaponShell : WeaponAmmoBehaviour
 
         if (lifetimeTimer <= 0)
         {
-            Debug.Log($"Owner null: {owner == null}");
-            owner.ReturnToPoolServerRpc(networkObject);
+            VehicleController.Instance.WeaponController.ReturnToPoolServerRpc(NetworkObject);
         }
     }
 
@@ -85,7 +113,7 @@ public class WeaponShell : WeaponAmmoBehaviour
     {
         if (VehicleController.IsNetworked)
         {
-            OnNetworkedFixedUpdate();
+            OnNetworkFixedUpdate?.Invoke();
         }
         else
         {
@@ -96,17 +124,14 @@ public class WeaponShell : WeaponAmmoBehaviour
     /// <summary>
     /// Called when the Network is active
     /// </summary>
-    public override void OnNetworkedFixedUpdate()
+    public override void NetworkedFixedUpdate()
     {
-        if (isPooled) return;
+        if (isPooled) return;   // If pooled (only spawnable)
 
+        // Move only if we own this object - Network Transform synchronises to every client!
         if (IsOwner)
         {
             rigidBody.MovePosition(rigidBody.position + transform.forward * (velocity * Time.fixedDeltaTime));
-        }
-        else if (rigidBody.isKinematic)
-        {
-            rigidBody.position += shellDirection * shellSpeed * Time.fixedDeltaTime;
         }
     }
 
@@ -117,7 +142,7 @@ public class WeaponShell : WeaponAmmoBehaviour
     {
         rigidBody.MovePosition(rigidBody.position + transform.forward * (velocity * Time.fixedDeltaTime));
     }
-
+    
     /// <summary>
     /// Called when this gameobject is spawned. Sets initial position and rotation.
     /// </summary>
@@ -126,10 +151,10 @@ public class WeaponShell : WeaponAmmoBehaviour
     {
         lifetimeTimer = lifetime;
         trailRenderer.emitting = true;
-        this.transform.position = owner.shellSpawnPoint.transform.position;
+        this.transform.position = VehicleController.Instance.WeaponController.shellSpawnPoint.transform.position;
         
         // Zero out X axis - the shell should always fly straight ahead
-        Vector3 rotation = owner.shellSpawnPoint.transform.rotation.eulerAngles;
+        Vector3 rotation = VehicleController.Instance.WeaponController.shellSpawnPoint.transform.rotation.eulerAngles;
         rotation.x = 0F;
         this.transform.rotation = Quaternion.Euler(rotation);
         this.transform.root.gameObject.SetActive(true);
@@ -143,6 +168,6 @@ public class WeaponShell : WeaponAmmoBehaviour
 	    trailRenderer.emitting = false;
 	    trailRenderer.Clear();
 	    this.transform.root.gameObject.SetActive(false);
-        networkObject.Despawn();
+        NetworkObject.Despawn();
     }
 }

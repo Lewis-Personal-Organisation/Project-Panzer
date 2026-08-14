@@ -1,25 +1,22 @@
-using System.Collections;
-using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
-[GenerateSerializationForGenericParameter(1)]
 public abstract class WeaponAmmoBehaviour : NetworkBehaviour
 {
-    public NetworkObject networkObject;
     public bool isPooled = true;                // Is the shell inactive (pooled)
     public float baseDamage;
-    internal Vector3 shellDirection;
+    public Vector3 shellDirection;
     
+    // The owner name synced to clients for collisions. Does not accomodate for players joining a session in progress
     public NetworkVariable<NetworkString> ownerName = new NetworkVariable<NetworkString>(new NetworkString(), NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     
     
     public abstract void Setup(VehicleWeaponController weaponController, Vector3 position, Quaternion rotation);
     
-    public abstract void OnNetworkedUpdate();
+    public abstract void OwnerNetworkUpdate();
     public abstract void OnUpdate();
     
-    public abstract void OnNetworkedFixedUpdate();
+    public abstract void NetworkedFixedUpdate();
     public abstract void OnFixedUpdate();
 
     /// <summary>

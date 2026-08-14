@@ -58,7 +58,7 @@ public class VehicleDefence : VehicleComponent, IVehicleComponentToggleable
             triggerEvent.Other.transform.root.TryGetComponent(out WeaponAmmoBehaviour ammunition);
             
             // Return if this is our shell!
-            if (ammunition.networkObject.IsOwner == true)
+            if (ammunition.NetworkObject.IsOwner)
                 return;
             
             SceneData.Label("Hits Received: ", $"{++hitsTaken}");

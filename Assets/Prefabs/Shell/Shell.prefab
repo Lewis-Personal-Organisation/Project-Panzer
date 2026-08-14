@@ -117,12 +117,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b0ef876f49f60844bb88fa0763548e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  networkObject: {fileID: 6493443310604571388}
   isPooled: 1
   baseDamage: 25
+  shellDirection: {x: 0, y: 0, z: 0}
   rigidBody: {fileID: 5877075993478472847}
-  <networkObject>k__BackingField: {fileID: 6493443310604571388}
-  lifetime: 20
+  lifetime: 25
   trailRenderer: {fileID: 5465372071143477761}
   velocity: 50
 --- !u!33 &1940422868625907792
