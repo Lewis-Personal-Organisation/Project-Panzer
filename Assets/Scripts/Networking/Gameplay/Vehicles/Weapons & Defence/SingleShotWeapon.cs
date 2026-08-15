@@ -1,4 +1,5 @@
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 
 public class SingleShotWeapon : VehicleWeaponController
@@ -71,13 +72,19 @@ public class SingleShotWeapon : VehicleWeaponController
             shellNetObj.Spawn(true);
         }
         
-        // Configure the shell for Server side only, tagging it with the actual firing player's name
-        shell.Setup(this, position, rotation);
         shell.ownerName.Value = new NetworkString(GameplayNetworkManager.Instance.GetPlayerName((int)ownerID));
         shell.isPooled = false;
         
-        // Set it's ownership and register it
+        // NOTE: Adjusting position and then changing ownership does not guarantee correct behaviour due to a bug with NGO.
+        // A synchronisation bug occurs with ownership change. To avoid this, the position is set within the client RPC,
+        // so we are sure it is moved correctly and timely!
+        
+        // Set it's ownership
         shellNetObj.ChangeOwnership(ownerID);
+        
+        // Configure the shell for Server side only, tagging it with the actual firing player's name
+        shell.Setup(this, position, rotation);
+        
         activeShells.Add(shellNetObj);
         
         return shellNetObj;
@@ -147,12 +154,19 @@ public class SingleShotWeapon : VehicleWeaponController
         if (!shellRef.TryGet(out NetworkObject netObj))
             return;
         
+        Debug.LogWarning($"[ActivateClientRpc] Playing Audio for other shell! Setting pos rot to {pos}, {rotation}");
+        
         audioSource.PlayOneShot(weapon.fireAudio);  // Play Gunfire sound
         
-        netObj.transform.SetPositionAndRotation(pos, rotation);
+        // Only the new owner is allowed to teleport a ClientNetworkTransform
+        if (netObj.IsOwner && netObj.TryGetComponent<NetworkTransform>(out var netTransform))
+        {
+            netTransform.Teleport(pos, rotation, netObj.transform.localScale);
+        }
         
         if (netObj.TryGetComponent<WeaponShell>(out var shell))
         {
+            Debug.LogWarning($"[ActivateClientRpc] Activating the shell!");
             shell.isPooled = false; // Activate it
         }
     }

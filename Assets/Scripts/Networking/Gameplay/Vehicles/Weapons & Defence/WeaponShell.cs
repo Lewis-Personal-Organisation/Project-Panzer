@@ -1,4 +1,7 @@
 using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Sirenix.OdinInspector;
 using UnityEngine;
 
 /*  This class is attached to a moving project or 'Shell'
@@ -6,7 +9,7 @@ using UnityEngine;
  *  Whether Authoritive or not
  */
 
-public class WeaponShell : WeaponAmmoBehaviour
+public class WeaponShell : WeaponAmmoBehaviour, IDebuggable
 {
     // public VehicleWeaponController owner;
     [SerializeField] private Rigidbody rigidBody;
@@ -22,7 +25,40 @@ public class WeaponShell : WeaponAmmoBehaviour
 
     private Action OnOwnerNetworkUpdate;
     private Action OnNetworkFixedUpdate;
-    
+
+    [Header("Debugging")]
+    [SerializeField] private bool debugMode;
+    public bool DebugMode { get => debugMode; set => debugMode = value; }
+    [ShowIf("debugMode", true)] public bool isTraversing = false;
+    [ShowIf("debugMode", true)] public Vector3 startPos;
+    private CancellationTokenSource _cts;
+    [ShowIf("debugMode", true)]
+    [DisableIf("@!debugMode || !EditorApplication.isPlaying || isTraversing")]
+    [Button(ButtonSizes.Medium), GUIColor(0.271F, 0.271F, 0.929F)]
+    private async void Traverse()
+    {
+        if (startPos != Vector3.zero)
+            startPos = this.transform.position;
+        
+        isTraversing = true;
+        _cts = new CancellationTokenSource();
+        float t = 0;
+
+        try
+        {
+            while (isTraversing && t < 5f)
+            {
+                float dt = EditorApplicationUpdater.DeltaTime;
+                rigidBody.MovePosition(rigidBody.position + transform.forward * dt * velocity);
+                t += dt;
+                await Task.Yield(); // or await Task.Delay(...) — stays cooperative, no thread switch
+            }
+        }
+        finally
+        {
+            isTraversing = false;
+        }
+    }
 
     /// <summary>
     /// Called by the server or Locally in non-networked scenarios

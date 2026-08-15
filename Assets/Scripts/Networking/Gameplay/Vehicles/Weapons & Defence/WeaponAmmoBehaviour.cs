@@ -30,6 +30,12 @@ public abstract class WeaponAmmoBehaviour : NetworkBehaviour
         shellDirection = newDirection;
         ReflectClientRpc(newDirection);
     }
+
+    public void RotateWithReflectionLocal(Vector3 newDirection)
+    {
+        transform.forward = newDirection;
+        shellDirection = newDirection;
+    }
     
     /// <summary>
     /// Set the new shell direction (CLIENTS ONLY)

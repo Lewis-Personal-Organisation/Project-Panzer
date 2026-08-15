@@ -6,9 +6,9 @@ public class VehicleBodyMover : LocalVehicleComponent
     private float inputSpeed;
     
     // external velocity
-    public Vector3 externalVelocity;
-    public float externalVelocityTimer;
-    public float externalVelocityDuration;
+    private Vector3 externalVelocity;
+    private float externalVelocityTimer;
+    private float externalVelocityDuration;
     public bool hasExternalVelocity => externalVelocityTimer > 0;
     
     public float RetainedVelocity

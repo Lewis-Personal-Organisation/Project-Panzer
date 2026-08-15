@@ -1,7 +1,6 @@
 using System;
 using UnityEngine;
 using UnityEngine.Events;
-using Sirenix.OdinInspector;
 
 /// <summary>
 /// Delegates the call to OnTrigger for this object to another object.
@@ -15,12 +14,11 @@ public class TriggerDelegator : MonoBehaviour
         if (!caller)
             caller = GetComponent<Collider>();
     }
-    
-    // private void Start()
-    // {
-    //     
-    // }
 
+    private void Start()
+    {
+        // HERE SO WE HAVE THE ENABLE/DISABLE INSPECTOR TICK BOX
+    }
 
     // TRIGGER DELEGATION
     private void OnTriggerEnter(Collider other) => OnTriggerEnterEvent.Invoke(new OnTriggerDelegation(caller, other));

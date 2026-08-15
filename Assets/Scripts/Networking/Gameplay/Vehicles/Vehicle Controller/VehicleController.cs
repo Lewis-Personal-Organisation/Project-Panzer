@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using Sirenix.OdinInspector;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Events;
@@ -52,6 +53,17 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
 
     private UnityAction OnFixedUpdate = null;
 
+    [DisableIf("@!EditorApplication.isPlaying")]
+    [Button(ButtonSizes.Medium), GUIColor(0.271F, 0.271F, 0.929F)]
+    private void Revive()
+    {
+        inputManager.enabled = true;
+        weaponController.Enable();
+        turretRotator.Enable();
+        defence.Enable();
+        vfxController.aliveParticles.Value = true;
+    }
+    
 
     public override void OnNetworkSpawn()
     {
@@ -114,9 +126,7 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
 
         audioListener.enabled = true;
 
-        Debug.Log("Reached A");
         paintMaterials = transform.GetComponentsInChildren<Renderer>();
-        Debug.Log("Reached B");
 
         bodyMover.RetainedVelocity = mobility.traction;
         gravitationalForce = mobility.localGravity;

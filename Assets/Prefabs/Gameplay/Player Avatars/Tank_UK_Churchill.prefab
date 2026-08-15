@@ -753,6 +753,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98c88a42dd8df8743a07e0f140f64fe5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  externalVelocity: {x: 0, y: 0, z: 0}
+  externalVelocityTimer: 0
+  externalVelocityDuration: 0
 --- !u!114 &2136361414815535393
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -844,6 +847,9 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 128
   minAngleForRicochet: 70
+  debugRayDistance: 3
+  debugSphereSize: 0
+  hits: []
 --- !u!114 &4425514349993116832
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -884,7 +890,6 @@ MonoBehaviour:
   minPos: 0.001
   isStuck: 0
   isMoving: 0
-  tryingToMove: 0
   stuckTimer: 0
   stuckTimerMax: 1.25
   stuckTime: 0

@@ -17,7 +17,5 @@ MonoBehaviour:
   processMouseMoveInInspector: 1
   drawingConfig:
     configs:
-    - DrawnTypeName: UnityEngine.MonoBehaviour, UnityEngine.CoreModule
-      EditorTypeName: 
     - DrawnTypeName: TriggerDelegator, Assembly-CSharp
       EditorTypeName: Sirenix.OdinInspector.Editor.OdinEditor, Sirenix.OdinInspector.Editor

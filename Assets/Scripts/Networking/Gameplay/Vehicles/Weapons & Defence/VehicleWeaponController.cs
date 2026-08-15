@@ -83,6 +83,9 @@ public abstract class VehicleWeaponController : NetworkedVehicleComponent, IVehi
             shell.isPooled = true;
         }
         
+        // Change ownership back to server for when it needs to respawn and reposition a shell
+        netObj.ChangeOwnership(NetworkManager.ServerClientId);
+        
         availableShells.Enqueue(netObj);
         
         // Notify all clients to deactivate

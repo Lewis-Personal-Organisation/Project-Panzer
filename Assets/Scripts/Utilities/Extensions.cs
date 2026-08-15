@@ -128,7 +128,7 @@ public static class Extensions
         targetTransform.forward = Vector3.Reflect(targetTransform.forward.normalized, sideDirection.normalized);
         return true;
     }
-    
+
     /// <summary>
     /// Returns a Reflect result containing the direction and ricochet state
     /// </summary>
@@ -138,9 +138,12 @@ public static class Extensions
     /// <returns></returns>
     public static ReflectResult ReflectWithAngleAdv(this BoxCollider boxCollider, Transform targetTransform, float ricochetAngle)
     {
+        // Find closest side on box collider
         Vector3 surfaceNormal = boxCollider.ClosestSide(targetTransform.position).normalized;
-
+        
+        // FIX? Should not measure against forward all of the time
         bool didReflect = Vector3.Angle(targetTransform.forward, -surfaceNormal) > ricochetAngle;
+        UnityEngine.Debug.Log($"{Vector3.Angle(targetTransform.forward, -surfaceNormal)} > {ricochetAngle} ? {didReflect}"); // DEBUG LINE ONLY
         
         float dotForward = Vector3.Dot(surfaceNormal, boxCollider.transform.forward);
         float dotRight = Vector3.Dot(surfaceNormal, boxCollider.transform.right);

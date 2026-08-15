@@ -53,7 +53,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 483747377
+  GlobalObjectIdHash: 369750210
   InScenePlacedSourceGlobalObjectIdHash: 0
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
@@ -124,6 +124,9 @@ MonoBehaviour:
   lifetime: 25
   trailRenderer: {fileID: 5465372071143477761}
   velocity: 50
+  debugMode: 0
+  isTraversing: 0
+  startPos: {x: 0, y: 0, z: 0}
 --- !u!33 &1940422868625907792
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -152,7 +155,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -7773331779438580464, guid: 11408fb129c7cac4ba3ed74508bc5488, type: 3}
+  - {fileID: 2100000, guid: 79cd0810324b5b44584f5b6e9a2ac286, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -405,5 +408,5 @@ TrailRenderer:
   m_MinVertexDistance: 0.5
   m_MaskInteraction: 0
   m_Autodestruct: 0
-  m_Emitting: 0
+  m_Emitting: 1
   m_ApplyActiveColorSpace: 1
