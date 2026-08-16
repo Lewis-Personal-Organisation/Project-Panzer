@@ -12,8 +12,6 @@ public class VehicleTurretRotator : VehicleComponent, IVehicleComponentToggleabl
     {
         vehicle = vehicleController;
         cameraController = vehicle.cameraController;
-
-        Enable();
     }
 
     private void LateUpdate()

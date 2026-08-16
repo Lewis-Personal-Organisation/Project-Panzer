@@ -1,9 +1,10 @@
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class VehicleInputManager : MonoBehaviour
 {
-    public enum InputState
+    public enum TraversalState
     {
         None,
         MovingForward,
@@ -16,31 +17,35 @@ public class VehicleInputManager : MonoBehaviour
     public float moveInput { get; private set; } = 0F;
     public float turnInputValue { get; private set; } = 0.0f;
     public int rotationInput => turnInputValue > 0 ? 1 : turnInputValue < 0 ? -1 : 0;
-    public InputState vehicleState => (rotationInput, moveInput) switch
+    public TraversalState vehicleState => (rotationInput, moveInput) switch
     {
-        (0, 0) => InputState.None,
-        (0, -1) => InputState.MovingBackward,
-        (-1 or 1, -1) => InputState.MovingBackwardAndRotating,
-        (0, 1) => InputState.MovingForward,
-        (-1 or 1, 1) => InputState.MovingForwardAndRotating,
-        (-1 or 1, 0) => InputState.Rotating,
-        _ => InputState.None
+        (0, 0) => TraversalState.None,
+        (0, -1) => TraversalState.MovingBackward,
+        (-1 or 1, -1) => TraversalState.MovingBackwardAndRotating,
+        (0, 1) => TraversalState.MovingForward,
+        (-1 or 1, 1) => TraversalState.MovingForwardAndRotating,
+        (-1 or 1, 0) => TraversalState.Rotating,
+        _ => TraversalState.None
     };
-    public void SetLastInputState() => lastInputState = vehicleState;
-    public InputState lastInputState;
+    public void SetLastInputState() => lastTraversalState = vehicleState;
+    [FormerlySerializedAs("lastInputState")]
+    public TraversalState lastTraversalState;
     public float MouseXDelta => Input.GetAxis("Mouse X");
     public float MouseYDelta => Input.GetAxis("Mouse Y");
+    public bool lmbPressed = false;
     
     
     private void FixedUpdate()
     {
         moveInput = Input.GetAxisRaw("Vertical");
         turnInputValue = Input.GetAxis("Horizontal");
+        lmbPressed = Input.GetMouseButtonDown(0);
     }
 
     private void OnDisable()
     {
         moveInput = 0;
         turnInputValue = 0;
+        lmbPressed = false;
     }
 }

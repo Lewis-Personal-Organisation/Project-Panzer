@@ -226,4 +226,13 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
         turretRotator.Enable();
         defence.Enable();
     }
+
+    /// <summary>
+    /// Enable core systems when countdown finishes
+    /// </summary>
+    public void OnGameStartEnable()
+    {
+        inputManager.enabled = true;
+        turretRotator.Enable();
+    }
 }

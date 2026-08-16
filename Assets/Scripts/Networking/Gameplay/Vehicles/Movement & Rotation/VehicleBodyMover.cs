@@ -1,5 +1,4 @@
 using UnityEngine;
-using InputStates = VehicleInputManager.InputState;
 
 public class VehicleBodyMover : LocalVehicleComponent
 {
@@ -41,24 +40,24 @@ public class VehicleBodyMover : LocalVehicleComponent
         {
             switch (vehicle.inputManager.vehicleState)
             {
-                case InputStates.MovingBackward or InputStates.MovingBackwardAndRotating:
+                case VehicleInputManager.TraversalState.MovingBackward or VehicleInputManager.TraversalState.MovingBackwardAndRotating:
                     
                     // Reset input speed, so we don't move forwards immediately (velocity would be positive when steer velocity is applied)
-                    if (vehicle.inputManager.lastInputState == InputStates.Rotating && vehicle.mobility.steerVelocity > 0)
+                    if (vehicle.inputManager.lastTraversalState == VehicleInputManager.TraversalState.Rotating && vehicle.mobility.steerVelocity > 0)
                         inputSpeed = 0;
 
                     inputSpeed = Mathf.MoveTowards(inputSpeed, TargetInputSpeed, vehicle.mobility.speedDelta * Time.deltaTime);
                     break;
 
-                case InputStates.MovingForward or InputStates.MovingForwardAndRotating:
+                case VehicleInputManager.TraversalState.MovingForward or VehicleInputManager.TraversalState.MovingForwardAndRotating:
                     inputSpeed = Mathf.MoveTowards(inputSpeed, TargetInputSpeed, vehicle.mobility.speedDelta * Time.deltaTime);
                     break;
 
-                case InputStates.Rotating:
+                case VehicleInputManager.TraversalState.Rotating:
                     inputSpeed = Mathf.MoveTowards(inputSpeed, 1, vehicle.mobility.speedDelta * Time.deltaTime);
                     break;
 
-                case InputStates.None:
+                case VehicleInputManager.TraversalState.None:
                     inputSpeed = Mathf.MoveTowards(inputSpeed, 0, vehicle.mobility.brakeDelta * Time.deltaTime);
                     break;
             }
@@ -71,7 +70,7 @@ public class VehicleBodyMover : LocalVehicleComponent
         // SceneData.Label("Input Speed: ", $"{inputSpeed}", 10, 40, 550, 25, Color.black);
 
         // If Rotating, target speed more than allowed and velocity is higher than allowed
-        if (vehicle.inputManager.vehicleState != InputStates.Rotating || vehicle.velocityTracker.z.velocity <= vehicle.mobility.steerVelocity)
+        if (vehicle.inputManager.vehicleState != VehicleInputManager.TraversalState.Rotating || vehicle.velocityTracker.z.velocity <= vehicle.mobility.steerVelocity)
         {
             vehicle.hullRigidbody.AddRelativeForce(Vector3.forward * inputSpeed * vehicle.mobility.forceMultiplier, ForceMode.Force);
         }

@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -15,14 +14,22 @@ public class TriggerDelegator : MonoBehaviour
             caller = GetComponent<Collider>();
     }
 
+    public void Disable()
+    {
+        OnTriggerEnterEvent = null;
+        OnTriggerExitEvent = null;
+        OnCollisionEnterEvent = null;
+        OnCollisionExitEvent = null;
+    }
+
     private void Start()
     {
         // HERE SO WE HAVE THE ENABLE/DISABLE INSPECTOR TICK BOX
     }
 
     // TRIGGER DELEGATION
-    private void OnTriggerEnter(Collider other) => OnTriggerEnterEvent.Invoke(new OnTriggerDelegation(caller, other));
-    private void OnTriggerExit(Collider other) => OnTriggerExitEvent.Invoke(new OnTriggerDelegation(caller, other));
+    private void OnTriggerEnter(Collider other) => OnTriggerEnterEvent?.Invoke(new OnTriggerDelegation(caller, other));
+    private void OnTriggerExit(Collider other) => OnTriggerExitEvent?.Invoke(new OnTriggerDelegation(caller, other));
     
     [Space(10)]
     [Tooltip("Which function should be called when trigger was entered.")]
@@ -32,8 +39,8 @@ public class TriggerDelegator : MonoBehaviour
     public UnityEvent<OnTriggerDelegation> OnTriggerExitEvent;
     
     // COLLISION DELEGATION
-    private void OnCollisionEnter(Collision other) => OnCollisionEnterEvent.Invoke(new OnCollisionDelegation(caller, other));
-    private void OnCollisionExit(Collision other) => OnCollisionExitEvent.Invoke(new OnCollisionDelegation(caller, other));
+    private void OnCollisionEnter(Collision other) => OnCollisionEnterEvent?.Invoke(new OnCollisionDelegation(caller, other));
+    private void OnCollisionExit(Collision other) => OnCollisionExitEvent?.Invoke(new OnCollisionDelegation(caller, other));
     
     [Tooltip("Which function should be called when Collision was entered.")]
     public UnityEvent<OnCollisionDelegation> OnCollisionEnterEvent;

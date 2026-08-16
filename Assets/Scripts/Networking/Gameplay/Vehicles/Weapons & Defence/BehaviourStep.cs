@@ -46,6 +46,7 @@ public class BehaviourStep
                 if (completeCondition == null || completeCondition != null && completeCondition())
                 {
                     stage = BehaviourStage.Complete;
+                    onComplete?.Invoke();
                 }
                 break;
             

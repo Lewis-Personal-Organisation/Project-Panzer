@@ -64,7 +64,7 @@ public class VehicleStuckManager : NetworkedVehicleComponent
         
         // We're moving if the difference in pos meets thresholds, and stuck if we're not meeting thresholds but trying to move
         isMoving = deltaPos.x >= minPos || deltaPos.y >= minPos || deltaPos.z >= minPos;
-        isStuck = !isMoving && vehicle.inputManager.vehicleState != VehicleInputManager.InputState.None;
+        isStuck = !isMoving && vehicle.inputManager.vehicleState != VehicleInputManager.TraversalState.None;
 
         // If stuck, increase timer. Once met, allow reposition timer in menu
         if (isStuck)

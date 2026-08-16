@@ -30,20 +30,23 @@ public class GameplaySceneManager : Singleton<GameplaySceneManager>
     private void Start()
     {
         spawnPoints.Shuffle();
-        
-        // Null check for non-network testing
-        if (NetworkManager.Singleton && NetworkManager.Singleton.IsServer)
+
+        if (!NetworkManager.Singleton)
         {
-            GameplayNetworkManager.Instantiate(gameplayNetworkManagerPrefab);
-        }
-        else
-        {
+            // Local Testing
             #if UNITY_EDITOR
             GameplayUI.CountdownGroup.TogglePanels(false);
             #endif
+            return;
         }
         
-        GameplayUI.Instance.UpdateScores();
+        // Null check for non-network testing
+        if (NetworkManager.Singleton.IsServer)
+        {
+            GameplayNetworkManager.Instantiate(gameplayNetworkManagerPrefab);
+        }
+        
+        // GameplayUI.Instance.UpdateScores();
     }
 
     public void SetCountdown(int seconds)

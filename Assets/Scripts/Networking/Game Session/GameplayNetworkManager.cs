@@ -51,9 +51,12 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
 
     // Invoked when the Player is fully spawned and Assigned.
     // Useful for queuing actions for objects which need access to Player information such as name or ID.
-    public static Action OnPlayerAssigned;
+    public static Action OnPlayerAssignedByServer;
+    
+    // Called when the server player is assigned. Only called on the Server Client
+    public static Action OnServerPlayerAssigned;
 
-    // Invoked when the local player avater is finished settoing up
+    // Invoked when the local player avater is finished setting up. Only called on the Client for this Local Player
     public static Action OnLocalPlayerAssigned;
     
     
@@ -330,12 +333,12 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
     {
         m_GameEndsTime = Time.time + m_PlayerOptions.gameDuration;
 
-        if (localPlayerAvatar != null)
-        {
+        // if (localPlayerAvatar != null)
+        // {
             Debug.Log($"GameplayNetworkManager :: StartPlayingGame() :: Timer complete, enabling player control");
-            localPlayerAvatar.vehicleController.inputManager.enabled = true;
+            VehicleController.Instance.OnGameStartEnable();
             GameplayUI.CountdownGroup.ToggleCountdownTimer(false);
-        }
+        // }
     }
     
     void OnScoreChanged()
@@ -384,9 +387,12 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
         
         PlayerAvatar playerAvatar = GameObject.Instantiate(playerAvatarPrefabs[playerIndex], pos, rot);
         playerAvatar.gameObject.name = playerAvatarPrefabs[playerIndex].name;           // Remove clone from name field
-        playerAvatar.networkObject.SpawnWithOwnership(clientID);
+        playerAvatar.NetworkObject.SpawnWithOwnership(clientID);
         playerAvatar.SetPlayerAvatarClientRpc(playerIndex, GetPlayerID(playerIndex), GetPlayerName(playerIndex), clientID);
-        OnPlayerAssigned.Invoke();
+        
+        if (playerIndex == 0)
+            OnServerPlayerAssigned?.Invoke();
+        
         Debug.Log($"GameplayNetworkManager :: SpawnPlayer :: Spawned Player with ID {playerIndex}", playerAvatar.gameObject);
     }
     

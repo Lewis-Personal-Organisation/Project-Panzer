@@ -45,15 +45,12 @@ public class SceneryMissile : NetworkBehaviour
     [FoldoutGroup("Behaviour Variables")] public float ascentTime = 8F;
     [FoldoutGroup("Behaviour Variables")] public float rotationSpeed;
 
-    private float timer = 0F;
+    [SerializeField] private float timer = 0F;
     private bool canRotate = true;
     private bool detonate = false;
     public float radiusSpeed = 1F;
-    [FormerlySerializedAs("detonationForceRadius")]
     public float detonationRadius = 0F;
-    [FormerlySerializedAs("detonationForceRadiusMax")]
     public float detonationRadiusMax = 1F;
-    [FormerlySerializedAs("minExplosionForce")]
     public float minDetonationForce = 1.5F;
     public float maxDetonationForce = 5F;
     public float detonationForcePushTimer = 1.5F;
@@ -64,6 +61,10 @@ public class SceneryMissile : NetworkBehaviour
 
     private BehaviourSequence behaviourSequence;
 
+    
+    public List<ExplosionEffector> debugTargets = new List<ExplosionEffector>();
+    
+    
     [DisableIf("@!EditorApplication.isPlaying")]
     [Button(ButtonSizes.Medium), GUIColor(0.929411765F, 0.270588235f, 0.270588235F)]
     private void Launch()
@@ -77,16 +78,19 @@ public class SceneryMissile : NetworkBehaviour
     /// </summary>
     public override void OnNetworkSpawn()
     {
-        platformTrigger.enabled = IsOwner;
+        if (!IsServer)
+        {
+            platformTrigger.Disable();
+        }
         
         // Register for network changes
         networkedStage.OnValueChanged += ApplyStage;
         ApplyStage(ProjectileStage.None, networkedStage.Value);
         
         // Queued
-        GameplayNetworkManager.OnPlayerAssigned += () => Debug.Log($"Registered for network changes of SceneryMissile for {GameplayNetworkManager.Instance.localPlayerName}");
+        GameplayNetworkManager.OnLocalPlayerAssigned += () => Debug.Log($"Registered for network changes of SceneryMissile for {GameplayNetworkManager.Instance.localPlayerName}");
     }
-
+    
     public override void OnNetworkDespawn()
     {
         networkedStage.OnValueChanged -= ApplyStage;
@@ -101,8 +105,6 @@ public class SceneryMissile : NetworkBehaviour
         #else
             networkedStage.Value = newStage;
         #endif
-
-        ApplyStage(ProjectileStage.None, newStage);
     }
 
     /// <summary>
@@ -120,7 +122,7 @@ public class SceneryMissile : NetworkBehaviour
                 break;
 
             case ProjectileStage.MidFlight:
-                groundParticles.Stop(false);
+                groundParticles.Stop();
                 break;
 
             case ProjectileStage.Impact:
@@ -143,10 +145,6 @@ public class SceneryMissile : NetworkBehaviour
                 break;
         }
     }
-
-    
-    [FormerlySerializedAs("targets")]
-    public List<ExplosionEffector> debugTargets = new List<ExplosionEffector>();
     
     private IEnumerator DoExplosion()
     {
@@ -296,6 +294,7 @@ public class SceneryMissile : NetworkBehaviour
             behaviourSequence?.Process();
         }
 
+        // Local Non-networked
         #if UNITY_EDITOR
         if (!NetworkManager.Singleton)
         {

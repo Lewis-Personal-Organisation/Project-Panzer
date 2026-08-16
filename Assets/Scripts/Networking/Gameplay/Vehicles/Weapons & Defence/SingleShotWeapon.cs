@@ -154,8 +154,6 @@ public class SingleShotWeapon : VehicleWeaponController
         if (!shellRef.TryGet(out NetworkObject netObj))
             return;
         
-        Debug.LogWarning($"[ActivateClientRpc] Playing Audio for other shell! Setting pos rot to {pos}, {rotation}");
-        
         audioSource.PlayOneShot(weapon.fireAudio);  // Play Gunfire sound
         
         // Only the new owner is allowed to teleport a ClientNetworkTransform
@@ -166,7 +164,6 @@ public class SingleShotWeapon : VehicleWeaponController
         
         if (netObj.TryGetComponent<WeaponShell>(out var shell))
         {
-            Debug.LogWarning($"[ActivateClientRpc] Activating the shell!");
             shell.isPooled = false; // Activate it
         }
     }

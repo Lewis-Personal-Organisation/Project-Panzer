@@ -95,7 +95,7 @@ public class WeaponShell : WeaponAmmoBehaviour, IDebuggable
         OnOwnerNetworkUpdate = OwnerNetworkUpdate;
         OnNetworkFixedUpdate = NetworkedFixedUpdate;
         
-        Debug.Log($"GAINED OWNERSHIP OF SHELL ({transform.name}). LIFETIME IS {lifetimeTimer}", gameObject);
+        Debug.Log($"We now own Shell {transform.name}", gameObject);
     }
 
     private void Update()

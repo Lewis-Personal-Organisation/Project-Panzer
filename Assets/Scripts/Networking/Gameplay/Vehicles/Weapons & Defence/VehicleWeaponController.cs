@@ -39,7 +39,7 @@ public abstract class VehicleWeaponController : NetworkedVehicleComponent, IVehi
     {
         OnSimulate += () =>
         {
-            if (Input.GetMouseButtonDown(0))
+            if (vehicle.inputManager.lmbPressed)
             {
                 Fire();
                 return;
