@@ -3991,7 +3991,7 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 608511794}
   m_Mesh: {fileID: 4300000, guid: 3442cb86caf3ab24cb963e86f3a50afd, type: 3}
---- !u!43 &619505139
+--- !u!43 &642383928
 Mesh:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -14250,133 +14250,9 @@ PrefabInstance:
       propertyPath: m_Name
       value: Scenery Missile
       objectReference: {fileID: 0}
-    - target: {fileID: 55860799341659980, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4084803746131597263, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4212683886237488993, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: looping
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4212683886237488993, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: TriggerModule.enter
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 4212683886237488993, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: TriggerModule.inside
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4212683886237488993, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: TriggerModule.enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4212683886237488993, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: CustomDataModule.mode0
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4212683886237488993, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: CollisionModule.enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4212683886237488993, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: CustomDataModule.enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4212683886237488993, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: TriggerModule.radiusScale
-      value: 0.02
-      objectReference: {fileID: 0}
-    - target: {fileID: 4212683886237488993, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: CollisionModule.collisionMode
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4212683886237488993, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: CollisionModule.maxCollisionShapes
-      value: 40
-      objectReference: {fileID: 0}
-    - target: {fileID: 4212683886237488993, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: CollisionModule.collidesWith.m_Bits
-      value: 64
-      objectReference: {fileID: 0}
-    - target: {fileID: 4212683886237488993, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: TriggerModule.primitives.Array.size
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 4307694814960741070, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
       propertyPath: GlobalObjectIdHash
       value: 4256397344
-      objectReference: {fileID: 0}
-    - target: {fileID: 5000834277641031817, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5411816356294422906, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: detonate
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5411816356294422906, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5411816356294422906, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: editorDebug
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5411816356294422906, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: radiusSpeed
-      value: 14
-      objectReference: {fileID: 0}
-    - target: {fileID: 5411816356294422906, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: detonationRadius
-      value: 9.1359625
-      objectReference: {fileID: 0}
-    - target: {fileID: 5411816356294422906, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: maxDetonationForce
-      value: 12
-      objectReference: {fileID: 0}
-    - target: {fileID: 5411816356294422906, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: minDetonationForce
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5411816356294422906, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: targets.Array.size
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 5411816356294422906, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: detonationRadiusMax
-      value: 24
-      objectReference: {fileID: 0}
-    - target: {fileID: 5411816356294422906, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: detonationForceRadius
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5411816356294422906, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: targets.Array.data[0]
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 5411816356294422906, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: targets.Array.data[1]
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 5411816356294422906, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: targets.Array.data[2]
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 5411816356294422906, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: debugTargets.Array.size
-      value: 25
-      objectReference: {fileID: 0}
-    - target: {fileID: 5411816356294422906, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: detonationForceRadiusMax
-      value: 24
-      objectReference: {fileID: 0}
-    - target: {fileID: 5411816356294422906, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: detonationForceMultiplier
-      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5411816356294422906, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
       propertyPath: debugTargets.Array.data[0]
@@ -14478,10 +14354,6 @@ PrefabInstance:
       propertyPath: debugTargets.Array.data[24]
       value: 
       objectReference: {fileID: 277768824}
-    - target: {fileID: 5617737807252196382, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
-      propertyPath: m_Mass
-      value: 0.18
-      objectReference: {fileID: 0}
     - target: {fileID: 7071577581855036218, guid: 6e80984ac3cbff644b72bb47090d33e6, type: 3}
       propertyPath: m_LocalPosition.x
       value: 54.59
@@ -29938,7 +29810,7 @@ MeshCollider:
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
-  m_Mesh: {fileID: 619505139}
+  m_Mesh: {fileID: 642383928}
 --- !u!23 &5986886976910951037
 MeshRenderer:
   m_ObjectHideFlags: 0

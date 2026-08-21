@@ -115,7 +115,7 @@ public class WeaponShell : WeaponAmmoBehaviour, IDebuggable
     /// </summary>
     public override void OwnerNetworkUpdate()
     {
-        if (isPooled) return;
+        if (isPooled.Value) return;
         if (!IsOwner) return;
 
         // Decrement timer to 0, then deactivate and return to pool
@@ -162,7 +162,7 @@ public class WeaponShell : WeaponAmmoBehaviour, IDebuggable
     /// </summary>
     public override void NetworkedFixedUpdate()
     {
-        if (isPooled) return;   // If pooled (only spawnable)
+        if (isPooled.Value) return;   // If pooled (only spawnable)
 
         // Move only if we own this object - Network Transform synchronises to every client!
         if (IsOwner)

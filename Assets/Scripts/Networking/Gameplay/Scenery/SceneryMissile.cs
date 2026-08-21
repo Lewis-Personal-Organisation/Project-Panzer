@@ -60,10 +60,8 @@ public class SceneryMissile : NetworkBehaviour
     private Vector3 localDetonatePosition;
 
     private BehaviourSequence behaviourSequence;
-
     
     public List<ExplosionEffector> debugTargets = new List<ExplosionEffector>();
-    
     
     [DisableIf("@!EditorApplication.isPlaying")]
     [Button(ButtonSizes.Medium), GUIColor(0.929411765F, 0.270588235f, 0.270588235F)]
@@ -204,19 +202,17 @@ public class SceneryMissile : NetworkBehaviour
                 detonationRadius = 0;
             }
         }
+
+        if (!editorDebug)
+            return;
         
         Gizmos.DrawWireSphere(detonateParticlesA.transform.position, detonationRadiusMax);
-        
-        if (editorDebug)
-        {
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(detonateParticlesA.transform.position, detonationRadius);
-            detonationRadius += EditorApplicationUpdater.DeltaTime * radiusSpeed;
-            EditorApplicationUpdater.RepaintOnUse();
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(detonateParticlesA.transform.position, detonationRadius);
+        detonationRadius += EditorApplicationUpdater.DeltaTime * radiusSpeed;
             
-            if (detonationRadius > detonationRadiusMax)
-                detonationRadius = 0F;
-        }
+        if (detonationRadius > detonationRadiusMax)
+            detonationRadius = 0F;
     }
 
     private void Start()

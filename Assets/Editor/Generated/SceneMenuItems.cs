@@ -67,10 +67,10 @@ public static class SceneMenuItems
         OpenScene("Assets/Scenes/Test Ground.unity");
     }
 
-    [MenuItem("Scenes/UI Testing")]
-    private static void Load_UI_Testing()
+    [MenuItem("Scenes/Editor Updater Demo")]
+    private static void Load_Editor_Updater_Demo()
     {
-        OpenScene("Assets/Scenes/UI Testing.unity");
+        OpenScene("Assets/Scenes/Editor Updater Demo.unity");
     }
 
     private static void OpenScene(string path)

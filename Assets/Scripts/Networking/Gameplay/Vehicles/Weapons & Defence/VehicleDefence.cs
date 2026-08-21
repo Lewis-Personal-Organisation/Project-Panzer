@@ -71,7 +71,6 @@ public class VehicleDefence : VehicleComponent, IVehicleComponentToggleable
                 }
 
                 hits[i].timer -= EditorApplicationUpdater.DeltaTime;
-                EditorApplicationUpdater.RepaintOnUse();
             }
         }
 
@@ -87,7 +86,7 @@ public class VehicleDefence : VehicleComponent, IVehicleComponentToggleable
         if ((shellMask.value & 1 << triggerEvent.Other.gameObject.layer) != 0)
         {
             triggerEvent.Other.transform.root.TryGetComponent(out WeaponAmmoBehaviour ammunition);
-            SceneData.Label("Hits Received: ", $"{++hitsTaken}");
+            // SceneData.Label("Hits Received: ", $"{++hitsTaken}");
             
             HitDebug hit = new HitDebug();
             hit.point = triggerEvent.Other.transform.position;

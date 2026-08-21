@@ -16,8 +16,9 @@ public abstract class VehicleWeaponController : NetworkedVehicleComponent, IVehi
     protected float reloadTimer = 0;
     private UnityAction OnSimulate;
     
-    protected Queue<NetworkObject> availableShells = new Queue<NetworkObject>();
-    protected HashSet<NetworkObject> activeShells = new HashSet<NetworkObject>();
+    protected Queue<NetworkObject> pooledShells = new Queue<NetworkObject>();
+    protected HashSet<NetworkObject> usedShells = new HashSet<NetworkObject>();
+    protected Dictionary<NetworkObject, WeaponAmmoBehaviour> shellLookup = new Dictionary<NetworkObject, WeaponAmmoBehaviour>(0);
 
 
     public virtual void Setup(VehicleController vehicleController)
@@ -72,7 +73,7 @@ public abstract class VehicleWeaponController : NetworkedVehicleComponent, IVehi
         if (!netObjRef.TryGet(out NetworkObject netObj))
             return;
 
-        if (!activeShells.Remove(netObj))       // If the shell wasnt present in the active list, return
+        if (!usedShells.Remove(netObj))       // If the shell wasnt present in the active list, return
             return;
         
         Debug.Log("Server: Pooling expired shell");
@@ -80,13 +81,16 @@ public abstract class VehicleWeaponController : NetworkedVehicleComponent, IVehi
         
         if (netObj.TryGetComponent<WeaponShell>(out var shell))
         {
-            shell.isPooled = true;
+            shell.isPooled.Value = true;
         }
         
-        // Change ownership back to server for when it needs to respawn and reposition a shell
-        netObj.ChangeOwnership(NetworkManager.ServerClientId);
+        // Change ownership back to server for when it needs to respawn and reposition a shell. Not required for server-fired shots
+        if (netObj.OwnerClientId != NetworkManager.ServerClientId)
+        {
+            netObj.ChangeOwnership(NetworkManager.ServerClientId);
+        }
         
-        availableShells.Enqueue(netObj);
+        pooledShells.Enqueue(netObj);
         
         // Notify all clients to deactivate
         DeactivateShellClientRpc(netObj.NetworkObjectId);
@@ -105,10 +109,5 @@ public abstract class VehicleWeaponController : NetworkedVehicleComponent, IVehi
         
         Debug.Log("Client (All): Deactivating expired shell as requested from Server");
         netObj.transform.position = new Vector3(0, -5, 0);
-        
-        if (netObj.TryGetComponent<WeaponShell>(out var shell))
-        {
-            shell.isPooled = true;
-        }
     }
 }

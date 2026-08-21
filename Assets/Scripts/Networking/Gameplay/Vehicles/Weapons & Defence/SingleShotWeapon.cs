@@ -39,13 +39,15 @@ public class SingleShotWeapon : VehicleWeaponController
             
             // We can't disable NetworkBehaviours, so hide objects
             shell.transform.position = new Vector3(0, -5F, 0);
-            shell.isPooled = true;
+            shell.isPooled.Value = true;
             shell.name = $"Shell (Pooled, {playerName})";
             
             NetworkObject shellNetObj = shell.NetworkObject;
             shellNetObj.Spawn(true);
+
+            shellLookup.Add(shellNetObj, shell);
             
-            availableShells.Enqueue(shellNetObj);
+            pooledShells.Enqueue(shellNetObj);
         }
         Debug.Log($"Server: Created Pool of {initPoolSize} shells for {this.transform.root.gameObject.name}!");
     }
@@ -53,40 +55,29 @@ public class SingleShotWeapon : VehicleWeaponController
     /// <summary>
     /// Returns the shell's NetworkObject retrieved or created from the pool system
     /// </summary>
-    private NetworkObject GetFromOrAddToPool(Vector3 position, Quaternion rotation, ulong ownerID)
+    private NetworkObject GetFromOrAddToPool(Vector3 position, Quaternion rotation, ulong newOwnerID)
     {
-        NetworkObject shellNetObj;
-        WeaponAmmoBehaviour shell;
+        WeaponAmmoBehaviour shell = pooledShells.Count > 0 ? shellLookup[pooledShells.Dequeue()] : Instantiate(weapon.shellPrefab);
+        NetworkObject shellNetObj = pooledShells.Count > 0 ? pooledShells.Dequeue() : shell.NetworkObject;
 
-        // Retrieve a shell from Queue, if any are available. Else, spawn a new one
-        if (availableShells.Count > 0)
-        {
-            shellNetObj = availableShells.Dequeue();
-            shell = shellNetObj.GetComponent<WeaponAmmoBehaviour>();
-        }
-        else
-        {
-            // Pool exhausted, create a new one
-            shell = Instantiate(weapon.shellPrefab);
-            shellNetObj = shell.NetworkObject;
-            shellNetObj.Spawn(true);
-        }
+        // Create lookup
+        shellLookup.TryAdd(shellNetObj, shell);
         
-        shell.ownerName.Value = new NetworkString(GameplayNetworkManager.Instance.GetPlayerName((int)ownerID));
-        shell.isPooled = false;
+        // Set ownership if required
+        if (shellNetObj.OwnerClientId != newOwnerID)
+            shellNetObj.ChangeOwnership(newOwnerID);  
         
-        // NOTE: Adjusting position and then changing ownership does not guarantee correct behaviour due to a bug with NGO.
-        // A synchronisation bug occurs with ownership change. To avoid this, the position is set within the client RPC,
-        // so we are sure it is moved correctly and timely!
-        
-        // Set it's ownership
-        shellNetObj.ChangeOwnership(ownerID);
-        
-        // Configure the shell for Server side only, tagging it with the actual firing player's name
+        // Setup locally for server
         shell.Setup(this, position, rotation);
         
-        activeShells.Add(shellNetObj);
+        // Spawn it for everyone, if not spawned
+        if (!shellNetObj.IsSpawned)
+            shellNetObj.Spawn(true);
         
+        shell.ownerName.Value = new NetworkString(GameplayNetworkManager.Instance.GetPlayerName((int)newOwnerID));
+        shell.isPooled.Value = false;
+        
+        usedShells.Add(shellNetObj);
         return shellNetObj;
     }
     
@@ -160,11 +151,6 @@ public class SingleShotWeapon : VehicleWeaponController
         if (netObj.IsOwner && netObj.TryGetComponent<NetworkTransform>(out var netTransform))
         {
             netTransform.Teleport(pos, rotation, netObj.transform.localScale);
-        }
-        
-        if (netObj.TryGetComponent<WeaponShell>(out var shell))
-        {
-            shell.isPooled = false; // Activate it
         }
     }
 }

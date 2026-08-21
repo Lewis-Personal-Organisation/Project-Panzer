@@ -179,6 +179,25 @@ public static class Extensions
     //     t.position = target + orbitOffset;
     //     return orbitOffset;
     // }
+    
+    // The 'this' keyword attaches this function to the Transform class
+    public static bool MoveTowards(this Transform transform, Vector3 target, float maxDistDelta)
+    {
+        Vector3 currentPosition = transform.position;
+        Vector3 direction = target - currentPosition;
+        float dist = direction.magnitude;
+
+        // Check if we are already there or will arrive this frame
+        if (dist <= maxDistDelta || dist == 0f)
+        {
+            transform.position = target;
+            return true; // Returns true to signify it reached the destination
+        }
+
+        // Move the transform closer
+        transform.position = currentPosition + (direction / dist) * maxDistDelta;
+        return false; // Returns false because it is still moving
+    }
 
     #endregion
     

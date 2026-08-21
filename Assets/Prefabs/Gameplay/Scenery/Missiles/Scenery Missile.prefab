@@ -56,7 +56,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 3321929394
+  GlobalObjectIdHash: 4256397344
   InScenePlacedSourceGlobalObjectIdHash: 4263421900
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
@@ -127,6 +127,40 @@ MonoBehaviour:
   descentAccel: 28
   ascentTime: 8
   rotationSpeed: 90
+  timer: 0
+  radiusSpeed: 14
+  detonationRadius: 9.1359625
+  detonationRadiusMax: 24
+  minDetonationForce: 1
+  maxDetonationForce: 12
+  detonationForcePushTimer: 1.5
+  editorDebug: 0
+  debugTargets:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
 --- !u!33 &8976930354084738079
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -206,7 +240,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 55860799341659980}
   serializedVersion: 4
-  m_Mass: 1
+  m_Mass: 0.18
   m_Drag: 0
   m_AngularDrag: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
@@ -5216,7 +5250,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1984985270437943115}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2c39d88434e7e8a45b09952ccb0f3adb, type: 3}
   m_Name: 
@@ -5280,6 +5314,18 @@ PrefabInstance:
       value: 0.02
       objectReference: {fileID: 0}
     - target: {fileID: 9060346502161629227, guid: 2382a426565e32948a1438ce3119306f, type: 3}
+      propertyPath: TriggerModule.enter
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 9060346502161629227, guid: 2382a426565e32948a1438ce3119306f, type: 3}
+      propertyPath: TriggerModule.inside
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9060346502161629227, guid: 2382a426565e32948a1438ce3119306f, type: 3}
+      propertyPath: CustomDataModule.mode0
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9060346502161629227, guid: 2382a426565e32948a1438ce3119306f, type: 3}
       propertyPath: RotationModule.enabled
       value: 0
       objectReference: {fileID: 0}
@@ -5296,11 +5342,19 @@ PrefabInstance:
       value: -90
       objectReference: {fileID: 0}
     - target: {fileID: 9060346502161629227, guid: 2382a426565e32948a1438ce3119306f, type: 3}
+      propertyPath: TriggerModule.radiusScale
+      value: 0.02
+      objectReference: {fileID: 0}
+    - target: {fileID: 9060346502161629227, guid: 2382a426565e32948a1438ce3119306f, type: 3}
       propertyPath: ClampVelocityModule.enabled
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9060346502161629227, guid: 2382a426565e32948a1438ce3119306f, type: 3}
       propertyPath: ShapeModule.alignToDirection
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9060346502161629227, guid: 2382a426565e32948a1438ce3119306f, type: 3}
+      propertyPath: CollisionModule.collisionMode
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9060346502161629227, guid: 2382a426565e32948a1438ce3119306f, type: 3}
@@ -5316,8 +5370,16 @@ PrefabInstance:
       value: 0.19
       objectReference: {fileID: 0}
     - target: {fileID: 9060346502161629227, guid: 2382a426565e32948a1438ce3119306f, type: 3}
+      propertyPath: CollisionModule.maxCollisionShapes
+      value: 40
+      objectReference: {fileID: 0}
+    - target: {fileID: 9060346502161629227, guid: 2382a426565e32948a1438ce3119306f, type: 3}
       propertyPath: RotationBySpeedModule.curve.scalar
       value: 2.6686082
+      objectReference: {fileID: 0}
+    - target: {fileID: 9060346502161629227, guid: 2382a426565e32948a1438ce3119306f, type: 3}
+      propertyPath: CollisionModule.collidesWith.m_Bits
+      value: 64
       objectReference: {fileID: 0}
     - target: {fileID: 9060346502161629227, guid: 2382a426565e32948a1438ce3119306f, type: 3}
       propertyPath: RotationBySpeedModule.x.minMaxState
@@ -5326,6 +5388,10 @@ PrefabInstance:
     - target: {fileID: 9060346502161629227, guid: 2382a426565e32948a1438ce3119306f, type: 3}
       propertyPath: RotationBySpeedModule.y.minMaxState
       value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 9060346502161629227, guid: 2382a426565e32948a1438ce3119306f, type: 3}
+      propertyPath: TriggerModule.primitives.Array.size
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9060346502161629227, guid: 2382a426565e32948a1438ce3119306f, type: 3}
       propertyPath: ShapeModule.sphericalDirectionAmount

@@ -1,9 +1,12 @@
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 
 public abstract class WeaponAmmoBehaviour : NetworkBehaviour
 {
-    public bool isPooled = true;                // Is the shell inactive (pooled)
+    public NetworkVariable<bool> isPooled = new NetworkVariable<bool>(true,
+        NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);                // Is the shell inactive (pooled)
+    
     public float baseDamage;
     public Vector3 shellDirection;
     
@@ -26,8 +29,18 @@ public abstract class WeaponAmmoBehaviour : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void RotateWithReflectionServerRPC(Vector3 newDirection)
     {
-        transform.forward = newDirection;
         shellDirection = newDirection;
+        
+        // To avoid smooth interpolation, use teleport to instantly snap values
+        if (IsOwner && TryGetComponent<NetworkTransform>(out var netTransform))
+        {
+            netTransform.Teleport(transform.position, Quaternion.LookRotation(newDirection), transform.localScale);
+        }
+        else
+        {
+            transform.forward = newDirection; // non-owner cosmetic only, will be overwritten by next NetworkTransform snapshot
+        }
+        
         ReflectClientRpc(newDirection);
     }
 
@@ -46,9 +59,15 @@ public abstract class WeaponAmmoBehaviour : NetworkBehaviour
     {
         if (IsServer) return; // Server already handled it, return
     
-        // Update kinematic rigidbody on clients
-        transform.forward = direction;
         shellDirection = direction;
+        
+        // To avoid interpolation, use teleport to instantly snap values
+        if (IsOwner && TryGetComponent<NetworkTransform>(out var netTransform))
+        {
+            netTransform.Teleport(transform.position, Quaternion.LookRotation(direction), transform.localScale);
+        }
+        
+        //transform.forward = direction;
         
         Debug.Log($"Client :: Shell reflection received - Direction: {direction}");
     }
