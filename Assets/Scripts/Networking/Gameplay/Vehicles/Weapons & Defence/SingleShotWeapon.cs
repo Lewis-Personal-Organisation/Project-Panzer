@@ -57,25 +57,48 @@ public class SingleShotWeapon : VehicleWeaponController
     /// </summary>
     private NetworkObject GetFromOrAddToPool(Vector3 position, Quaternion rotation, ulong newOwnerID)
     {
-        WeaponAmmoBehaviour shell = pooledShells.Count > 0 ? shellLookup[pooledShells.Dequeue()] : Instantiate(weapon.shellPrefab);
-        NetworkObject shellNetObj = pooledShells.Count > 0 ? pooledShells.Dequeue() : shell.NetworkObject;
+        WeaponAmmoBehaviour shell;
+        NetworkObject shellNetObj;
+        
+        // Get from Pool OR Spawn new
+        if (pooledShells.Count > 0)
+        {
+            shellNetObj = pooledShells.Dequeue();
+            shell = shellLookup[shellNetObj];
+        }
+        else
+        {
+            shell = Instantiate(weapon.shellPrefab);
+            shellNetObj = shell.NetworkObject;
+        }
 
         // Create lookup
         shellLookup.TryAdd(shellNetObj, shell);
         
-        // Set ownership if required
-        if (shellNetObj.OwnerClientId != newOwnerID)
-            shellNetObj.ChangeOwnership(newOwnerID);  
+        // Sync net variables
+        shell.isPooled.Value = false;
+        shell.ownerName.Value = new NetworkString(GameplayNetworkManager.Instance.GetPlayerName((int)newOwnerID));
+
+        shell.spawnData.Value = new ShellSpawnData(position, rotation, !shell.spawnData.Value.DirtyBool);
         
-        // Setup locally for server
-        shell.Setup(this, position, rotation);
+        // shell.spawnData.Value = new ShellSpawnData
+        // {
+        //     Position = position,
+        //     Rotation = rotation,
+        //     dirtyBool = !dirtyBool
+        // };
         
         // Spawn it for everyone, if not spawned
         if (!shellNetObj.IsSpawned)
             shellNetObj.Spawn(true);
         
-        shell.ownerName.Value = new NetworkString(GameplayNetworkManager.Instance.GetPlayerName((int)newOwnerID));
-        shell.isPooled.Value = false;
+        // Called even if already the owner - This is triggers both WeaponShell.OnGainedOwnership()
+        // and NetworkTransform's OnOwnershipChanged authority refresh. Authority refresh cant be
+        // triggered any other way, and is required for Teleporting() on the new owner
+        shellNetObj.ChangeOwnership(newOwnerID);
+        
+        // Setup locally for server
+        shell.Setup(this, position, rotation);
         
         usedShells.Add(shellNetObj);
         return shellNetObj;
@@ -132,25 +155,20 @@ public class SingleShotWeapon : VehicleWeaponController
     {
         NetworkObject shellNetObj = GetFromOrAddToPool(position, rotation, rpcParams.Receive.SenderClientId);
         audioSource.PlayOneShot(weapon.fireAudio);
-        ActivateClientRpc(shellNetObj, position, rotation);
+        ActivateGunshotClientRPC(shellNetObj);
     }
     
     /// <summary>
     /// Finds the spawned shell referenced by the server and syncs its position, rotation, and pooled state to clients
     /// </summary>
     [ClientRpc]
-    private void ActivateClientRpc(NetworkObjectReference shellRef, Vector3 pos, Quaternion rotation)
+    private void ActivateGunshotClientRPC(NetworkObjectReference shellRef)
     {
         if (IsServer) return;  // Don't run this on the server
         if (!shellRef.TryGet(out NetworkObject netObj))
             return;
         
-        audioSource.PlayOneShot(weapon.fireAudio);  // Play Gunfire sound
-        
-        // Only the new owner is allowed to teleport a ClientNetworkTransform
-        if (netObj.IsOwner && netObj.TryGetComponent<NetworkTransform>(out var netTransform))
-        {
-            netTransform.Teleport(pos, rotation, netObj.transform.localScale);
-        }
+        // Play Gunfire sound
+        audioSource.PlayOneShot(weapon.fireAudio);  
     }
 }

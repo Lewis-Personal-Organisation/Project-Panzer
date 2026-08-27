@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Sirenix.OdinInspector;
+using Unity.Netcode.Components;
 using UnityEngine;
 
 /*  This class is attached to a moving project or 'Shell'
@@ -11,7 +12,6 @@ using UnityEngine;
 
 public class WeaponShell : WeaponAmmoBehaviour, IDebuggable
 {
-    // public VehicleWeaponController owner;
     [SerializeField] private Rigidbody rigidBody;
     
     [Header("Lifetime")]
@@ -60,44 +60,59 @@ public class WeaponShell : WeaponAmmoBehaviour, IDebuggable
         }
     }
 
+    private void Awake()
+    {
+        if (!networkTransform)
+            networkTransform = GetComponent<NetworkTransform>();
+    }
+    
+    private void OnEnable()  => spawnData.OnValueChanged += OnSpawnDataChanged;
+    private void OnDisable() => spawnData.OnValueChanged -= OnSpawnDataChanged;
+    private void OnSpawnDataChanged(ShellSpawnData pre, ShellSpawnData curr)
+    {
+        TryApplySpawnData(curr);
+    }
+
     /// <summary>
     /// Called by the server or Locally in non-networked scenarios
     /// </summary>
 	public override void Setup(VehicleWeaponController weaponController, Vector3 position, Quaternion rotation)
     {
-        // owner = weaponController;
-
-        // ownerName is assigned by the caller (which knows the actual firing client's ID),
-        // since this shell may be initialized here before it is owned by the shooter.
-
         transform.SetPositionAndRotation(position, rotation);
-        shellDirection = rotation * Vector3.forward;
         shellSpeed = velocity;
         lifetimeTimer = lifetime;
     }
+
+    private bool pendingTeleport = false;
     
-    /// <summary>
-    /// Called when the server gives ownership to the owning player. Called on both Server and Owner
-    /// </summary>
-    public override void OnGainedOwnership()
+    protected override void OnOwnershipChanged(ulong previous, ulong current)
     {
-        base.OnGainedOwnership();
+        base.OnOwnershipChanged(previous, current);
         
-        // Excludes the server, if the server is not the owner
         if (!IsOwner)
             return;
-        
-        // owner = VehicleController.Instance.WeaponController;
         
         lifetimeTimer = lifetime;
         shellSpeed = velocity;
         
         OnOwnerNetworkUpdate = OwnerNetworkUpdate;
         OnNetworkFixedUpdate = NetworkedFixedUpdate;
+
+        // pendingTeleport = true;
+        TryApplySpawnData(spawnData.Value);
         
         Debug.Log($"We now own Shell {transform.name}", gameObject);
     }
+    
+    private void TryApplySpawnData(ShellSpawnData data)
+    {
+        if (!IsOwner)
+            return;
+    
+        networkTransform.Teleport(data.Position, data.Rotation, transform.localScale);
+    }
 
+    
     private void Update()
     {
         if (VehicleController.IsNetworked)
@@ -162,11 +177,16 @@ public class WeaponShell : WeaponAmmoBehaviour, IDebuggable
     /// </summary>
     public override void NetworkedFixedUpdate()
     {
-        if (isPooled.Value) return;   // If pooled (only spawnable)
+        if (isPooled.Value)
+        {
+            // Debug.Log($"{name}: still pooled, skipping move. IsOwner={IsOwner}");
+            return; // If pooled (only spawnable)
+        }
 
         // Move only if we own this object - Network Transform synchronises to every client!
         if (IsOwner)
         {
+            // Debug.Log($"Moving with direction: {transform.forward * (velocity * Time.fixedDeltaTime)}");
             rigidBody.MovePosition(rigidBody.position + transform.forward * (velocity * Time.fixedDeltaTime));
         }
     }

@@ -23,6 +23,6 @@ public class Singleton<T> : MonoBehaviour where T : Singleton<T>
 
     protected virtual void OnDestroy()
     {
-        Debug.Log($"On Destroy called for {this.GetType().Name} on GameObject{this.gameObject.name} ({GetInstanceID()})");
+        Debug.Log($"On Destroy called for {this.GetType().Name} on GameObject {this.gameObject.name} ({GetInstanceID()})");
     }
 }

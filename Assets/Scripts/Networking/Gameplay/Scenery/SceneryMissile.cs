@@ -76,6 +76,7 @@ public class SceneryMissile : NetworkBehaviour
     /// </summary>
     public override void OnNetworkSpawn()
     {
+        // Platforms can only be triggered on the server side!
         if (!IsServer)
         {
             platformTrigger.Disable();

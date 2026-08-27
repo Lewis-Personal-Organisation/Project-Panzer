@@ -7,6 +7,7 @@ using UnityEngine.Serialization;
 using UnityEngine.SceneManagement;
 using System.Linq;
 using System.Threading.Tasks;
+using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Services.Lobbies.Models;
 using UnityEditor;
@@ -156,7 +157,8 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
             if (clientId != NetworkManager.ServerClientId)
             {
                 // When a client disconnects, we should show a popup ingame here!
-                GameplayUI.Notifications.QueueNetworkNotif($"Player {GetPlayerName((int)clientId)} disconnected!");
+                
+                GameplayUI.Notifications.Request($"{GetPlayerName((int)clientId)} disconnected!");
                 message = $"Client {GetPlayerName((int)clientId)} ({clientId}) disconnected! Remaining players: {NetworkManager.Singleton.ConnectedClients.Count}";
             }
             else

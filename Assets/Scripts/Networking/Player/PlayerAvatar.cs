@@ -6,11 +6,11 @@ using UnityEngine;
 
 public class PlayerAvatar : NetworkBehaviour
 {
-    public int playerIndex { get; private set; }
-    public string playerId { get; private set; }
-    public string playerName { get; private set; }
-    public ulong playerRelayId { get; private set; }
-    public int score { get; private set; }
+    public int playerIndex;
+    public string playerId;
+    public string playerName;
+    public ulong playerRelayId;
+    public int score;
     
     
     /// <summary>

@@ -52,7 +52,8 @@ public class GameplayNotifications : NetworkBehaviour
     [SerializeField] private float moveSpeed = 1F;
     [SerializeField] private float messageMargin = 3F;
     [SerializeField] private float defaultExpiryTime = 1F;      // The default time before a text element begins to fade
-   
+    [SerializeField] private float fadeSpeed;
+    
     [SerializeField] private List<TextElementController> queuedElements = new List<TextElementController>();
     [SerializeField] private List<TextElementController> activeElements = new List<TextElementController>();
     [SerializeField] private List<TextElementController> inactiveElements = new List<TextElementController>();
@@ -60,7 +61,7 @@ public class GameplayNotifications : NetworkBehaviour
     private float lastElementDistance => Vector2.Distance(spawnPos, activeElements[^1].textElement.rectTransform.anchoredPosition);
     private bool clearToSpawn => lastElementDistance > activeElements[^1].textElement.rectTransform.sizeDelta.y + messageMargin;
 
-
+    
     private void Awake()
     {
         Setup();
@@ -82,13 +83,12 @@ public class GameplayNotifications : NetworkBehaviour
         if (Application.isPlaying)
         {
             // DEBUG
-            if (Input.GetKeyDown(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.M))
+            if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.M))
             {
-                QueueNetworkNotif($"Debug Message | Time: {(int)Time.time}!");
+                Request($"Debug Message | Time: {(int)Time.time}!");
             }
             
-            // 1. If we have a queued element, check if the space is clear to spawn a new element
-            // If so, we can spawn the queued item
+            // If we are waiting to spawn, try spawning if area is clear
             if (queuedElements.Count > 0)
             {
                 if (activeElements.Count == 0 || (activeElements.Count > 0 && clearToSpawn))
@@ -99,25 +99,26 @@ public class GameplayNotifications : NetworkBehaviour
                 }
             }
 
-            // 2. Act upon the elements state, fading in or out.
-            // Then move the object. Once time has lapsed, fade it out
+            // Change state of each element
             for (int i = 0; i < activeElements.Count; i++)
             {
                 // FADE IN
                 if (activeElements[i].state == TextElementController.State.FadeIn)
                 {
+                    // Alpha up
                     if (activeElements[i].textElement.alpha < 255F)
-                    {
-                        activeElements[i].textElement.alpha = Mathf.Clamp(activeElements[i].textElement.alpha += Time.deltaTime / 2F, 0F, 1F);
-                    }
+                        activeElements[i].textElement.alpha = Mathf.Clamp(activeElements[i].textElement.alpha += Time.deltaTime * fadeSpeed, 0F, 1F);
+                    
+                    // On-screen time decrease
+                    if ((activeElements[i].waitTimeForFadeOut -= Time.deltaTime) <= 0)
+                        activeElements[i].state = TextElementController.State.FadeOut;
+                    
                 }
                 // FADE OUT
                 else
                 {
-                    if (activeElements[i].textElement.alpha > 0)
-                    {
-                        activeElements[i].textElement.alpha = Mathf.Clamp(activeElements[i].textElement.alpha -= Time.deltaTime / 2F, 0F, 1F);
-                    }
+                    // Decrease alpha
+                    activeElements[i].textElement.alpha = Mathf.Clamp(activeElements[i].textElement.alpha -= Time.deltaTime * fadeSpeed, 0F, 1F);
 
                     if (activeElements[i].textElement.alpha <= 0)
                     {
@@ -130,12 +131,8 @@ public class GameplayNotifications : NetworkBehaviour
                     }
                 }
 
+                // MOVEMENT
                 activeElements[i].textElement.rectTransform.anchoredPosition += Vector2.up * (moveSpeed * Time.deltaTime);
-
-                if ((activeElements[i].waitTimeForFadeOut -= Time.deltaTime) <= 0)
-                {
-                    activeElements[i].state = TextElementController.State.FadeOut;
-                }
             }
         }
     }
@@ -143,7 +140,7 @@ public class GameplayNotifications : NetworkBehaviour
     /// <summary>
     /// Call to schedule a message popup
     /// </summary>
-    public void QueueLocalNotif(string text)
+    private void QueueLocalNotif(string text)
     {
         // Re-use pooled elements
         if (inactiveElements.Count > 0)
@@ -162,14 +159,19 @@ public class GameplayNotifications : NetworkBehaviour
     }
 
     /// <summary>
-    /// Send a network notification message to all players. Fallback to local message if not possible
+    /// Request a network notification message to all players. Fallback to local message if not possible
     /// </summary>
-    public void QueueNetworkNotif(string message)
+    public void Request(string message)
     {
-        if (!NetworkManager.Singleton)
-            QueueLocalNotif(message);
-        else
+        if (!IsSpawned)
+        {
+            Debug.Log($"This script is not spawned yet!");
+        }
+        
+        if (NetworkManager.Singleton)
             SendNetworkNotifServerRPC(message);
+        else
+            QueueLocalNotif(message);
     }
     
     /// <summary>

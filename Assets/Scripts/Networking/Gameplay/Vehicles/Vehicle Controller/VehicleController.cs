@@ -1,10 +1,7 @@
-using System;
-using System.Collections;
 using Sirenix.OdinInspector;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.Serialization;
 using Debug = UnityEngine.Debug;
 
 [RequireComponent(typeof(Rigidbody))]
@@ -46,7 +43,8 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
     
     [Header("Team Colour")]
     private Renderer[] paintMaterials;
-
+    
+    
     public static bool IsNetworked => NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
     
     public bool testing = false;
@@ -68,7 +66,7 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
-
+        
         if (IsOwner)
         {
             Setup();
@@ -138,6 +136,8 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
 
         OnFixedUpdate += ProcessVehicle;
     }
+    
+    
 
     /// <summary>
     /// Process Vehicle components
@@ -203,7 +203,7 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
         turretRotator.Disable();
         defence.Disable();
     }
-
+    
     public void Destroy()
     {
         Debug.Log("PLAYER DESTROYED");

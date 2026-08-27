@@ -70,7 +70,6 @@ public class WeaponMissile : WeaponAmmoBehaviour
     {
         this.owner = weaponController;
         transform.SetPositionAndRotation(position, rotation);
-        shellDirection = rotation * Vector3.forward;
         shellSpeed = velocity;
         lifetimeTimer = lifetime;
         velocityMax = velocity * 2F;

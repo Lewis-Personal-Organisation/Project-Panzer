@@ -638,10 +638,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d186d9ea9de10294da5c21a57324f186, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  networkObject: {fileID: 8601831742884366808}
-  rigidbody: {fileID: 3582152835948603133}
-  vehicleController: {fileID: 8735465697540438093}
-  cameraController: {fileID: 0}
 --- !u!114 &8735465697540438093
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -686,7 +682,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 533ad2b3ae11a4a419cef61bc6f93cd0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lastInputState: 0
+  lastTraversalState: 0
+  lmbPressed: 0
 --- !u!114 &7666651930663201895
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -753,9 +750,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98c88a42dd8df8743a07e0f140f64fe5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  externalVelocity: {x: 0, y: 0, z: 0}
-  externalVelocityTimer: 0
-  externalVelocityDuration: 0
 --- !u!114 &2136361414815535393
 MonoBehaviour:
   m_ObjectHideFlags: 0
