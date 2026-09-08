@@ -36,6 +36,6 @@ public class GameplayUI : Singleton<GameplayUI>
 
         System.Collections.Generic.List<PlayerAvatar> playerAvatars = GameplayNetworkManager.Instance.playerAvatars;
 
-        scoresText.text = string.Join("\n", playerAvatars.Select(playerAvatar => $"{playerAvatar.name}: {playerAvatar.score}").ToArray());
+        scoresText.text = string.Join("\n", playerAvatars.Select(playerAvatar => $"{((Object)playerAvatar).name}: {playerAvatar.score}").ToArray());
     }
 }

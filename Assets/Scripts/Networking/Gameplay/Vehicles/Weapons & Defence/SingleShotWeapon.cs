@@ -36,17 +36,26 @@ public class SingleShotWeapon : VehicleWeaponController
         for (int i = 0; i < initPoolSize; i++)
         {
             WeaponAmmoBehaviour shell = Instantiate(weapon.shellPrefab);
+
+            shell.usedCounter.OnValueChanged += (int oldVal, int newVal) =>
+            {
+                // if Shell has hit tank on all clients, return to server pool
+                if (newVal == NetworkManager.ConnectedClients.Count)
+                {
+                    Debug.Log($"Shell hit on all clients: {newVal}/{NetworkManager.ConnectedClients.Count}");
+                    VehicleController.Instance.WeaponController.ReturnToPoolServerRpc(shell.NetworkObject);
+                }
+            };
             
             // We can't disable NetworkBehaviours, so hide objects
             shell.transform.position = new Vector3(0, -5F, 0);
-            shell.isPooled.Value = true;
+            // shell.isPooled.Value = true;
             shell.name = $"Shell (Pooled, {playerName})";
             
             NetworkObject shellNetObj = shell.NetworkObject;
             shellNetObj.Spawn(true);
 
             shellLookup.Add(shellNetObj, shell);
-            
             pooledShells.Enqueue(shellNetObj);
         }
         Debug.Log($"Server: Created Pool of {initPoolSize} shells for {this.transform.root.gameObject.name}!");
@@ -75,18 +84,8 @@ public class SingleShotWeapon : VehicleWeaponController
         // Create lookup
         shellLookup.TryAdd(shellNetObj, shell);
         
-        // Sync net variables
-        shell.isPooled.Value = false;
-        shell.ownerName.Value = new NetworkString(GameplayNetworkManager.Instance.GetPlayerName((int)newOwnerID));
-
-        shell.spawnData.Value = new ShellSpawnData(position, rotation, !shell.spawnData.Value.DirtyBool);
-        
-        // shell.spawnData.Value = new ShellSpawnData
-        // {
-        //     Position = position,
-        //     Rotation = rotation,
-        //     dirtyBool = !dirtyBool
-        // };
+        // Sync state
+        shell.spawnData.Value = new ShellSpawnData(!shell.spawnData.Value.DirtyBool, position, rotation, false, new NetworkString(GameplayNetworkManager.Instance.GetPlayerName((int)newOwnerID)));
         
         // Spawn it for everyone, if not spawned
         if (!shellNetObj.IsSpawned)

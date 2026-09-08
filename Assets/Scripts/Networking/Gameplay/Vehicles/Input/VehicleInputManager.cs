@@ -1,4 +1,5 @@
 using System;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -35,7 +36,7 @@ public class VehicleInputManager : MonoBehaviour
     public bool lmbPressed = false;
     
     
-    private void FixedUpdate()
+    private void Update()
     {
         moveInput = Input.GetAxisRaw("Vertical");
         turnInputValue = Input.GetAxis("Horizontal");

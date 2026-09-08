@@ -3,13 +3,18 @@ using System.Collections.Generic;
 using MiniTanks;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class PlayerAvatar : NetworkBehaviour
 {
-    public int playerIndex;
-    public string playerId;
-    public string playerName;
-    public ulong playerRelayId;
+    [FormerlySerializedAs("playerIndex")]
+    public int index;
+    [FormerlySerializedAs("playerId")]
+    public string id;
+    [FormerlySerializedAs("playerName")]
+    public new string name;
+    [FormerlySerializedAs("playerRelayId")]
+    public ulong relayId;
     public int score;
     
     
@@ -19,10 +24,10 @@ public class PlayerAvatar : NetworkBehaviour
     [ClientRpc]
     public void SetPlayerAvatarClientRpc(int playerIndex, string playerId, string playerName, ulong relayClientId)
     {
-        this.playerIndex = playerIndex;
-        this.playerId = playerId;
-        this.playerName = playerName;
-        this.playerRelayId = relayClientId;
+        this.index = playerIndex;
+        this.id = playerId;
+        this.name = playerName;
+        this.relayId = relayClientId;
 
         // Sanitize the player name to ensure it's not profane.
         // this.playerName = ProfanityManager.SanitizePlayerName(this.playerName);

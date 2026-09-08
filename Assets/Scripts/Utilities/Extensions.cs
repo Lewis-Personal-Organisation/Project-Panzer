@@ -46,8 +46,9 @@ public static class Extensions
     public struct ReflectResult
     {
         public bool didRicochet;
+        public float hitAngle;
         public Vector3 direction;
-        public TankSide tankSide;
+        public BoxColliderHitSide boxColliderHitSide;
     }
 
     /// <summary>
@@ -71,120 +72,108 @@ public static class Extensions
     /// <param name="boxCollider"></param>
     /// <param name="worldPos"></param>
     /// <returns></returns>
-    public static Vector3 ClosestSide(this BoxCollider boxCollider, Vector3 worldPos)
+    // public static Vector3 ClosestSide(this BoxCollider boxCollider, Vector3 worldPos)
+    // {
+    //     // Hit point converted to local position
+    //     Vector3 localPos = boxCollider.transform.InverseTransformPoint(worldPos) - boxCollider.center;
+    //
+    //     // Scale relative to box size (so non-square boxes are handled correctly)
+    //     Vector3 halfSize = boxCollider.size * 0.5f;
+    //     float x = localPos.x / halfSize.x;
+    //     float y = localPos.y / halfSize.y;
+    //     float z = localPos.z / halfSize.z;
+    //     
+    //     // Find the axis with the largest absolute value
+    //     if (Mathf.Abs(x) > Mathf.Abs(y) && Mathf.Abs(x) > Mathf.Abs(z))
+    //     {
+    //         if (x > 0)
+    //             return boxCollider.transform.right;
+    //         else
+    //             return boxCollider.transform.right * -1;
+    //     }
+    //     else if (Mathf.Abs(y) > Mathf.Abs(z))
+    //     {
+    //         if (y > 0)
+    //             return boxCollider.transform.up;
+    //         else
+    //             return boxCollider.transform.up * -1;
+    //     }
+    //     else
+    //     {
+    //         if (z > 0)
+    //             return boxCollider.transform.forward;
+    //         else
+    //             return boxCollider.transform.forward * -1;
+    //     }
+    // }
+    
+    /// <summary>
+    /// Returns the surface normal vector in LOCAL space relative to the BoxCollider.
+    /// </summary>
+    public static Vector3 ClosestSideLocal(this BoxCollider boxCollider, Vector3 worldPos)
     {
+        // Convert hit point to local space relative to center
         Vector3 localPos = boxCollider.transform.InverseTransformPoint(worldPos) - boxCollider.center;
 
-        // Scale relative to box size (so non-square boxes are handled correctly)
+        // Scale relative to half-extents
         Vector3 halfSize = boxCollider.size * 0.5f;
-        float x = localPos.x / halfSize.x;
-        float y = localPos.y / halfSize.y;
-        float z = localPos.z / halfSize.z;
+        float x = halfSize.x > 0 ? localPos.x / halfSize.x : 0;
+        float y = halfSize.y > 0 ? localPos.y / halfSize.y : 0;
+        float z = halfSize.z > 0 ? localPos.z / halfSize.z : 0;
 
-        UnityEngine.Debug.Log(halfSize);
-        
-        // Find the axis with the largest absolute value
-        if (Mathf.Abs(x) > Mathf.Abs(y) && Mathf.Abs(x) > Mathf.Abs(z))
-        {
-            if (x > 0)
-                return boxCollider.transform.right;
-            else
-                return boxCollider.transform.right * -1;
-        }
-        else if (Mathf.Abs(y) > Mathf.Abs(z))
-        {
-            if (y > 0)
-                return boxCollider.transform.up;
-            else
-                return boxCollider.transform.up * -1;
-        }
-        else
-        {
-            if (z > 0)
-                return boxCollider.transform.forward;
-            else
-                return boxCollider.transform.forward * -1;
-        }
+        float absX = Mathf.Abs(x);
+        float absY = Mathf.Abs(y);
+        float absZ = Mathf.Abs(z);
+
+        // Identify dominant axis
+        if (absX > absY && absX > absZ)
+            return new Vector3(Mathf.Sign(x), 0f, 0f);
+        if (absY > absZ)
+            return new Vector3(0f, Mathf.Sign(y), 0f);
+    
+        return new Vector3(0f, 0f, Mathf.Sign(z));
     }
     
-    public static Vector3 ClosestSideFromDirection(this BoxCollider boxCollider, Vector3 incomingDirection)
-    {
-        Vector3 localDir = boxCollider.transform.InverseTransformDirection(incomingDirection).normalized;
 
-        float x = Mathf.Abs(localDir.x);
-        float y = Mathf.Abs(localDir.y);
-        float z = Mathf.Abs(localDir.z);
-
-        if (x > y && x > z)
-            return localDir.x > 0 ? -boxCollider.transform.right : boxCollider.transform.right;
-        else if (y > z)
-            return localDir.y > 0 ? -boxCollider.transform.up : boxCollider.transform.up;
-        else
-            return localDir.z > 0 ? -boxCollider.transform.forward : boxCollider.transform.forward;
-    }
-
-    public enum TankSide
+    public enum BoxColliderHitSide
     {
         Front,
         Right,
         Back,
         Left
     }
-
-    /// <summary>
-    /// Returns whether a transform should be reflected and applies the result.
-    /// Reflection occurs when the targetTransform angle is at or above the specified angle
-    /// </summary>
-    /// <param name="boxCollider"></param>
-    /// <param name="targetTransform"></param>
-    /// <param name="ricochetAngle"></param>
-    /// <returns></returns>
-    public static bool ReflectWithAngle(this BoxCollider boxCollider, Transform targetTransform, float ricochetAngle)
-    {
-        Vector3 sideDirection = boxCollider.ClosestSide(targetTransform.position);
-
-        if (!(Mathf.Abs(180F - Vector3.Angle(targetTransform.forward, sideDirection)) > ricochetAngle))
-            return false;
-
-        targetTransform.forward = Vector3.Reflect(targetTransform.forward.normalized, sideDirection.normalized);
-        return true;
-    }
     
     /// <summary>
-    /// Returns a Reflect result containing the direction and ricochet state.
-    /// Uses the shell's actual travel direction (not its transform.forward or position)
-    /// to determine which face was struck, avoiding tunneling misclassification.
+    /// Correctly calculates ricochet reflection vectors in World Space.
     /// </summary>
-    public static ReflectResult ReflectWithAngleAdvFromDirection(this BoxCollider boxCollider, Vector3 incomingDirection, float ricochetAngle)
+    public static ReflectResult ReflectWithAngleAdvFromDirection(this BoxCollider boxCollider, Vector3 hitPoint, Vector3 incomingDirection, float minAngleForRicochet)
     {
-        incomingDirection = incomingDirection.normalized;
+        // 1. Get face normal in Local Space, then convert once to World Space
+        Vector3 localNormal = boxCollider.ClosestSideLocal(hitPoint);
+        Vector3 surfaceNormal = boxCollider.transform.TransformDirection(localNormal).normalized;
 
-        Vector3 surfaceNormal = boxCollider.ClosestSideFromDirection(incomingDirection);
+        Vector3 inDirNormalized = incomingDirection.normalized;
 
-        bool didReflect = Vector3.Angle(incomingDirection, -surfaceNormal) > ricochetAngle;
+        // 2. Angle between incoming trajectory and face normal
+        float hitAngle = Vector3.Angle(inDirNormalized, -surfaceNormal);
+        bool didReflect = hitAngle > minAngleForRicochet;
 
-        float dotForward = Vector3.Dot(surfaceNormal, boxCollider.transform.forward);
-        float dotRight = Vector3.Dot(surfaceNormal, boxCollider.transform.right);
-        float dotBack = Vector3.Dot(surfaceNormal, -boxCollider.transform.forward);
-        float dotLeft = Vector3.Dot(surfaceNormal, -boxCollider.transform.right);
+        // 3. Determine vehicle hit side relative to local normal
+        BoxColliderHitSide boxColliderHitSide = BoxColliderHitSide.Front;
+        if (localNormal.z > 0.5f) boxColliderHitSide = BoxColliderHitSide.Front;
+        else if (localNormal.z < -0.5f) boxColliderHitSide = BoxColliderHitSide.Back;
+        else if (localNormal.x > 0.5f) boxColliderHitSide = BoxColliderHitSide.Right;
+        else if (localNormal.x < -0.5f) boxColliderHitSide = BoxColliderHitSide.Left;
 
-        float maxDot = Mathf.Max(dotForward, dotRight, dotBack, dotLeft);
-        
-        TankSide tankSide = maxDot switch
-        {
-            var d when d == dotForward => TankSide.Front,
-            var d when d == dotRight => TankSide.Right,
-            var d when d == dotBack => TankSide.Back,
-            _ => TankSide.Left
-        };
-        
-        // UnityEngine.Debug.Log($"{Vector3.Angle(incomingDirection, -surfaceNormal)} > {ricochetAngle} ? {didReflect}, {tankSide}, {incomingDirection}"); // DEBUG LINE ONLY
+        // 4. Calculate Vector Reflection
+        Vector3 reflectDir = Vector3.Reflect(inDirNormalized, surfaceNormal);
 
         return new ReflectResult
         {
             didRicochet = didReflect,
-            direction = didReflect ? Vector3.Reflect(incomingDirection, surfaceNormal) : surfaceNormal,
-            tankSide = tankSide
+            hitAngle = hitAngle,
+            direction = didReflect ? reflectDir : surfaceNormal,
+            boxColliderHitSide = boxColliderHitSide
         };
     }
 

@@ -54,8 +54,8 @@ public class DataStructs : MonoBehaviour
 
 		public PlayerScoreData(PlayerAvatar playerAvatar)
 		{
-			playerId = playerAvatar.playerId;
-			playerName = playerAvatar.playerName;
+			playerId = playerAvatar.id;
+			playerName = playerAvatar.name;
 			score = playerAvatar.score;
 		}
 	}

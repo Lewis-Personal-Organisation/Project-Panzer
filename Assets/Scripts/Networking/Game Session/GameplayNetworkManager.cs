@@ -11,6 +11,7 @@ using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Services.Lobbies.Models;
 using UnityEditor;
+using Object = UnityEngine.Object;
 
 public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
 {
@@ -47,8 +48,8 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
     public string GetPlayerVehicleIndex(int playerIndex) => Instance.cachedLobby.Players[playerIndex].Data[LobbyManager.PlayerDictionaryData.vehicleIndexKey].Value;
     
     public List<PlayerAvatar> playerAvatars { get; private set; } = new List<PlayerAvatar>();
-    public PlayerAvatar localPlayerAvatar;
-    public string localPlayerName => localPlayerAvatar.playerName;
+    public static PlayerAvatar localPlayerAvatar;
+    public string localName => localPlayerAvatar.name;
 
     // Invoked when the Player is fully spawned and Assigned.
     // Useful for queuing actions for objects which need access to Player information such as name or ID.
@@ -388,7 +389,7 @@ public class GameplayNetworkManager : NetworkSingleton<GameplayNetworkManager>
         quaternion rot = GameplaySceneManager.Instance.spawnPoints[playerIndex].rotation;
         
         PlayerAvatar playerAvatar = GameObject.Instantiate(playerAvatarPrefabs[playerIndex], pos, rot);
-        playerAvatar.gameObject.name = playerAvatarPrefabs[playerIndex].name;           // Remove clone from name field
+        playerAvatar.gameObject.name = ((Object)playerAvatarPrefabs[playerIndex]).name;           // Remove clone from name field
         playerAvatar.NetworkObject.SpawnWithOwnership(clientID);
         playerAvatar.SetPlayerAvatarClientRpc(playerIndex, GetPlayerID(playerIndex), GetPlayerName(playerIndex), clientID);
         

@@ -79,7 +79,6 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
             velocityTracker.enabled = false;
             weaponController.enabled = false;
             turretRotator.enabled = false;
-            defence.enabled = false;
             stuckManager.enabled = false;
         }
     }

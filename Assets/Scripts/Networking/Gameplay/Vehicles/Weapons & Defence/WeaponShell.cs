@@ -13,11 +13,6 @@ using UnityEngine;
 public class WeaponShell : WeaponAmmoBehaviour, IDebuggable
 {
     [SerializeField] private Rigidbody rigidBody;
-    
-    [Header("Lifetime")]
-    [SerializeField] private float lifetime;
-    private float lifetimeTimer;
-    [SerializeField] private TrailRenderer trailRenderer;
 	
     [Header("Movement")]
     [SerializeField] private float velocity;
@@ -64,6 +59,8 @@ public class WeaponShell : WeaponAmmoBehaviour, IDebuggable
     {
         if (!networkTransform)
             networkTransform = GetComponent<NetworkTransform>();
+
+        trailTime = trailRenderer.time;
     }
     
     private void OnEnable()  => spawnData.OnValueChanged += OnSpawnDataChanged;
@@ -82,34 +79,32 @@ public class WeaponShell : WeaponAmmoBehaviour, IDebuggable
         shellSpeed = velocity;
         lifetimeTimer = lifetime;
     }
-
-    private bool pendingTeleport = false;
     
-    protected override void OnOwnershipChanged(ulong previous, ulong current)
+    private void TryApplySpawnData(ShellSpawnData newData)
     {
-        base.OnOwnershipChanged(previous, current);
-        
-        if (!IsOwner)
-            return;
-        
-        lifetimeTimer = lifetime;
-        shellSpeed = velocity;
-        
-        OnOwnerNetworkUpdate = OwnerNetworkUpdate;
-        OnNetworkFixedUpdate = NetworkedFixedUpdate;
+        if (IsOwner)
+        {
+            Debug.Log($"We now own Shell {transform.name}. It was {(newData.Pooled ? "pooled" : "fired")}", gameObject);
+            networkTransform.Teleport(newData.Position, newData.Rotation, transform.localScale);
 
-        // pendingTeleport = true;
-        TryApplySpawnData(spawnData.Value);
-        
-        Debug.Log($"We now own Shell {transform.name}", gameObject);
-    }
-    
-    private void TryApplySpawnData(ShellSpawnData data)
-    {
-        if (!IsOwner)
-            return;
-    
-        networkTransform.Teleport(data.Position, data.Rotation, transform.localScale);
+            // If Spawned, setup movement etc
+            if (!newData.Pooled)
+            {
+                lifetimeTimer = lifetime;
+                shellSpeed = velocity;
+            
+                OnOwnerNetworkUpdate = OwnerNetworkUpdate;
+                OnNetworkFixedUpdate = NetworkedFixedUpdate;
+            
+                ToggleVisuals(true);
+            }
+        }
+
+        // If returned to pool, notify clients
+        if (newData.Pooled)
+        {
+            Debug.Log("Clients (All): Expired shell as requested from Server");
+        }
     }
 
     
@@ -130,7 +125,7 @@ public class WeaponShell : WeaponAmmoBehaviour, IDebuggable
     /// </summary>
     public override void OwnerNetworkUpdate()
     {
-        if (isPooled.Value) return;
+        if (spawnData.Value.Pooled) return;
         if (!IsOwner) return;
 
         // Decrement timer to 0, then deactivate and return to pool
@@ -141,6 +136,8 @@ public class WeaponShell : WeaponAmmoBehaviour, IDebuggable
             VehicleController.Instance.WeaponController.ReturnToPoolServerRpc(NetworkObject);
         }
     }
+
+    
 
     /// <summary>
     /// The Update method called when not connected to a network
@@ -177,16 +174,14 @@ public class WeaponShell : WeaponAmmoBehaviour, IDebuggable
     /// </summary>
     public override void NetworkedFixedUpdate()
     {
-        if (isPooled.Value)
+        if (spawnData.Value.Pooled)
         {
-            // Debug.Log($"{name}: still pooled, skipping move. IsOwner={IsOwner}");
             return; // If pooled (only spawnable)
         }
 
         // Move only if we own this object - Network Transform synchronises to every client!
         if (IsOwner)
         {
-            // Debug.Log($"Moving with direction: {transform.forward * (velocity * Time.fixedDeltaTime)}");
             rigidBody.MovePosition(rigidBody.position + transform.forward * (velocity * Time.fixedDeltaTime));
         }
     }
@@ -197,33 +192,5 @@ public class WeaponShell : WeaponAmmoBehaviour, IDebuggable
     public override void OnFixedUpdate()
     {
         rigidBody.MovePosition(rigidBody.position + transform.forward * (velocity * Time.fixedDeltaTime));
-    }
-    
-    /// <summary>
-    /// Called when this gameobject is spawned. Sets initial position and rotation.
-    /// </summary>
-    // [ServerRpc]
-    public void Respawn()
-    {
-        lifetimeTimer = lifetime;
-        trailRenderer.emitting = true;
-        this.transform.position = VehicleController.Instance.WeaponController.shellSpawnPoint.transform.position;
-        
-        // Zero out X axis - the shell should always fly straight ahead
-        Vector3 rotation = VehicleController.Instance.WeaponController.shellSpawnPoint.transform.rotation.eulerAngles;
-        rotation.x = 0F;
-        this.transform.rotation = Quaternion.Euler(rotation);
-        this.transform.root.gameObject.SetActive(true);
-    }
-
-    /// <summary>
-    /// Pauses functionality when released from pool
-    /// </summary>
-    public void Despawn()
-    {
-	    trailRenderer.emitting = false;
-	    trailRenderer.Clear();
-	    this.transform.root.gameObject.SetActive(false);
-        NetworkObject.Despawn();
     }
 }

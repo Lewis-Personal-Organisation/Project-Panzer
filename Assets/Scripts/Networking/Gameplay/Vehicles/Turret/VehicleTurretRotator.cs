@@ -1,4 +1,5 @@
 using System;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -12,6 +13,9 @@ public class VehicleTurretRotator : VehicleComponent, IVehicleComponentToggleabl
     {
         vehicle = vehicleController;
         cameraController = vehicle.cameraController;
+        
+        if (!NetworkManager.Singleton)
+            Enable();
     }
 
     private void LateUpdate()

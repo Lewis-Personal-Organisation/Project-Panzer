@@ -1,0 +1,215 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &7657882680982517918
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6339320747650697797}
+  - component: {fileID: 6374874310182082865}
+  - component: {fileID: 4836852859836872648}
+  - component: {fileID: 422024822436313036}
+  - component: {fileID: 4014287414099684075}
+  - component: {fileID: 3500769871885755055}
+  - component: {fileID: 1541395198334611057}
+  m_Layer: 0
+  m_Name: Gameplay UI
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6339320747650697797
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7657882680982517918}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 960, y: 540, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6374874310182082865
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7657882680982517918}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 830891588
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 0
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+--- !u!114 &4836852859836872648
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7657882680982517918}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6af80720f3e24947a04c90c5d1c1702, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  scoresText: {fileID: 0}
+  countdownGroup: {fileID: 4014287414099684075}
+  repositionUI: {fileID: 422024822436313036}
+  notifications: {fileID: 3500769871885755055}
+  pauseMenu: {fileID: 1541395198334611057}
+--- !u!114 &422024822436313036
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7657882680982517918}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f90cf15993c320849bb1829011753427, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <view>k__BackingField: 3
+  panel: {fileID: 0}
+  exitOnNewPagePush: 0
+  newPagePushExcludedPanels: []
+  onPopAction:
+    m_PersistentCalls:
+      m_Calls: []
+  onPushAction:
+    m_PersistentCalls:
+      m_Calls: []
+  repositionCanvasGroup: {fileID: 0}
+  fadeDuration: 1
+--- !u!114 &4014287414099684075
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7657882680982517918}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ae94840a38c4ea438e421223142d71b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <view>k__BackingField: 3
+  panel: {fileID: 0}
+  exitOnNewPagePush: 0
+  newPagePushExcludedPanels: []
+  onPopAction:
+    m_PersistentCalls:
+      m_Calls: []
+  onPushAction:
+    m_PersistentCalls:
+      m_Calls: []
+  countdownText: {fileID: 0}
+  countdownTimer: {fileID: 0}
+  animatedGameObject: {fileID: 0}
+--- !u!114 &3500769871885755055
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7657882680982517918}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6cc3898492505c4497e245feca84282, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  canvas: {fileID: 0}
+  textElementPrefab: {fileID: 7746532339653725254, guid: 2bc8186234357e543bd9cac53c1f19c4, type: 3}
+  spawnPos: {x: 0, y: 40}
+  spawnSize: {x: 1880, y: 50}
+  moveSpeed: 55
+  messageMargin: 3
+  defaultExpiryTime: 1
+  queuedElements: []
+  activeElements: []
+  inactiveElements:
+  - state: 0
+    textElement: {fileID: 0}
+    waitTimeForFadeOut: 1
+    alphaTarget: 0
+  - state: 0
+    textElement: {fileID: 0}
+    waitTimeForFadeOut: 1
+    alphaTarget: 0
+  - state: 0
+    textElement: {fileID: 0}
+    waitTimeForFadeOut: 1
+    alphaTarget: 0
+  - state: 0
+    textElement: {fileID: 0}
+    waitTimeForFadeOut: 1
+    alphaTarget: 0
+  - state: 0
+    textElement: {fileID: 0}
+    waitTimeForFadeOut: 1
+    alphaTarget: 0
+  - state: 0
+    textElement: {fileID: 0}
+    waitTimeForFadeOut: 1
+    alphaTarget: 0
+  - state: 0
+    textElement: {fileID: 0}
+    waitTimeForFadeOut: 1
+    alphaTarget: 0
+  - state: 0
+    textElement: {fileID: 0}
+    waitTimeForFadeOut: 1
+    alphaTarget: 0
+  - state: 0
+    textElement: {fileID: 0}
+    waitTimeForFadeOut: 1
+    alphaTarget: 0
+  - state: 0
+    textElement: {fileID: 0}
+    waitTimeForFadeOut: 1
+    alphaTarget: 0
+--- !u!114 &1541395198334611057
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7657882680982517918}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cbbf01dc588c88a4abbdf185cdb88545, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <view>k__BackingField: 3
+  panel: {fileID: 0}
+  exitOnNewPagePush: 0
+  newPagePushExcludedPanels: []
+  onPopAction:
+    m_PersistentCalls:
+      m_Calls: []
+  onPushAction:
+    m_PersistentCalls:
+      m_Calls: []
+  showRepositionOption: 0
+  cachedReposOption: 0
+  quitButton: {fileID: 0}
+  repositionPlayerButton: {fileID: 0}
+  closeButton: {fileID: 0}

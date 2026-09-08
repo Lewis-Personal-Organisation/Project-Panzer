@@ -14,14 +14,14 @@ public class VehicleArmour : ScriptableObject
     [field: SerializeField] public ShakeParameters OnHitEnemyShakeParams { get; private set; }
     [field: SerializeField] public ShakeParameters OnRicochetEnemyShakeParams { get; private set; }
 
-    public float GetThickness(Extensions.TankSide side)
+    public float GetThickness(Extensions.BoxColliderHitSide side)
     {
         switch (side)
         {
-            case Extensions.TankSide.Front: return frontThickness;
-            case Extensions.TankSide.Left:
-            case Extensions.TankSide.Right: return sideThickness;
-            case Extensions.TankSide.Back: return rearThickness;
+            case Extensions.BoxColliderHitSide.Front: return frontThickness;
+            case Extensions.BoxColliderHitSide.Left:
+            case Extensions.BoxColliderHitSide.Right: return sideThickness;
+            case Extensions.BoxColliderHitSide.Back: return rearThickness;
         }
 
         return 0F;

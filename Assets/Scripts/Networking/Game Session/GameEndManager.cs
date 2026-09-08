@@ -58,8 +58,8 @@ public class GameEndManager : Singleton<GameEndManager>
         {
             if (playerAvatar.score > gameResultsData.winnerScore)
             {
-                gameResultsData.winnerPlayerName = playerAvatar.playerName;
-                gameResultsData.winnerPlayerId = playerAvatar.playerId;
+                gameResultsData.winnerPlayerName = playerAvatar.name;
+                gameResultsData.winnerPlayerId = playerAvatar.id;
                 gameResultsData.winnerScore = playerAvatar.score;
                 numTies = 1;
             }
@@ -70,8 +70,8 @@ public class GameEndManager : Singleton<GameEndManager>
                 numTies++;
                 if (UnityEngine.Random.Range(0, numTies) == 0)
                 {
-                    gameResultsData.winnerPlayerName = playerAvatar.playerName;
-                    gameResultsData.winnerPlayerId = playerAvatar.playerId;
+                    gameResultsData.winnerPlayerName = playerAvatar.name;
+                    gameResultsData.winnerPlayerId = playerAvatar.id;
                     gameResultsData.winnerScore = playerAvatar.score;
                 }
             }

@@ -45,10 +45,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gameplayNetworkManagerPrefab: {fileID: 7377892574041393959, guid: bbba43b447168b24f9f5f23bcc5ce4a2, type: 3}
-  <spawnPoints>k__BackingField:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  <spawnPoints>k__BackingField: []
   timer: {fileID: 0}
   rocketTargets: []

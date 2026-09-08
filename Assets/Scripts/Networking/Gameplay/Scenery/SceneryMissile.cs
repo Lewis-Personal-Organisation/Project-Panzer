@@ -87,7 +87,7 @@ public class SceneryMissile : NetworkBehaviour
         ApplyStage(ProjectileStage.None, networkedStage.Value);
         
         // Queued
-        GameplayNetworkManager.OnLocalPlayerAssigned += () => Debug.Log($"Registered for network changes of SceneryMissile for {GameplayNetworkManager.Instance.localPlayerName}");
+        GameplayNetworkManager.OnLocalPlayerAssigned += () => Debug.Log($"Registered for network changes of SceneryMissile for {GameplayNetworkManager.Instance.localName}");
     }
     
     public override void OnNetworkDespawn()
