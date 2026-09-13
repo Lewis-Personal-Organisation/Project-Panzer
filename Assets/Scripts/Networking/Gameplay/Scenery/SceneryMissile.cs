@@ -67,7 +67,7 @@ public class SceneryMissile : NetworkBehaviour
     [Button(ButtonSizes.Medium), GUIColor(0.929411765F, 0.270588235f, 0.270588235F)]
     private void Launch()
     {
-        SetNetworkState(ProjectileStage.Impact);
+        networkedStage.Value = ProjectileStage.Impact;
         // behaviourSequence = MissileBehaviour();
     }
 
@@ -96,16 +96,28 @@ public class SceneryMissile : NetworkBehaviour
     }
 
     // Called from the server to change state
-    private void SetNetworkState(ProjectileStage newStage)
-    {
-        #if UNITY_EDITOR
-        if (NetworkManager.Singleton)
-            networkedStage.Value = newStage;
-        #else
-            networkedStage.Value = newStage;
-        #endif
-    }
+    // private void SetNetworkState(ProjectileStage newStage)
+    // {
+    //     #if UNITY_EDITOR
+    //     if (NetworkManager.Singleton)
+    //         networkedStage.Value = newStage;
+    //     #else
+    //         networkedStage.Value = newStage;
+    //     #endif
+    // }
 
+    IEnumerator ResizeGroundParticles()
+    {
+        ParticleSystem.MainModule groundParticlesMain = groundParticles.main;
+        
+        while (timer < ascentTime)
+        {
+            groundParticlesMain.startSize = Mathf.Lerp(groundParticleStartSize, 0, Mathf.InverseLerp(1, 2.5F, timer)); // Shrink start size from 1s, ending at 5s
+            timer += Time.deltaTime;
+            yield return null;
+        }
+    }
+    
     /// <summary>
     /// The method to run on all clients when network variables changes
     /// </summary>
@@ -118,6 +130,10 @@ public class SceneryMissile : NetworkBehaviour
                 hitParticlesB.Play(false);
                 groundParticles.Play(false);
                 engineParticles.Play(false);
+
+                // Resize ground particles. Not needed on server
+                if (!IsServer)
+                    StartCoroutine(ResizeGroundParticles());
                 break;
 
             case ProjectileStage.MidFlight:
@@ -240,7 +256,7 @@ public class SceneryMissile : NetworkBehaviour
         target = GameplaySceneManager.Instance.UnusedRocketTarget();
 
         BehaviourStep LaunchAndRise = new BehaviourStep(
-            () => SetNetworkState(ProjectileStage.Launch),
+            () => networkedStage.Value = ProjectileStage.Launch,
             () =>
             {
                 if (velocity < ascentVelocity)
@@ -249,18 +265,19 @@ public class SceneryMissile : NetworkBehaviour
                 transform.position += transform.up * (velocity * Time.fixedDeltaTime);
                 timer += Time.deltaTime;
 
-                ParticleSystem.MainModule gpMain = groundParticles.main;
-                gpMain.startSize = Mathf.Lerp(groundParticleStartSize, 0, Mathf.InverseLerp(1, 2.5F, timer)); // Shrink start size from 1s, ending at 5s
+                ParticleSystem.MainModule groundParticlesMain = groundParticles.main;
+                groundParticlesMain.startSize = Mathf.Lerp(groundParticleStartSize, 0, Mathf.InverseLerp(1, 2.5F, timer)); // Shrink start size from 1s, ending at 5s
             },
             () => timer > ascentTime,
             () =>
             {
                 timer = 0F;
-                SetNetworkState(ProjectileStage.MidFlight);
+                networkedStage.Value = ProjectileStage.MidFlight;
             },
             false);
 
-        BehaviourStep travelToTarget = new BehaviourStep(null,
+        BehaviourStep travelToTarget = new BehaviourStep(
+            null,
             () =>
             {
                 if (canRotate)
@@ -278,7 +295,7 @@ public class SceneryMissile : NetworkBehaviour
                 transform.position += transform.up * (velocity * Time.fixedDeltaTime);
             },
             () => detonate,
-            () => SetNetworkState(ProjectileStage.Impact),
+            null,
             false);
 
         return new BehaviourSequence(false, LaunchAndRise, travelToTarget);
@@ -303,7 +320,7 @@ public class SceneryMissile : NetworkBehaviour
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.R))
-            SetNetworkState(ProjectileStage.Impact);
+            networkedStage.Value = ProjectileStage.Impact;
     }
 
     /// <summary>
@@ -350,5 +367,22 @@ public class SceneryMissile : NetworkBehaviour
 
         // Set for detonation
         detonate = true;
+        
+        engineParticles.transform.SetParent(null);
+        engineParticles.Stop(false);
+
+        // Re-apply the cached local position, Saving sending over network on detonation
+        if (!IsServer)
+            detonateParticlesA.transform.localPosition = localDetonatePosition;
+                
+        detonateParticlesA.transform.SetParent(null);
+        detonateParticlesA.transform.rotation = Quaternion.Euler(Vector3.zero);
+        detonateParticlesA.Play(false);
+                
+        // Start Coroutine on the Player, as we deactivate this gameobject 
+        VehicleController.Instance.StartCoroutine(DoExplosion());
+                
+        enabled = false;
+        this.gameObject.SetActive(false);
     }
 }

@@ -87,7 +87,7 @@ public class VehicleBodyMover : LocalVehicleComponent
             -vehicle.mobility.backwardSpeed,
             vehicle.mobility.forwardSpeed
         );
-        SceneData.Label("Velocity: ", $"{vehicle.velocityTracker.z.Clamped(-vehicle.mobility.backwardSpeed, vehicle.mobility.forwardSpeed)}", 10, 60, 550, 25, Color.black);
+        // SceneData.Label("Velocity: ", $"{vehicle.velocityTracker.z.Clamped(-vehicle.mobility.backwardSpeed, vehicle.mobility.forwardSpeed)}", 10, 60, 550, 25, Color.black);
         
         // Set the local velocity multiplier
         localVelocity.x *= RetainedVelocity;

@@ -1,3 +1,4 @@
+using System;
 using System.Reflection;
 using Unity.Collections;
 using UnityEngine;
@@ -43,6 +44,7 @@ public static class Extensions
     /// <summary>
     /// The ReflectResult struct. Contains info about a shell Ricochet
     /// </summary>
+    [Serializable]
     public struct ReflectResult
     {
         public bool didRicochet;
@@ -65,47 +67,6 @@ public static class Extensions
 
         return box.transform.TransformPoint(box.center + point);
     }
-
-    /// <summary>
-    /// Returns a Vector3 Indicating the closes side of a boxCollider regarding a world position
-    /// </summary>
-    /// <param name="boxCollider"></param>
-    /// <param name="worldPos"></param>
-    /// <returns></returns>
-    // public static Vector3 ClosestSide(this BoxCollider boxCollider, Vector3 worldPos)
-    // {
-    //     // Hit point converted to local position
-    //     Vector3 localPos = boxCollider.transform.InverseTransformPoint(worldPos) - boxCollider.center;
-    //
-    //     // Scale relative to box size (so non-square boxes are handled correctly)
-    //     Vector3 halfSize = boxCollider.size * 0.5f;
-    //     float x = localPos.x / halfSize.x;
-    //     float y = localPos.y / halfSize.y;
-    //     float z = localPos.z / halfSize.z;
-    //     
-    //     // Find the axis with the largest absolute value
-    //     if (Mathf.Abs(x) > Mathf.Abs(y) && Mathf.Abs(x) > Mathf.Abs(z))
-    //     {
-    //         if (x > 0)
-    //             return boxCollider.transform.right;
-    //         else
-    //             return boxCollider.transform.right * -1;
-    //     }
-    //     else if (Mathf.Abs(y) > Mathf.Abs(z))
-    //     {
-    //         if (y > 0)
-    //             return boxCollider.transform.up;
-    //         else
-    //             return boxCollider.transform.up * -1;
-    //     }
-    //     else
-    //     {
-    //         if (z > 0)
-    //             return boxCollider.transform.forward;
-    //         else
-    //             return boxCollider.transform.forward * -1;
-    //     }
-    // }
     
     /// <summary>
     /// Returns the surface normal vector in LOCAL space relative to the BoxCollider.
@@ -148,7 +109,7 @@ public static class Extensions
     /// </summary>
     public static ReflectResult ReflectWithAngleAdvFromDirection(this BoxCollider boxCollider, Vector3 hitPoint, Vector3 incomingDirection, float minAngleForRicochet)
     {
-        // 1. Get face normal in Local Space, then convert once to World Space
+        // 1. Get face normal in Local Space, then convert to World Space
         Vector3 localNormal = boxCollider.ClosestSideLocal(hitPoint);
         Vector3 surfaceNormal = boxCollider.transform.TransformDirection(localNormal).normalized;
 

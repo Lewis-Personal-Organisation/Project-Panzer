@@ -34,5 +34,5 @@ MonoBehaviour:
   horizontalMaxLean: 7
   verticalLeanSpeed: 4.53
   verticalRestingLean: -2
-  verticalMaxLean: 6
+  verticalMaxLean: 4.5
   verticalToRestingLeanValue: 1

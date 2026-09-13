@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -10,7 +11,6 @@ public class RotateAround : MonoBehaviour
     public float angle = 0f;
     public float rotationSpeed = 1F;
 
-    
     void Update()
     {
         angle += rotationSpeed * Time.deltaTime;

@@ -32,7 +32,8 @@ public class VehicleTurretRotator : VehicleComponent, IVehicleComponentToggleabl
 
     public void Enable()
     {
-        OnProcessTurret += ProcessTurret;
+        if (cameraController)
+            OnProcessTurret += ProcessTurret;
     }
     
     public void Disable()

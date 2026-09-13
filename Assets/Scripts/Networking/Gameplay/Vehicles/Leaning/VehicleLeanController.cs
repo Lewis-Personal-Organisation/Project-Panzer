@@ -5,8 +5,6 @@ using UnityEngine;
 
 public abstract class VehicleLeanController : LocalVehicleComponent
 {
-    public bool enabled;
-    
     protected float baseXLean;
     protected float baseZLean;
     public abstract float LeanX { get; }

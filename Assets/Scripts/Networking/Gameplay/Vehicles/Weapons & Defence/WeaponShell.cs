@@ -103,7 +103,7 @@ public class WeaponShell : WeaponAmmoBehaviour, IDebuggable
         // If returned to pool, notify clients
         if (newData.Pooled)
         {
-            Debug.Log("Clients (All): Expired shell as requested from Server");
+            Debug.Log("Clients (All): Expired shell as requested from Server", this.gameObject);
         }
     }
 

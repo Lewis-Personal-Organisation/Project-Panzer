@@ -1,8 +1,7 @@
 using UnityEngine;
 
-public class TankLeanController : MonoBehaviour
+public class TankLeanController : VehicleComponent
 {
-    private readonly VehicleController controller;
     private float xLean = 0.0f;
     private float xTargetLean = 0;
     private float xLeanTimer = 0F;
@@ -15,9 +14,15 @@ public class TankLeanController : MonoBehaviour
     private float velocityMultiplier => localVelocity.z > 0F ? -1F : localVelocity.z < 0F ? 1F : 0F;
     internal float tiltSign => velocityMultiplier > data.minForwardVelocity ? -1F : velocityMultiplier < -data.minForwardVelocity ? 1F : 0F;
 
+
+    public void Setup(VehicleController controller)
+    {
+        vehicle = controller;
+    }
+    
     private void FixedUpdate()
     {
-        localVelocity.z = controller.inputManager.moveInput * 10;
+        localVelocity.z = vehicle.inputManager.moveInput * 10;
         
         ApplyTankLean();
     }
@@ -41,6 +46,6 @@ public class TankLeanController : MonoBehaviour
         }
 
         // Hull lean Z
-        zLean = Mathf.Lerp(zLean, controller.inputManager.turnInputValue * data.horizontalMaxLean, Time.deltaTime * data.horizontalLeanSpeed);
+        zLean = Mathf.Lerp(zLean, vehicle.inputManager.turnInputValue * data.horizontalMaxLean, Time.deltaTime * data.horizontalLeanSpeed);
     }
 }

@@ -29,7 +29,6 @@ public class VehicleInputManager : MonoBehaviour
         _ => TraversalState.None
     };
     public void SetLastInputState() => lastTraversalState = vehicleState;
-    [FormerlySerializedAs("lastInputState")]
     public TraversalState lastTraversalState;
     public float MouseXDelta => Input.GetAxis("Mouse X");
     public float MouseYDelta => Input.GetAxis("Mouse Y");
@@ -41,6 +40,7 @@ public class VehicleInputManager : MonoBehaviour
         moveInput = Input.GetAxisRaw("Vertical");
         turnInputValue = Input.GetAxis("Horizontal");
         lmbPressed = Input.GetMouseButtonDown(0);
+        
     }
 
     private void OnDisable()

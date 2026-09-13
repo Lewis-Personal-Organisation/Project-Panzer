@@ -189,7 +189,7 @@ public class VehicleDefence : VehicleComponent, IVehicleComponentToggleable
                 vehicle.cameraController?.Shake(vehicleArmour.OnHitEnemyShakeParams);
                 
                 if (TakeDamage(reflectResult.boxColliderHitSide, ammo.baseDamage))
-                    GameplayUI.Notifications.Request($"{ammo.spawnData.Value.OwnerName} destroyed {GameplayNetworkManager.localPlayerAvatar.name}");
+                    GameplayUI.Notifications.Request($"{ammo.spawnData.Value.OwnerName.Value} destroyed {GameplayNetworkManager.localPlayerAvatar.name}");
             }
         }
     }

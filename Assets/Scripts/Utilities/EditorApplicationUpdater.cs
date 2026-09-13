@@ -40,6 +40,7 @@ public static class EditorApplicationUpdater
     {
         DeltaClamp = Time.maximumDeltaTime;
         lastTime = EditorApplication.timeSinceStartup;
+        EditorApplication.update -= Update;
         EditorApplication.update += Update;
     }
     

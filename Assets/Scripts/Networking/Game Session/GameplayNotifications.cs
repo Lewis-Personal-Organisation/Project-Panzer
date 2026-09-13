@@ -122,7 +122,7 @@ public class GameplayNotifications : NetworkBehaviour
 
                     if (activeElements[i].textElement.alpha <= 0)
                     {
-                        Debug.Log($"Moving to inactive: {activeElements[i].textElement.gameObject.name}");
+                        Debug.Log($"Moving to inactive: {activeElements[i].textElement.gameObject.name}", activeElements[i].textElement.gameObject);
                         activeElements[i].textElement.alpha = 0;
                         activeElements[i].textElement.gameObject.SetActive(false);
                         inactiveElements.Add(activeElements[i]);

@@ -113,12 +113,18 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
         }
         
         cameraController = FindObjectOfType<CameraController>();
-        cameraController.Setup(this);
+        
+        if (cameraController)
+            cameraController.Setup(this);
         
         weaponController.Setup(this);
         turretRotator.Setup(this);
+        
         defence.Setup(this);
-        vfxController.Setup(this);
+        
+        if (vfxController)
+            vfxController.Setup(this);
+        
         stuckManager.Setup(this);
 
         audioListener.enabled = true;
@@ -171,9 +177,17 @@ public class VehicleController : NetworkVehicleComponent, IVehicleComponentToggl
         
         bodyLean.UpdateLeanValues();
         hullBoneTransform.localRotation = Quaternion.Euler(bodyLean.LeanX + weaponLean.LeanX, 0, bodyLean.LeanZ + weaponLean.LeanZ);;
+
+        if (vfxController)
+        {
+            float speedAsT = Mathf.InverseLerp(mobility.forwardSpeed, 0, velocityTracker.z.velocity);
+            vfxController.LerpLifetimeOptions(speedAsT, 0.2f);
+        }
         
-        float speedAsT = Mathf.InverseLerp(mobility.forwardSpeed, 0, velocityTracker.z.velocity);
-        vfxController.LerpLifetimeOptions(speedAsT, 0.2f);
+        
+        // SceneData.Label("Vehicle Movement State: ", $"{inputManager.vehicleState}", 10, 550, 550, 25, Color.black);
+        // SceneData.Label("Vehicle Tilt: ", $"{bodyLean.tilt}", 10, 575, 550, 25, Color.black);
+        // SceneData.Label("Vehicle Movement State: ", $"{inputManager.vehicleState}", 10, 550, 550, 25, Color.black);
     }
     
     public void DisableSoft()
