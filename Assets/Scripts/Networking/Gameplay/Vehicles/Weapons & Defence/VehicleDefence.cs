@@ -48,7 +48,7 @@ public class VehicleDefence : VehicleComponent, IVehicleComponentToggleable
     {
         if (Input.GetKeyDown(KeyCode.Alpha0))
         {
-            TakeDamageLocal(Extensions.TankSide.Front, 55);
+            TakeDamageLocal(Extensions.BoxColliderHitSide.Front, 55);
         }
     }
     
@@ -86,6 +86,8 @@ public class VehicleDefence : VehicleComponent, IVehicleComponentToggleable
     {
         if ((shellMask.value & 1 << triggerEvent.Other.gameObject.layer) != 0)
         {
+            Transform shellTransform = triggerEvent.Other.transform;
+            Vector3 shellPosition = shellTransform.position;
             triggerEvent.Other.transform.root.TryGetComponent(out WeaponAmmoBehaviour ammunition);
             // SceneData.Label("Hits Received: ", $"{++hitsTaken}");
             
@@ -95,7 +97,7 @@ public class VehicleDefence : VehicleComponent, IVehicleComponentToggleable
             hit.toPos = triggerEvent.Other.transform.position;
             
             // Reflect the target transform if its hits our Box Collider at or above ricochet angle
-            Extensions.ReflectResult reflectResult = ((BoxCollider)triggerEvent.Caller).ReflectWithAngleAdvFromDirection(triggerEvent.Other.transform.forward, minAngleForRicochet);
+            Extensions.ReflectResult reflectResult = ((BoxCollider)triggerEvent.Caller).ReflectWithAngleAdvFromDirection(shellPosition, shellTransform.forward, minAngleForRicochet);
             hit.reflectResult = reflectResult;
             
             SceneData.Label("Last bullet Ricochet?: ", $"{reflectResult.didRicochet} - {reflectResult.direction}");
@@ -113,9 +115,9 @@ public class VehicleDefence : VehicleComponent, IVehicleComponentToggleable
             }
             else
             {
-                Debug.Log($"VehicleDefence :: We took a hit from {ammunition.ownerName.Value.Value}");
+                Debug.Log($"VehicleDefence :: We took a hit from {ammunition.spawnData.Value.OwnerName.Value}");
                 
-                if (TakeDamage(reflectResult.tankSide, ammunition.baseDamage))
+                if (TakeDamage(reflectResult.boxColliderHitSide, ammunition.baseDamage))
                 {
                     vehicle.Destroy();
                 }
@@ -147,7 +149,11 @@ public class VehicleDefence : VehicleComponent, IVehicleComponentToggleable
         
         if ((shellMask.value & 1 << triggerEvent.Other.gameObject.layer) != 0)
         {
+            
             triggerEvent.Other.transform.root.TryGetComponent(out WeaponAmmoBehaviour ammo);
+            
+            Vector3 shellForward = ammo.transform.forward;
+            Vector3 shellPosition = ammo.transform.position;
             
             // Return. We don't take damage from our own shells!!
             if (ammo.NetworkObject.IsOwner)
@@ -162,7 +168,7 @@ public class VehicleDefence : VehicleComponent, IVehicleComponentToggleable
             
             
             // Reflect the target transform if its hits our Box Collider at or above ricochet angle
-            Extensions.ReflectResult reflectResult = ((BoxCollider)triggerEvent.Caller).ReflectWithAngleAdvFromDirection(ammo.transform.forward, minAngleForRicochet);
+            Extensions.ReflectResult reflectResult = ((BoxCollider)triggerEvent.Caller).ReflectWithAngleAdvFromDirection(shellPosition, shellForward, minAngleForRicochet);
             hit.reflectResult = reflectResult;
             
             SceneData.Label("Last bullet Ricochet?: ", $"{reflectResult.didRicochet} - {reflectResult.direction}");
@@ -177,13 +183,14 @@ public class VehicleDefence : VehicleComponent, IVehicleComponentToggleable
             }
             else
             {
-                Debug.Log($"VehicleDefence :: Hit by {ammo.ownerName.Value.Value}");
+                Debug.Log($"VehicleDefence :: Hit by {ammo.spawnData.Value}. Increasing use");
+                ammo.SetUseCounterServerRPC(true);
                 
-                if (TakeDamage(reflectResult.tankSide, ammo.baseDamage))
+                if (TakeDamage(reflectResult.boxColliderHitSide, ammo.baseDamage))
                 {
                     if (vehicle.IsOwner)
                     {
-                        GameplayUI.Notifications.Request($"{ammo.ownerName.Value.Value} destroyed {GameplayNetworkManager.Instance.localPlayerAvatar.playerName}");
+                        GameplayUI.Notifications.Request($"{ammo.spawnData.Value} destroyed {GameplayNetworkManager.Instance.localPlayerAvatar.playerName}");
                     }
                     vehicle.Destroy();
                 }
@@ -199,7 +206,7 @@ public class VehicleDefence : VehicleComponent, IVehicleComponentToggleable
     /// <summary>
     /// Causes this vehicle to take damage. Returns whether the damage destroyed this vehicle
     /// </summary>
-    private bool TakeDamage(Extensions.TankSide side, float baseDamage)
+    private bool TakeDamage(Extensions.BoxColliderHitSide side, float baseDamage)
     {
         // Get the thickness for the side of vehicle that was hit
         float thickness = vehicleArmour.GetThickness(side);
@@ -223,7 +230,7 @@ public class VehicleDefence : VehicleComponent, IVehicleComponentToggleable
         return health <= 0F;
     }
 
-    private void TakeDamageLocal(Extensions.TankSide side, float baseDamage)
+    private void TakeDamageLocal(Extensions.BoxColliderHitSide side, float baseDamage)
     {
         // Get the thickness for the side of vehicle that was hit
         float thickness = vehicleArmour.GetThickness(side);

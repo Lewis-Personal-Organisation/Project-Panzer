@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="ae413e54-c8ff-4cf3-828f-6345cf33e0d8" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/../../POLYGON_War_Unity_2021_3_v1_10_1.unitypackage.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Plugins/Sirenix/Demos/Custom Attribute Processors.unitypackage.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Plugins/Sirenix/Demos/Custom Drawers.unitypackage.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Plugins/Sirenix/Demos/Editor Windows.unitypackage.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Plugins/Sirenix/Demos/Sample - RPG Editor.unitypackage.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../PolygonWar/URP_ExtractMe.unitypackage.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Samples/Remote Config/4.1.1/Remote Config Deployment/SampleContent/RemoteConfig.cs.meta" beforeDir="false" afterPath="$PROJECT_DIR$/../../Samples/Remote Config/4.1.1/Remote Config Deployment/SampleContent/RemoteConfig.cs.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Samples/Remote Config/4.1.1/Remote Config Deployment/SampleContent/RemoteConfigDisplay.cs.meta" beforeDir="false" afterPath="$PROJECT_DIR$/../../Samples/Remote Config/4.1.1/Remote Config Deployment/SampleContent/RemoteConfigDisplay.cs.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Examples/ConnectionAwareActioner.cs.meta" beforeDir="false" afterPath="$PROJECT_DIR$/../Examples/ConnectionAwareActioner.cs.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Examples/RpcTest.cs.meta" beforeDir="false" afterPath="$PROJECT_DIR$/../Examples/RpcTest.cs.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Networking/Lobby/LobbyManager.cs.meta" beforeDir="false" afterPath="$PROJECT_DIR$/../Networking/Lobby/LobbyManager.cs.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Networking/Player/Player.cs.meta" beforeDir="false" afterPath="$PROJECT_DIR$/../Networking/Player/Player.cs.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Networking/Session Management/SessionManager.cs.meta" beforeDir="false" afterPath="$PROJECT_DIR$/../Networking/Session Management/SessionManager.cs.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Networking/Shared Network Data/NetworkData.cs.meta" beforeDir="false" afterPath="$PROJECT_DIR$/../Networking/Shared Network Data/NetworkData.cs.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Serverless Game Example/DataStructs.cs.meta" beforeDir="false" afterPath="$PROJECT_DIR$/../Serverless Game Example/DataStructs.cs.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Serverless Game Example/ServerlessMultiplayerGameSampleManager.cs.meta" beforeDir="false" afterPath="$PROJECT_DIR$/../Serverless Game Example/ServerlessMultiplayerGameSampleManager.cs.meta" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../../.." />
+  </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "GTXPlayer"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/Lewis-Personal-Organisation/Project-Panzer.git",
+    "accountId": "03aa3d21-40df-4eb7-bdea-5698ab4fcae3"
+  }
+}]]></component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/EditorUpdateExample.cs" root0="SKIP_HIGHLIGHTING" />
+  </component>
+  <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 3,
+  &quot;fromUser&quot;: false
+}</component>
+  <component name="ProjectId" id="3I8BrFcV0Iz0SUTfMwiKgET5t6H" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "cidr.known.project.marker": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "git-widget-placeholder": "master",
+    "settings.editor.selected.configurable": "settings.sync"
+  }
+}]]></component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="ae413e54-c8ff-4cf3-828f-6345cf33e0d8" name="Changes" comment="" />
+      <created>1787136573919</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1787136573919</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="UnityCheckinConfiguration" checkUnsavedScenes="true" />
+  <component name="UnityProjectConfiguration" hasMinimizedUI="false" />
+  <component name="VcsManagerConfiguration">
+    <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <breakpoint enabled="true" type="DotNet_Exception_Breakpoints">
+          <properties exception="System.OperationCanceledException" breakIfHandledByOtherCode="false" displayValue="System.OperationCanceledException" />
+          <option name="timeStamp" value="1" />
+        </breakpoint>
+        <breakpoint enabled="true" type="DotNet_Exception_Breakpoints">
+          <properties exception="System.Threading.Tasks.TaskCanceledException" breakIfHandledByOtherCode="false" displayValue="System.Threading.Tasks.TaskCanceledException" />
+          <option name="timeStamp" value="2" />
+        </breakpoint>
+        <breakpoint enabled="true" type="DotNet_Exception_Breakpoints">
+          <properties exception="System.Threading.ThreadAbortException" breakIfHandledByOtherCode="false" displayValue="System.Threading.ThreadAbortException" />
+          <option name="timeStamp" value="3" />
+        </breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+</project>

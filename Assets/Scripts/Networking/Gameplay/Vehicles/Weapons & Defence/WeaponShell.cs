@@ -78,6 +78,7 @@ public class WeaponShell : WeaponAmmoBehaviour, IDebuggable
     /// </summary>
 	public override void Setup(VehicleWeaponController weaponController, Vector3 position, Quaternion rotation)
     {
+        sourceController = weaponController;
         transform.SetPositionAndRotation(position, rotation);
         shellSpeed = velocity;
         lifetimeTimer = lifetime;
@@ -85,31 +86,29 @@ public class WeaponShell : WeaponAmmoBehaviour, IDebuggable
 
     private bool pendingTeleport = false;
     
-    protected override void OnOwnershipChanged(ulong previous, ulong current)
-    {
-        base.OnOwnershipChanged(previous, current);
-        
-        if (!IsOwner)
-            return;
-        
-        lifetimeTimer = lifetime;
-        shellSpeed = velocity;
-        
-        OnOwnerNetworkUpdate = OwnerNetworkUpdate;
-        OnNetworkFixedUpdate = NetworkedFixedUpdate;
-
-        // pendingTeleport = true;
-        TryApplySpawnData(spawnData.Value);
-        
-        Debug.Log($"We now own Shell {transform.name}", gameObject);
-    }
-    
     private void TryApplySpawnData(ShellSpawnData data)
     {
         if (!IsOwner)
             return;
     
         networkTransform.Teleport(data.Position, data.Rotation, transform.localScale);
+        
+        // If Spawned, setup movement etc
+        if (!data.Pooled)
+        {
+            lifetimeTimer = lifetime;
+            shellSpeed = velocity;
+            
+            OnOwnerNetworkUpdate = OwnerNetworkUpdate;
+            OnNetworkFixedUpdate = NetworkedFixedUpdate;
+            
+            // ToggleVisuals(true);
+        }
+        
+        if (data.Pooled)
+        {
+            Debug.Log("Clients (All): Expired shell as requested from Server", this.gameObject);
+        }
     }
 
     
@@ -130,7 +129,7 @@ public class WeaponShell : WeaponAmmoBehaviour, IDebuggable
     /// </summary>
     public override void OwnerNetworkUpdate()
     {
-        if (isPooled.Value) return;
+        if (spawnData.Value.Pooled) return;
         if (!IsOwner) return;
 
         // Decrement timer to 0, then deactivate and return to pool
@@ -138,7 +137,7 @@ public class WeaponShell : WeaponAmmoBehaviour, IDebuggable
 
         if (lifetimeTimer <= 0)
         {
-            VehicleController.Instance.WeaponController.ReturnToPoolServerRpc(NetworkObject);
+            sourceController.ReturnToPoolServerRpc(NetworkObject);
         }
     }
 
@@ -177,7 +176,7 @@ public class WeaponShell : WeaponAmmoBehaviour, IDebuggable
     /// </summary>
     public override void NetworkedFixedUpdate()
     {
-        if (isPooled.Value)
+        if (spawnData.Value.Pooled)
         {
             // Debug.Log($"{name}: still pooled, skipping move. IsOwner={IsOwner}");
             return; // If pooled (only spawnable)

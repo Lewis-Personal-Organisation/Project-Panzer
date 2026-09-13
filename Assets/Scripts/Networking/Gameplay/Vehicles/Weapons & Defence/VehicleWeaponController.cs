@@ -78,11 +78,16 @@ public abstract class VehicleWeaponController : NetworkedVehicleComponent, IVehi
         
         Debug.Log("Server: Pooling expired shell");
         netObj.transform.position = new Vector3(0, -5, 0);              // Hide (reposition) the shell from gameplay
+
+        WeaponAmmoBehaviour shell = shellLookup[netObj];
+
+        shell.SetUseCounterServerRPC(false);
         
-        if (netObj.TryGetComponent<WeaponShell>(out var shell))
-        {
-            shell.isPooled.Value = true;
-        }
+        shell.spawnData.Value = new ShellSpawnData(!shell.spawnData.Value.DirtyBool,
+            new Vector3(0, -5, 0),
+            Quaternion.identity,
+            true,
+            new NetworkString(GameplayNetworkManager.Instance.GetPlayerName((int)NetworkManager.ServerClientId)));
         
         // Change ownership back to server for when it needs to respawn and reposition a shell. Not required for server-fired shots
         if (netObj.OwnerClientId != NetworkManager.ServerClientId)

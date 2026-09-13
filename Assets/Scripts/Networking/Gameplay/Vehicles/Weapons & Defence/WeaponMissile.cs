@@ -159,7 +159,7 @@ public class WeaponMissile : WeaponAmmoBehaviour
 
     public override void OwnerNetworkUpdate()
     {
-        if (isPooled.Value) return;
+        if (spawnData.Value.Pooled) return;
         if (!IsOwner) return;
 
         // Decrement timer to 0, then deactivate and return to pool
@@ -183,7 +183,7 @@ public class WeaponMissile : WeaponAmmoBehaviour
     }
     public override void NetworkedFixedUpdate()
     {
-        if (isPooled.Value) return;
+        if (spawnData.Value.Pooled) return;
 
         if (IsOwner)
         {
