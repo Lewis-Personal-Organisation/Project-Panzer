@@ -141,7 +141,7 @@ public class WeaponMissile : WeaponAmmoBehaviour
         }
         else
         {
-            OnUpdate();
+            OnLocalUpdate();
         }
     }
     
@@ -153,7 +153,7 @@ public class WeaponMissile : WeaponAmmoBehaviour
         }
         else
         {
-            OnFixedUpdate();
+            OnLocalFixedUpdate();
         }
     }
 
@@ -171,7 +171,7 @@ public class WeaponMissile : WeaponAmmoBehaviour
             owner.ReturnToPoolServerRpc(NetworkObject);
         }
     }
-    public override void OnUpdate()
+    public override void OnLocalUpdate()
     {
         // Decrement timer to 0, then deactivate and return to pool
         lifetimeTimer -= Time.deltaTime;
@@ -194,7 +194,7 @@ public class WeaponMissile : WeaponAmmoBehaviour
         //     rigidBody.position += shellDirection * shellSpeed * Time.fixedDeltaTime;
         // }
     }
-    public override void OnFixedUpdate()
+    public override void OnLocalFixedUpdate()
     {
         missileBehaviourSequence.Process();
     }

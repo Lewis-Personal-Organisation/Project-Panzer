@@ -84,9 +84,6 @@ public class SingleShotWeapon : VehicleWeaponController
         // Create lookup
         shellLookup.TryAdd(shellNetObj, shell);
         
-        // Sync state
-        shell.spawnData.Value = new ShellSpawnData(!shell.spawnData.Value.DirtyBool, position, rotation, false, new NetworkString(GameplayNetworkManager.Instance.GetPlayerName((int)newOwnerID)));
-        
         // Spawn it for everyone, if not spawned
         if (!shellNetObj.IsSpawned)
             shellNetObj.Spawn(true);
@@ -95,6 +92,9 @@ public class SingleShotWeapon : VehicleWeaponController
         // and NetworkTransform's OnOwnershipChanged authority refresh. Authority refresh cant be
         // triggered any other way, and is required for Teleporting() on the new owner
         shellNetObj.ChangeOwnership(newOwnerID);
+        
+        // Sync state
+        shell.spawnData.Value = new ShellSpawnData(!shell.spawnData.Value.DirtyBool, position, rotation, false, new NetworkString(GameplayNetworkManager.Instance.GetPlayerName((int)newOwnerID)));
         
         // Setup locally for server
         shell.Setup(this, position, rotation);

@@ -95,17 +95,6 @@ public class SceneryMissile : NetworkBehaviour
         networkedStage.OnValueChanged -= ApplyStage;
     }
 
-    // Called from the server to change state
-    // private void SetNetworkState(ProjectileStage newStage)
-    // {
-    //     #if UNITY_EDITOR
-    //     if (NetworkManager.Singleton)
-    //         networkedStage.Value = newStage;
-    //     #else
-    //         networkedStage.Value = newStage;
-    //     #endif
-    // }
-
     IEnumerator ResizeGroundParticles()
     {
         ParticleSystem.MainModule groundParticlesMain = groundParticles.main;

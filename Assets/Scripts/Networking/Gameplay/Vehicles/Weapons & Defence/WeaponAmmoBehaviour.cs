@@ -57,9 +57,9 @@ public abstract class WeaponAmmoBehaviour : NetworkBehaviour
     
     public abstract void Setup(VehicleWeaponController weaponController, Vector3 position, Quaternion rotation);
     public abstract void OwnerNetworkUpdate();
-    public abstract void OnUpdate();
+    public abstract void OnLocalUpdate();
     public abstract void NetworkedFixedUpdate();
-    public abstract void OnFixedUpdate();
+    public abstract void OnLocalFixedUpdate();
 
     
     /// <summary>

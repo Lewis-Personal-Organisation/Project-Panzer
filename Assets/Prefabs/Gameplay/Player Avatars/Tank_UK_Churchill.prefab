@@ -638,6 +638,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d186d9ea9de10294da5c21a57324f186, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  index: 0
+  id: 
+  name: 
+  relayId: 0
+  score: 0
 --- !u!114 &8735465697540438093
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -715,6 +720,8 @@ MonoBehaviour:
   rendererHolder: {fileID: 4679777344879733027}
   trackMaterial: {fileID: 0}
   trackOffset: 0
+  debug: 0
+  turnInput: 0
 --- !u!114 &3355831130857118527
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -788,8 +795,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 56e1f61376bcd8f4fb00d0363926281c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enabled: 1
   velocityTracker: {fileID: 4425514349993116832}
+  debug: 0
+  moveInput: 0
+  zVelocity: 0
+  turnInputValue: 0
 --- !u!114 &7759402707074100814
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -819,7 +829,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 134f6750b727ee046bbac9ab2e3c6c73, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enabled: 1
   leanInFunction: 15
   leanOutFunction: 14
 --- !u!114 &8063876861978009509

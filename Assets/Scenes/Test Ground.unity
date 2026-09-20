@@ -3767,6 +3767,11 @@ MonoBehaviour:
     m_Bits: 64
   shotColour: {r: 1, g: 0, b: 0, a: 1}
   bounceColour: {r: 0, g: 0.6623492, b: 1, a: 1}
+  result:
+    didRicochet: 0
+    hitAngle: 0
+    direction: {x: 0, y: 0, z: 0}
+    boxColliderHitSide: 0
   resultDebugHeight: 9
   handleLineThickness: 5
 --- !u!114 &2060938217

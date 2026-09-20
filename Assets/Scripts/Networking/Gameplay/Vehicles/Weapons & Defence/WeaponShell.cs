@@ -16,9 +16,8 @@ public class WeaponShell : WeaponAmmoBehaviour, IDebuggable
 	
     [Header("Movement")]
     [SerializeField] private float velocity;
-    private float shellSpeed;
 
-    private Action OnOwnerNetworkUpdate;
+    private Action OnNetworkUpdate;
     private Action OnNetworkFixedUpdate;
 
     [Header("Debugging")]
@@ -46,7 +45,7 @@ public class WeaponShell : WeaponAmmoBehaviour, IDebuggable
                 float dt = EditorApplicationUpdater.DeltaTime;
                 rigidBody.MovePosition(rigidBody.position + transform.forward * dt * velocity);
                 t += dt;
-                await Task.Yield(); // or await Task.Delay(...) — stays cooperative, no thread switch
+                await Task.Yield();
             }
         }
         finally
@@ -62,12 +61,47 @@ public class WeaponShell : WeaponAmmoBehaviour, IDebuggable
 
         trailTime = trailRenderer.time;
     }
-    
-    private void OnEnable()  => spawnData.OnValueChanged += OnSpawnDataChanged;
-    private void OnDisable() => spawnData.OnValueChanged -= OnSpawnDataChanged;
-    private void OnSpawnDataChanged(ShellSpawnData pre, ShellSpawnData curr)
+
+    // Subscribe when spawned and execute Data change to sync network state
+    public override void OnNetworkSpawn()
     {
-        TryApplySpawnData(curr);
+        base.OnNetworkSpawn();
+        spawnData.OnValueChanged += OnSpawnDataChanged;
+        
+        OnSpawnDataChanged(spawnData.Value, spawnData.Value);
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        base.OnNetworkDespawn();
+        spawnData.OnValueChanged -= OnSpawnDataChanged;
+    }
+    
+    private void OnSpawnDataChanged(ShellSpawnData oldData, ShellSpawnData newData)
+    {
+        if (newData.Pooled)
+            return;
+        
+        // Setup shell if it's owned by this client
+        if (IsOwner)
+        {
+            Debug.Log($"We now own Shell {transform.name}. It was {(newData.Pooled ? "pooled" : "fired")}", gameObject);
+            networkTransform.Teleport(newData.Position, newData.Rotation, transform.localScale);
+                
+            lifetimeTimer = lifetime;
+            
+            OnNetworkUpdate = OwnerNetworkUpdate;
+            OnNetworkFixedUpdate = NetworkedFixedUpdate;
+            
+            ToggleVisuals(true);
+        }
+        
+        // Clear Trail so it doesn't stretch from Pooled to new location, for all clients
+        if (trailRenderer != null)
+        {
+            trailRenderer.Clear();
+            trailRenderer.emitting = true;
+        }
     }
 
     /// <summary>
@@ -76,47 +110,18 @@ public class WeaponShell : WeaponAmmoBehaviour, IDebuggable
 	public override void Setup(VehicleWeaponController weaponController, Vector3 position, Quaternion rotation)
     {
         transform.SetPositionAndRotation(position, rotation);
-        shellSpeed = velocity;
         lifetimeTimer = lifetime;
     }
-    
-    private void TryApplySpawnData(ShellSpawnData newData)
-    {
-        if (IsOwner)
-        {
-            Debug.Log($"We now own Shell {transform.name}. It was {(newData.Pooled ? "pooled" : "fired")}", gameObject);
-            networkTransform.Teleport(newData.Position, newData.Rotation, transform.localScale);
-
-            // If Spawned, setup movement etc
-            if (!newData.Pooled)
-            {
-                lifetimeTimer = lifetime;
-                shellSpeed = velocity;
-            
-                OnOwnerNetworkUpdate = OwnerNetworkUpdate;
-                OnNetworkFixedUpdate = NetworkedFixedUpdate;
-            
-                ToggleVisuals(true);
-            }
-        }
-
-        // If returned to pool, notify clients
-        if (newData.Pooled)
-        {
-            Debug.Log("Clients (All): Expired shell as requested from Server", this.gameObject);
-        }
-    }
-
     
     private void Update()
     {
         if (VehicleController.IsNetworked)
         {
-            OnOwnerNetworkUpdate?.Invoke();
+            OnNetworkUpdate?.Invoke();
         }
         else
         {
-            OnUpdate();     // The Local-only/Testing Update
+            OnLocalUpdate();     // The Local-only/Testing Update
         }
     }
     
@@ -137,14 +142,11 @@ public class WeaponShell : WeaponAmmoBehaviour, IDebuggable
         }
     }
 
-    
-
     /// <summary>
     /// The Update method called when not connected to a network
     /// </summary>
-    public override void OnUpdate()
+    public override void OnLocalUpdate()
     {
-        // Decrement timer to 0, then deactivate and return to pool
         lifetimeTimer -= Time.deltaTime;
 
         if (lifetimeTimer <= 0)
@@ -165,7 +167,7 @@ public class WeaponShell : WeaponAmmoBehaviour, IDebuggable
         }
         else
         {
-            OnFixedUpdate();
+            OnLocalFixedUpdate();
         }
     }
 
@@ -189,7 +191,7 @@ public class WeaponShell : WeaponAmmoBehaviour, IDebuggable
     /// <summary>
     /// Called when in solo play
     /// </summary>
-    public override void OnFixedUpdate()
+    public override void OnLocalFixedUpdate()
     {
         rigidBody.MovePosition(rigidBody.position + transform.forward * (velocity * Time.fixedDeltaTime));
     }
